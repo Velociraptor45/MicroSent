@@ -9,7 +9,6 @@ using Microsoft.Extensions.Options;
 using LinqToTwitter;
 using MicroSent.Models.Analyser;
 using MicroSent.Models;
-using OpenNLP.Tools.PosTagger;
 
 namespace MicroSent.Controllers
 {
@@ -18,28 +17,39 @@ namespace MicroSent.Controllers
         private TwitterCrawler twitterCrawler;
 
         private Tokenizer tokenizer;
+        private TokenAnalyser tokenAnalyser;
+        private WordRater wordRater;
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
             twitterCrawler = new TwitterCrawler(config);
             tokenizer = new Tokenizer();
+            tokenAnalyser = new TokenAnalyser();
+            wordRater = new WordRater();
         }
 
         public async Task<IActionResult> Index()
         {
-            List<Status> quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
+            List<Status> quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
+            //List<Status> quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
             List<Tweet> allTweets = new List<Tweet>();
 
             foreach (Status status in quotedRetweetStatuses)
             {
-                Tweet t = new Tweet(status.FullText);
-                tokenizer.splitIntoTokens(ref t);
-                allTweets.Add(t);
-
-                Console.WriteLine("--------------------------------------");
-                foreach (Token token in t.allTokens)
+                Tweet tweet = new Tweet(status.FullText);
+                tokenizer.splitIntoTokens(ref tweet);
+                allTweets.Add(tweet);
+                
+                for(int i = 0; i < tweet.allTokens.Count; i++)
                 {
-                    Console.WriteLine(token.text);
+                    Token token = tweet.allTokens[i];
+                    token = tokenAnalyser.analyseToken(token);
+                    if (!token.isHashtag && !token.isLink && !token.isMention)
+                    {
+                        token.wordRating = wordRater.getWordRating(tweet.allTokens[i]);
+                    }
+
+                    tweet.allTokens[i] = token;
                 }
             }
 

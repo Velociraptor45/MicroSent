@@ -1,4 +1,5 @@
 ﻿using MicroSent.Models.Constants;
+using System.Collections.Generic;
 
 namespace MicroSent.Models
 {
@@ -12,10 +13,13 @@ namespace MicroSent.Models
         public bool isLink;
         public bool isHashtag;
 
+        public List<Token> hashtagSubTokens;
+
         public int smileyRating;
         public int emoticonRating;
         public int ironyRating;
         public int negationRating;
+        public int wordRating;
 
         public Token(string text, int position)
         {
@@ -27,10 +31,13 @@ namespace MicroSent.Models
             isLink = false;
             isHashtag = false;
 
+            hashtagSubTokens = new List<Token>();
+
             smileyRating = RatingConstants.NEUTRAL;
             emoticonRating = RatingConstants.NEUTRAL;
             ironyRating = RatingConstants.NEUTRAL;
             negationRating = RatingConstants.NEUTRAL;
+            wordRating = RatingConstants.NEUTRAL;
         }
     }
 }
