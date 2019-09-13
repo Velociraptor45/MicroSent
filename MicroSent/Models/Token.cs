@@ -20,7 +20,7 @@ namespace MicroSent.Models
         public Token(string text, int position)
         {
             this.text = text;
-            this.originalText = text;
+            originalText = text;
             this.position = position;
 
             isMention = false;

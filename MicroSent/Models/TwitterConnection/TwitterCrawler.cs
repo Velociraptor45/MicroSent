@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MicroSent.Models
+namespace MicroSent.Models.TwitterConnection
 {
     public class TwitterCrawler
     {
@@ -79,7 +79,27 @@ namespace MicroSent.Models
             return allResults;
         }
 
-        public List<Status> removeNormalRetweets(List<Status> statuses)
+        public async Task<Status> getSingleQuotedTweet(string username)
+        {
+            int maxTweets = 1000;
+            ulong since = 1;
+            List<Status> timeline = new List<Status>();
+
+            try
+            {
+                timeline = await (from tweet in twitterContext.Status
+                                  where tweet.Type == StatusType.User && tweet.ScreenName == username && tweet.TweetMode == TweetMode.Extended && tweet.Count == maxTweets && tweet.SinceID == since && tweet.IsQuotedStatus
+                                  select tweet).ToListAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
+            }
+            timeline = removeNormalRetweets(timeline);
+            return timeline.First();
+        }
+
+        private List<Status> removeNormalRetweets(List<Status> statuses)
         {
             return statuses.Where(s => !s.FullText.StartsWith("RT")).ToList();
         }
