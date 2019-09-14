@@ -28,20 +28,18 @@ namespace MicroSent.Models.Analyser
                     var tags = nlpPosTagger.Tag(sentenceTokens.Select(t => t.text).ToArray());
                     for(int j = 0; j < tags.Length; j++)
                     {
+                        //translate the tag into PosLabels enum
                         int tokenPosition = sentenceTokens[j].position;
-                        if(!Enum.TryParse(tags[j], out PosLabels label))
+                        if(Enum.TryParse(tags[j], out PosLabels label))
                         {
-                            label = PosLabels.Default;
+                            Token token = tweet.allTokens[tokenPosition];
+                            token.posLabel = label;
+                            tweet.allTokens[tokenPosition] = token;
                         }
-                        Token token = tweet.allTokens[tokenPosition];
-                        token.posLabel = label;
-                        tweet.allTokens[tokenPosition] = token;
                     }
-
                     sentenceTokens.Clear();
                 }
             }
-            int a = 0;
         }
     }
 }

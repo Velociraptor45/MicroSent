@@ -48,10 +48,13 @@ namespace MicroSent.Controllers
                 for (int i = 0; i < tweet.allTokens.Count; i++)
                 {
                     Token token = tweet.allTokens[i];
-                    token = tokenAnalyser.analyseTokenType(token);
-                    if (!token.isHashtag && !token.isLink && !token.isMention)
+                    tokenAnalyser.analyseTokenType(ref token);
+                    tokenAnalyser.checkForUppercase(ref token);
+                    tokenAnalyser.replaceAbbreviations(ref token);
+                    if (!token.isHashtag && !token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
-                        token.wordRating = wordRater.getWordRating(tweet.allTokens[i]);
+                        tokenAnalyser.removeRepeatedLetters(ref token);
+                        token.wordRating = wordRater.getWordRating(token);
                     }
 
                     tweet.allTokens[i] = token;

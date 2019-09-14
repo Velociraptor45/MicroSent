@@ -15,6 +15,7 @@ namespace MicroSent.Models
         public bool isHashtag;
         public bool isPunctuation;
         public bool isStructureToken; // ')' '(' '-'
+        public bool isAllUppercase;
 
         public List<Token> hashtagSubTokens;
 
@@ -37,6 +38,7 @@ namespace MicroSent.Models
             isHashtag = false;
             isPunctuation = false;
             isStructureToken = false;
+            isAllUppercase = false;
 
             hashtagSubTokens = new List<Token>();
 
