@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.Caching;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MicroSent.Models.TwitterConnection;
@@ -10,8 +6,6 @@ using Microsoft.Extensions.Options;
 using LinqToTwitter;
 using MicroSent.Models.Analyser;
 using MicroSent.Models;
-using OpenNLP.Tools.Tokenize;
-using OpenNLP.Tools.SentenceDetect;
 
 namespace MicroSent.Controllers
 {

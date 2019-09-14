@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace MicroSent.Models.Enums
+﻿namespace MicroSent.Models.Enums
 {
     //src: https://stackoverflow.com/questions/1833252/java-stanford-nlp-part-of-speech-labels
     public enum PosLabels
