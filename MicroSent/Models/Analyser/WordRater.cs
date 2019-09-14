@@ -39,7 +39,7 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        public int getWordRating(Token token)
+        public float getWordRating(Token token)
         {
             if (positiveWords.Contains(token.text))
             {

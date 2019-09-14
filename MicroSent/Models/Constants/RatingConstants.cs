@@ -7,8 +7,8 @@ namespace MicroSent.Models.Constants
 {
     public class RatingConstants
     {
-        public const int POSITIVE = 2;
-        public const int NEUTRAL = 1;
-        public const int NEGATIVE = -2;
+        public const float POSITIVE = 2f;
+        public const float NEUTRAL = 1f;
+        public const float NEGATIVE = -2f;
     }
 }

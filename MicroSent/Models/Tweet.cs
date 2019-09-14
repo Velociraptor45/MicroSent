@@ -9,6 +9,7 @@ namespace MicroSent.Models
         public List<Token> relevantForAnalysis;
 
         public bool isDefinitelySarcastic;
+        public float rating;
 
         public Tweet(string fullText)
         {
@@ -17,6 +18,7 @@ namespace MicroSent.Models
             relevantForAnalysis = new List<Token>();
 
             isDefinitelySarcastic = false;
+            rating = 0f;
         }
     }
 }

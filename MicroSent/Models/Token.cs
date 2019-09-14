@@ -1,4 +1,5 @@
 ﻿using MicroSent.Models.Constants;
+using MicroSent.Models.Enums;
 using System.Collections.Generic;
 
 namespace MicroSent.Models
@@ -12,14 +13,18 @@ namespace MicroSent.Models
         public bool isMention;
         public bool isLink;
         public bool isHashtag;
+        public bool isPunctuation;
+        public bool isStructureToken; // ')' '(' '-'
 
         public List<Token> hashtagSubTokens;
 
-        public int smileyRating;
-        public int emoticonRating;
-        public int ironyRating;
-        public int negationRating;
-        public int wordRating;
+        public float smileyRating;
+        public float emoticonRating;
+        public float ironyRating;
+        public float negationRating;
+        public float wordRating;
+
+        public PosLabels posLabel;
 
         public Token(string text, int position)
         {
@@ -30,6 +35,8 @@ namespace MicroSent.Models
             isMention = false;
             isLink = false;
             isHashtag = false;
+            isPunctuation = false;
+            isStructureToken = false;
 
             hashtagSubTokens = new List<Token>();
 
@@ -38,6 +45,8 @@ namespace MicroSent.Models
             ironyRating = RatingConstants.NEUTRAL;
             negationRating = RatingConstants.NEUTRAL;
             wordRating = RatingConstants.NEUTRAL;
+
+            posLabel = PosLabels.Default;
         }
     }
 }

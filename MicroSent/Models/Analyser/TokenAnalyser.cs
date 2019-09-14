@@ -16,11 +16,15 @@ namespace MicroSent.Models.Analyser
 
         }
 
-        public Token analyseToken(Token token)
+        public Token analyseTokenType(Token token)
         {
             string tokentext = token.text;
             Regex linkRegex = new Regex(@"(https:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
-            MatchCollection matches = linkRegex.Matches(tokentext);
+            Regex puntuationRegex = new Regex(@"([\?!]+|\.+|,|:)");
+            Regex sentenceStructureRegex = new Regex(@"(\(|\)|-)");
+            MatchCollection linkMatches = linkRegex.Matches(tokentext);
+            MatchCollection punktuationMatches = puntuationRegex.Matches(tokentext);
+            MatchCollection sentenceStructureMatches = sentenceStructureRegex.Matches(tokentext);
 
             if (tokentext.StartsWith(HASHTAG))
             {
@@ -33,9 +37,17 @@ namespace MicroSent.Models.Analyser
                 token.isMention = true;
                 token.text = tokentext.Remove(0, 1);
             }
-            else if(matches.Count > 0)
+            else if(linkMatches.Count > 0)
             {
                 token.isLink = true;
+            }
+            else if(punktuationMatches.Count > 0)
+            {
+                token.isPunctuation = true;
+            }
+            else if(sentenceStructureMatches.Count > 0)
+            {
+                token.isStructureToken = true;
             }
 
             return token;
