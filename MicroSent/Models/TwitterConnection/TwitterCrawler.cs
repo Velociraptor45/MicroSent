@@ -103,5 +103,44 @@ namespace MicroSent.Models.TwitterConnection
         {
             return statuses.Where(s => !s.FullText.StartsWith("RT")).ToList();
         }
+
+        public async Task<List<Status>> searchFor(string query, int maxAmount)
+        {
+            int maxTweets = 1000;
+            ulong prevMaxID = ulong.MaxValue;
+            ulong maxID = 0;
+            List<Status> allResults = new List<Status>();
+            List<Status> results = new List<Status>();
+
+            var directResults = await (from tweet in twitterContext.Search
+                                       where tweet.Type == SearchType.Search && tweet.SearchLanguage == "en" 
+                                       && tweet.Query == query && tweet.TweetMode == TweetMode.Extended && tweet.Count == maxTweets
+                                       select tweet).ToListAsync();
+            results = directResults.First().Statuses;
+
+            do
+            {
+                allResults.AddRange(results);
+                maxID = results.Min(status => status.StatusID) - 1;
+
+                if (maxID < prevMaxID)
+                {
+                    prevMaxID = maxID;
+                }
+                else
+                {
+                    break;
+                }
+
+                directResults = await (from tweet in twitterContext.Search
+                                  where tweet.Type == SearchType.Search && tweet.SearchLanguage == "en" && tweet.Query == query 
+                                  && tweet.TweetMode == TweetMode.Extended && tweet.Count == maxTweets && tweet.MaxID == maxID
+                                  select tweet).ToListAsync();
+                results = directResults.First().Statuses;
+                allResults = removeNormalRetweets(allResults);
+            } while (results.Any() && allResults.Count < maxAmount);
+
+            return allResults;
+        }
     }
 }

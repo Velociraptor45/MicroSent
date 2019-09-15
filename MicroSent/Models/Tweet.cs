@@ -8,8 +8,11 @@ namespace MicroSent.Models
         public List<Token> allTokens;
         public List<Token> relevantForAnalysis;
 
+        public int firstEndHashtagPosition;
+
         public bool isDefinitelySarcastic;
-        public float rating;
+        public float positiveRating;
+        public float negativeRating;
 
         public Tweet(string fullText)
         {
@@ -17,8 +20,11 @@ namespace MicroSent.Models
             allTokens = new List<Token>();
             relevantForAnalysis = new List<Token>();
 
+            firstEndHashtagPosition = -1;
+
             isDefinitelySarcastic = false;
-            rating = 0f;
+            positiveRating = 0f;
+            negativeRating = 0f;
         }
     }
 }

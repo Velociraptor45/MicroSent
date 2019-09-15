@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace MicroSent.Models.Analyser
 {
@@ -14,14 +15,35 @@ namespace MicroSent.Models.Analyser
         {
             foreach(Token token in tweet.allTokens)
             {
-                tweet.rating = token.negationRating * token.wordRating;
+                float tokenRating = token.negationRating * token.wordRating;
                 if (tweet.isDefinitelySarcastic)
                 {
-                    tweet.rating *= token.ironyRating;
+                    tokenRating *= token.ironyRating;
                 }
                 else
                 {
-                    tweet.rating *= -1;
+                    tokenRating *= -1;
+                }
+
+                if(token.hasRepeatedLetters)
+                {
+                    //TODO
+                }
+                if(token.isAllUppercase)
+                {
+                    //TODO
+                }
+
+                if(Math.Abs(tokenRating) != 1)
+                {
+                    if(tokenRating > 0)
+                    {
+                        tweet.positiveRating += tokenRating;
+                    }
+                    else
+                    {
+                        tweet.negativeRating += tokenRating;
+                    }
                 }
             }
         }

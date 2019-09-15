@@ -10,22 +10,29 @@ namespace MicroSent.Models
         public string originalText;
         public int position;
 
+        public List<Token> hashtagSubTokens;
+        public PosLabels posLabel;
+
+        //token type
         public bool isMention;
         public bool isLink;
         public bool isHashtag;
         public bool isPunctuation;
         public bool isStructureToken; // ')' '(' '-'
-        public bool isAllUppercase;
+        public bool isSmiley;
+        public bool isEmoticon;
+        public bool isLaughingExpression;
 
-        public List<Token> hashtagSubTokens;
-
+        //ratings
         public float smileyRating;
         public float emoticonRating;
         public float ironyRating;
         public float negationRating;
         public float wordRating;
 
-        public PosLabels posLabel;
+        //token format
+        public bool isAllUppercase;
+        public bool hasRepeatedLetters;
 
         public Token(string text, int position)
         {
@@ -33,14 +40,17 @@ namespace MicroSent.Models
             originalText = text;
             this.position = position;
 
+            hashtagSubTokens = new List<Token>();
+            posLabel = PosLabels.Default;
+
             isMention = false;
             isLink = false;
             isHashtag = false;
             isPunctuation = false;
             isStructureToken = false;
-            isAllUppercase = false;
-
-            hashtagSubTokens = new List<Token>();
+            isSmiley = false;
+            isEmoticon = false;
+            isLaughingExpression = false;
 
             smileyRating = RatingConstants.NEUTRAL;
             emoticonRating = RatingConstants.NEUTRAL;
@@ -48,7 +58,8 @@ namespace MicroSent.Models
             negationRating = RatingConstants.NEUTRAL;
             wordRating = RatingConstants.NEUTRAL;
 
-            posLabel = PosLabels.Default;
+            isAllUppercase = false;
+            hasRepeatedLetters = false;
         }
     }
 }
