@@ -56,7 +56,7 @@ namespace MicroSent.Models
             emoticonRating = RatingConstants.NEUTRAL;
             ironyRating = RatingConstants.NEUTRAL;
             negationRating = RatingConstants.NEUTRAL;
-            wordRating = RatingConstants.NEUTRAL;
+            wordRating = RatingConstants.WORD_NEUTRAL;
 
             isAllUppercase = false;
             hasRepeatedLetters = false;

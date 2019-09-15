@@ -19,51 +19,137 @@ namespace MicroSent.Models.Analyser
 
         public void analyseTokenType(ref Token token)
         {
-            string tokentext = token.text;
-            Regex linkRegex = new Regex(@"(https:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
-            Regex puntuationRegex = new Regex(@"([\?!]+|\.+|,|:)");
-            Regex sentenceStructureRegex = new Regex(@"(\(|\)|-)");
-            MatchCollection linkMatches = linkRegex.Matches(tokentext);
-            MatchCollection punktuationMatches = puntuationRegex.Matches(tokentext);
-            MatchCollection sentenceStructureMatches = sentenceStructureRegex.Matches(tokentext);
 
-            Regex smileyRegex = new Regex(@"((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|:\s[\)\(])");
-            Regex emoticonRegex = new Regex(@"\\U[a-f0-9]{4,8}");
-            MatchCollection smileyMatches = smileyRegex.Matches(tokentext);
-            MatchCollection emoticonMatches = emoticonRegex.Matches(tokentext);
-
-            if (tokentext.StartsWith(HASHTAG))
+            if(checkForHashtag(ref token))
             {
-                token.isHashtag = true;
-                token.text = tokentext.Remove(0, 1);
-                //analyseHashtag
+                return;
             }
-            else if (tokentext.StartsWith(MENTION))
+            else if(checkForMention(ref token))
             {
-                token.isMention = true;
-                token.text = tokentext.Remove(0, 1);
+                return;
             }
-            else if (linkMatches.Count > 0)
+            else if(checkForLink(ref token))
             {
-                token.isLink = true;
+                return;
             }
-            else if (punktuationMatches.Count > 0)
+            else if(checkForPunctuation(ref token))
             {
-                token.isPunctuation = true;
+                return;
             }
-            else if (sentenceStructureMatches.Count > 0)
+            else if(checkForSentenceStructure(ref token))
             {
-                token.isStructureToken = true;
+                return;
             }
-            else if (smileyMatches.Count > 0)
+            else if(checkForSmiley(ref token))
             {
-                token.isSmiley = true;
+                return;
             }
-            else if (emoticonMatches.Count > 0)
+            else if(checkForEmoticon(ref token))
             {
-                token.isEmoticon = true;
+                return;
+            }
+            else if(checkForLaughingExpression(ref token))
+            {
+                return;
             }
         }
+
+        private bool checkForHashtag(ref Token token)
+        {
+            if (token.text.StartsWith(HASHTAG))
+            {
+                token.text = token.text.Remove(0, 1);
+                //analyseHashtag
+                return token.isHashtag = true;
+            }
+            return false;
+        }
+
+        private bool checkForMention(ref Token token)
+        {
+            if (token.text.StartsWith(MENTION))
+            {
+                token.text = token.text.Remove(0, 1);
+                return token.isMention = true;
+            }
+            return false;
+        }
+
+        private bool checkForLink(ref Token token)
+        {
+            Regex linkRegex = new Regex(@"(https:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
+            MatchCollection linkMatches = linkRegex.Matches(token.text);
+
+            if (linkMatches.Count > 0)
+            {
+                return token.isLink = true;
+            }
+            return false;
+        }
+
+        private bool checkForPunctuation(ref Token token)
+        {
+            Regex puntuationRegex = new Regex(@"([\?!]+|\.+|,|:)");
+            MatchCollection punktuationMatches = puntuationRegex.Matches(token.text);
+
+            if (punktuationMatches.Count > 0)
+            {
+                return token.isPunctuation = true;
+            }
+            return false;
+        }
+
+        private bool checkForSentenceStructure(ref Token token)
+        {
+            Regex sentenceStructureRegex = new Regex(@"(\(|\)|-)");
+            MatchCollection sentenceStructureMatches = sentenceStructureRegex.Matches(token.text);
+
+            if (sentenceStructureMatches.Count > 0)
+            {
+                return token.isStructureToken = true;
+            }
+            return false;
+        }
+
+        private bool checkForSmiley(ref Token token)
+        {
+            Regex smileyRegex = new Regex(@"((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|:\s[\)\(])");
+            MatchCollection smileyMatches = smileyRegex.Matches(token.text);
+
+            if (smileyMatches.Count > 0)
+            {
+                return token.isSmiley = true;
+            }
+            return false;
+        }
+
+        private bool checkForEmoticon(ref Token token)
+        {
+            Regex emoticonRegex = new Regex(@"\\U[a-f0-9]{4,8}");
+            MatchCollection emoticonMatches = emoticonRegex.Matches(token.text);
+
+            if (emoticonMatches.Count > 0)
+            {
+                return token.isEmoticon = true;
+            }
+            return false;
+        }
+
+        private bool checkForLaughingExpression(ref Token token)
+        {
+            Regex hahaRegex = new Regex(@"a?(ha){2,}");
+            Regex hihiRegex = new Regex(@"i?(hi){2,}");
+            MatchCollection hahaMatches = hahaRegex.Matches(token.text);
+            MatchCollection hihiMatches = hihiRegex.Matches(token.text);
+
+            if (hahaMatches.Count > 0 || hihiMatches.Count > 0)
+            {
+                return token.isLaughingExpression = true;
+            }
+            return false;
+        }
+
+
 
         public void checkForUppercase(ref Token token)
         {
@@ -92,12 +178,13 @@ namespace MicroSent.Models.Analyser
 
         public void removeRepeatedLetters(ref Token token)
         {
-            for (int i = 1; i < token.text.Length; i++)
+            for (int i = 2; i < token.text.Length; i++)
             {
                 char currentLetter = token.text[i];
                 char lastLetter = token.text[i - 1];
+                char secondLastLetter = token.text[i - 2];
 
-                if (currentLetter == lastLetter)
+                if (currentLetter == lastLetter && currentLetter == secondLastLetter)
                 {
                     token.hasRepeatedLetters = true;
                     token.text = token.text.Remove(i, 1);
@@ -106,22 +193,9 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        public void checkForLaughingExpression(ref Token token)
-        {
-            Regex hahaRegex = new Regex(@"a?(ha){2,}");
-            Regex hihiRegex = new Regex(@"i?(hi){2,}");
-            MatchCollection hahaMatches = hahaRegex.Matches(token.text);
-            MatchCollection hihiMatches = hihiRegex.Matches(token.text);
-
-            if(hahaMatches.Count > 0 || hihiMatches.Count > 0)
-            {
-                token.isLaughingExpression = true;
-            }
-        }
-
         private void analyseHashtag(string hashtag)
         {
-
+            //TODO
         }
     }
 }

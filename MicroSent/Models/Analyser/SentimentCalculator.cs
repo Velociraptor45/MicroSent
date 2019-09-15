@@ -16,7 +16,7 @@ namespace MicroSent.Models.Analyser
             foreach(Token token in tweet.allTokens)
             {
                 float tokenRating = token.negationRating * token.wordRating;
-                if (tweet.isDefinitelySarcastic)
+                if (!tweet.isDefinitelySarcastic)
                 {
                     tokenRating *= token.ironyRating;
                 }
@@ -27,14 +27,14 @@ namespace MicroSent.Models.Analyser
 
                 if(token.hasRepeatedLetters)
                 {
-                    //TODO
+                    tokenRating *= 1.4f; //TODO
                 }
                 if(token.isAllUppercase)
                 {
-                    //TODO
+                    tokenRating *= 1.4f; //TODO
                 }
 
-                if(Math.Abs(tokenRating) != 1)
+                if(tokenRating != 0)
                 {
                     if(tokenRating > 0)
                     {

@@ -49,7 +49,7 @@ namespace MicroSent.Models.Analyser
             {
                 return RatingConstants.NEGATIVE;
             }
-            return RatingConstants.NEUTRAL;
+            return RatingConstants.WORD_NEUTRAL;
         }
     }
 }

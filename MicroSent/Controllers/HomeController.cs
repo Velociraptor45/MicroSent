@@ -4,6 +4,7 @@ using MicroSent.Models.Analyser;
 using MicroSent.Models.TwitterConnection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -18,6 +19,7 @@ namespace MicroSent.Controllers
         private TweetAnalyser tweetAnalyser;
         private WordRater wordRater;
         private PosTagger posTagger;
+        private SentimentCalculator sentimentCalculator;
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
@@ -27,16 +29,17 @@ namespace MicroSent.Controllers
             tweetAnalyser = new TweetAnalyser();
             wordRater = new WordRater();
             posTagger = new PosTagger();
+            sentimentCalculator = new SentimentCalculator();
         }
 
         public async Task<IActionResult> Index()
         {
-            //List<Status> quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
-            List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
+            List<Status> quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
+            //List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
             //List<Status> quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
             List<Tweet> allTweets = new List<Tweet>();
 
-            foreach (Status status in ironyHashtags)
+            foreach (Status status in quotedRetweetStatuses)
             {
                 Tweet tweet = new Tweet(status.FullText);
                 tokenizer.splitIntoTokens(ref tweet);
@@ -60,7 +63,12 @@ namespace MicroSent.Controllers
                 tweetAnalyser.analyseFirstEndHashtagPosition(ref tweet);
                 posTagger.tagTweet(ref tweet);
 
+                sentimentCalculator.calculateFinalSentiment(ref tweet);
                 allTweets.Add(tweet);
+                Console.WriteLine("_______________________________________________________________");
+                Console.WriteLine(tweet.fullText);
+                Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
+                Console.WriteLine($"Negative Rating: {tweet.negativeRating}");
             }
 
             return View();
