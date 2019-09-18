@@ -29,7 +29,7 @@ namespace MicroSent.Models.Analyser
                     for(int j = 0; j < tags.Length; j++)
                     {
                         //translate the tag into PosLabels enum
-                        int tokenPosition = sentenceTokens[j].position;
+                        int tokenPosition = sentenceTokens[j].index;
                         if(Enum.TryParse(tags[j], out PosLabels label))
                         {
                             Token token = tweet.allTokens[tokenPosition];

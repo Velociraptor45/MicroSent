@@ -8,7 +8,7 @@ namespace MicroSent.Models
         public List<Token> allTokens;
         public List<Token> relevantForAnalysis;
 
-        public int firstEndHashtagPosition;
+        public int firstEndHashtagIndex;
 
         public bool isDefinitelySarcastic;
         public float positiveRating;
@@ -20,7 +20,7 @@ namespace MicroSent.Models
             allTokens = new List<Token>();
             relevantForAnalysis = new List<Token>();
 
-            firstEndHashtagPosition = -1;
+            firstEndHashtagIndex = -1;
 
             isDefinitelySarcastic = false;
             positiveRating = 0f;

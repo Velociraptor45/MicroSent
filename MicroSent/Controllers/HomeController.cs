@@ -1,11 +1,13 @@
 ﻿using LinqToTwitter;
 using MicroSent.Models;
 using MicroSent.Models.Analyser;
+using MicroSent.Models.Constants;
 using MicroSent.Models.TwitterConnection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MicroSent.Controllers
@@ -61,14 +63,26 @@ namespace MicroSent.Controllers
                 }
                 //single tweet analysis
                 tweetAnalyser.analyseFirstEndHashtagPosition(ref tweet);
+                tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
                 posTagger.tagTweet(ref tweet);
 
                 sentimentCalculator.calculateFinalSentiment(ref tweet);
                 allTweets.Add(tweet);
                 Console.WriteLine("_______________________________________________________________");
+                Console.WriteLine($"https://twitter.com/{status.ScreenName}/status/{status.ID}");
                 Console.WriteLine(tweet.fullText);
                 Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
+                foreach (Token token in tweet.allTokens.Where(t => t.wordRating > 0))
+                {
+                    Console.Write(token.text + ", ");
+                }
+                Console.WriteLine("");
                 Console.WriteLine($"Negative Rating: {tweet.negativeRating}");
+                foreach (Token token in tweet.allTokens.Where(t => t.wordRating < 0))
+                {
+                    Console.Write(token.text + ", ");
+                }
+                Console.WriteLine("");
             }
 
             return View();
