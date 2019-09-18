@@ -27,7 +27,7 @@ namespace MicroSent.Models.Analyser
                 {
                     if (!previousToken.isHashtag)
                     {
-                        tweet.firstEndHashtagIndex = currentToken.index;
+                        tweet.firstEndHashtagIndex = currentToken.indexInTweet;
                     }
                     else
                     {
@@ -62,9 +62,10 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
-        public void applyKWordNegation(ref Tweet tweet, int negatedWordDistance, bool negateLeftSide = true, bool negateRightSide = true)
+        public void applyKWordNegation(ref Tweet tweet, int negatedWordDistance,
+            bool negateLeftSide = true, bool negateRightSide = true, bool intelligentNegation = true)
         {
-            Regex negationWord = new Regex(@"\b((can)?not|non)|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
+            Regex negationWord = new Regex(@"\b((can)?not|no(\b|n))|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
 
             for(int j = 0; j < tweet.allTokens.Count; j++)// each(Token token in tweet.allTokens)
             {
@@ -72,7 +73,7 @@ namespace MicroSent.Models.Analyser
                 MatchCollection matches = negationWord.Matches(token.text);
                 if(matches.Count > 0)
                 {
-                    int tokenIndex = token.index;
+                    int tokenIndex = token.indexInTweet;
                     int firstNegationIndex = negateLeftSide ? tokenIndex - negatedWordDistance : tokenIndex;
                     int lastNegationIndex = negateRightSide ? tokenIndex + negatedWordDistance : tokenIndex;
                     firstNegationIndex = firstNegationIndex < 0 ? 0 : firstNegationIndex;
