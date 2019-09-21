@@ -36,17 +36,17 @@ namespace MicroSent.Controllers
 
         public async Task<IActionResult> Index()
         {
+            List<Tweet> allTweets = new List<Tweet>();
             List<Status> quotedRetweetStatuses = new List<Status>();
             List <Status> linkStatuses = new List<Status>();
-            //quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
-            linkStatuses = await twitterCrawler.getLinks("AlanZucconi");
+            quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
+            //linkStatuses = await twitterCrawler.getLinks("AlanZucconi");
             //List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
-            //List<Status> quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
-            List<Tweet> allTweets = new List<Tweet>();
+            //quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
 
             foreach (Status status in quotedRetweetStatuses)
             {
-                Tweet tweet = new Tweet(status.FullText);
+                Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.ID);
                 tokenizer.splitIntoTokens(ref tweet);
 
                 for (int i = 0; i < tweet.allTokens.Count; i++)
@@ -72,8 +72,19 @@ namespace MicroSent.Controllers
 
                 sentimentCalculator.calculateFinalSentiment(ref tweet);
                 allTweets.Add(tweet);
+            }
+
+            printOnConsole(allTweets);
+
+            return View();
+        }
+
+        private void printOnConsole(List<Tweet> allTweets)
+        {
+            foreach(Tweet tweet in allTweets)
+            {
                 Console.WriteLine("_______________________________________________________________");
-                Console.WriteLine($"https://twitter.com/{status.ScreenName}/status/{status.ID}");
+                Console.WriteLine($"https://twitter.com/{tweet.userScreenName}/status/{tweet.userID}");
                 Console.WriteLine(tweet.fullText);
                 Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
                 foreach (Token token in tweet.allTokens.Where(t => t.wordRating > 0))
@@ -88,8 +99,6 @@ namespace MicroSent.Controllers
                 }
                 Console.WriteLine("");
             }
-
-            return View();
         }
     }
 }

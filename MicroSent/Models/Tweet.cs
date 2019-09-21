@@ -10,6 +10,8 @@ namespace MicroSent.Models
         private const int FoundTokenCode = -3;
 
         public string fullText;
+        public string userScreenName;
+        public ulong userID;
         public List<Token> allTokens;
         public List<Token> relevantForAnalysis;
         public List<Parse> parseTrees;
@@ -21,9 +23,11 @@ namespace MicroSent.Models
         public float positiveRating;
         public float negativeRating;
 
-        public Tweet(string fullText)
+        public Tweet(string fullText, string userScreenName, ulong userID)
         {
             this.fullText = fullText;
+            this.userScreenName = userScreenName;
+            this.userID = userID;
             allTokens = new List<Token>();
             relevantForAnalysis = new List<Token>();
             parseTrees = new List<Parse>();
