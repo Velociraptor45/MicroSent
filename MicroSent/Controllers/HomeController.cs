@@ -9,8 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using OpenNLP.Tools.Parser;
-using MicroSent.Models.Enums;
 
 namespace MicroSent.Controllers
 {
@@ -36,35 +34,12 @@ namespace MicroSent.Controllers
             sentimentCalculator = new SentimentCalculator();
         }
 
-        //private void test(Parse[] children)
-        //{
-
-        //    foreach (var child in children)
-        //    {
-        //        if (Enum.TryParse(child.Type.ToString(), out PosLabels label))
-        //            continue;
-
-        //        test(child.GetChildren());
-        //    }
-        //}
-
         public async Task<IActionResult> Index()
         {
-            //EnglishTreebankParser nlpParser;
-            //string nbinFilePath = @"data\NBIN_files\";
-            //nlpParser = new EnglishTreebankParser(nbinFilePath, true, false);
-
-            //Tweet tweet2 = new Tweet("I promise you will not regret it.");
-            //tokenizer.splitIntoTokens(ref tweet2);
-
-            //var parse = nlpParser.DoParse(tweet2.fullText);
-            //tweet2.parseTrees.Add(parse.GetChildren()[0]);
-            //var res = tweet2.getAllParentsChildIndexes(4, 0);
-            //test(children);
-            //return View();
-
-
-            List<Status> quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
+            List<Status> quotedRetweetStatuses = new List<Status>();
+            List <Status> linkStatuses = new List<Status>();
+            //quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
+            linkStatuses = await twitterCrawler.getLinks("AlanZucconi");
             //List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
             //List<Status> quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
             List<Tweet> allTweets = new List<Tweet>();
