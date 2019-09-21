@@ -46,7 +46,11 @@ namespace MicroSent.Controllers
 
             foreach (Status status in quotedRetweetStatuses)
             {
-                Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.ID);
+                Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.StatusID);
+                if (status.FullText.StartsWith("Please @msexcel, don't be jealous."))
+                {
+                    int a = 0;
+                }
                 tokenizer.splitIntoTokens(ref tweet);
 
                 for (int i = 0; i < tweet.allTokens.Count; i++)
@@ -66,9 +70,10 @@ namespace MicroSent.Controllers
                 }
                 //single tweet analysis
                 tweetAnalyser.analyseFirstEndHashtagPosition(ref tweet);
-                tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
+                //tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(ref tweet);
                 posTagger.tagTweet(ref tweet);
+                tweetAnalyser.applyParseTreeDependentNegation(ref tweet);
 
                 sentimentCalculator.calculateFinalSentiment(ref tweet);
                 allTweets.Add(tweet);
@@ -87,13 +92,15 @@ namespace MicroSent.Controllers
                 Console.WriteLine($"https://twitter.com/{tweet.userScreenName}/status/{tweet.userID}");
                 Console.WriteLine(tweet.fullText);
                 Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
-                foreach (Token token in tweet.allTokens.Where(t => t.wordRating > 0))
+                var tokensPositiv = tweet.allTokens.Where(t => t.wordRating * t.negationRating > 0);
+                foreach (Token token in tokensPositiv)
                 {
                     Console.Write(token.text + ", ");
                 }
                 Console.WriteLine("");
                 Console.WriteLine($"Negative Rating: {tweet.negativeRating}");
-                foreach (Token token in tweet.allTokens.Where(t => t.wordRating < 0))
+                var tokensNegative = tweet.allTokens.Where(t => t.wordRating * t.negationRating < 0);
+                foreach (Token token in tokensNegative)
                 {
                     Console.Write(token.text + ", ");
                 }

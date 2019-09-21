@@ -40,14 +40,14 @@ namespace MicroSent.Models
             negativeRating = 0f;
         }
 
-        public List<int> getAllParentsChildIndexes(int tokenIndexInSentence, int sentenceIndex)
+        public List<int> getAllSiblingsIndexes(int tokenIndexInSentence, int sentenceIndex)
         {
-            List<int> childrenOfParentIndexes = new List<int>();
-            depthSearch(parseTrees[sentenceIndex], tokenIndexInSentence, -1, childrenOfParentIndexes);
-            return childrenOfParentIndexes;
+            List<int> siblingIndexes = new List<int>();
+            depthSearch(parseTrees[sentenceIndex], tokenIndexInSentence, -1, siblingIndexes);
+            return siblingIndexes;
         }
 
-        private int depthSearch(Parse tree, int tokenIndexInSentence, int lastFoundIndex, List<int> childrenOfParentIndexes)
+        private int depthSearch(Parse tree, int tokenIndexInSentence, int lastFoundIndex, List<int> siblingIndexes)
         {
             int smallestChildrenIndex = int.MaxValue;
             int highestChildrenIndex = int.MinValue;
@@ -60,14 +60,17 @@ namespace MicroSent.Models
             foreach (Parse child in tree.GetChildren())
             {
                 lastFoundIndex = lastFoundIndex == FoundTokenCode ? tokenIndexInSentence : lastFoundIndex; //filter out FoundTokenCode
-                lastFoundIndex = depthSearch(child, tokenIndexInSentence, lastFoundIndex, childrenOfParentIndexes);
+                lastFoundIndex = depthSearch(child, tokenIndexInSentence, lastFoundIndex, siblingIndexes);
                 if (lastFoundIndex == ExitCode)
                 {
                     return ExitCode;
                 }
                 else if (lastFoundIndex == FoundTokenCode)
                 {
-                    foundToken = true;
+                    if (tree.ChildCount > 1)
+                        foundToken = true;
+                    else
+                        return FoundTokenCode;
                 }
                 else if (lastFoundIndex == tokenIndexInSentence)
                 {
@@ -85,7 +88,7 @@ namespace MicroSent.Models
 
             if (foundToken)
             {
-                fillListWithIndexes(childrenOfParentIndexes, smallestChildrenIndex, highestChildrenIndex);
+                fillListWithIndexes(siblingIndexes, smallestChildrenIndex, highestChildrenIndex);
                 return ExitCode;
             }
 

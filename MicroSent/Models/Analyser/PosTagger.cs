@@ -72,7 +72,7 @@ namespace MicroSent.Models.Analyser
                         {
                             Token t = tweet.allTokens[tokenPosition];
                             t.posLabel = label;
-                            tweet.allTokens[tagIndex] = t;
+                            tweet.allTokens[tokenPosition] = t;
                         }
                     }
                     sentenceTokens.Clear();
