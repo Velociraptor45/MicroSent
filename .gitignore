@@ -6,6 +6,8 @@
 
 [Bb]in/
 
+__pycache__/
+
 # Visual Studio cache directory
 
 .vs/
