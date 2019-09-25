@@ -72,7 +72,7 @@ namespace MicroSent.Controllers
                 tweetAnalyser.analyseFirstEndHashtagPosition(ref tweet);
                 //tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(ref tweet);
-                posTagger.tagTweet(ref tweet);
+                posTagger.parseTweet(ref tweet);
                 tweetAnalyser.applyParseTreeDependentNegation(ref tweet);
 
                 sentimentCalculator.calculateFinalSentiment(ref tweet);

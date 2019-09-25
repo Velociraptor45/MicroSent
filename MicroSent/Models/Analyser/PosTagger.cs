@@ -42,7 +42,7 @@ namespace MicroSent.Models.Analyser
             tweet.sentenceCount = sentenceIndex + 1;
         }
 
-        public void tagTweet(ref Tweet tweet)
+        public void parseTweet(ref Tweet tweet)
         {
             if (tweet.sentenceCount == 0)
             {
@@ -79,37 +79,6 @@ namespace MicroSent.Models.Analyser
                     sentenceIndex++;
                 }
             }
-
-
-
-
-
-            //List<Token> sentenceTokens = new List<Token>();
-            //for (int i = 0; i < tweet.allTokens.Count; i++)
-            //{
-            //    Token currentToken = tweet.allTokens[i];
-            //    sentenceTokens.Add(currentToken);
-            //    if (currentToken.isPunctuation && currentToken.text != ",")
-            //    {
-            //        var tags = nlpPosTagger.Tag(sentenceTokens.Select(t => t.text).ToArray());
-            //        var parse = nlpParser.DoParse(sentenceTokens.Select(t => t.text).ToArray());
-            //        tweet.parseTrees.Add(parse.GetChildren()[0]);
-
-            //        for (int j = 0; j < tags.Length; j++)
-            //        {
-            //            //translate the tag into PosLabels enum
-            //            int tokenPosition = sentenceTokens[j].indexInTweet;
-            //            if (Enum.TryParse(tags[j], out PosLabels label))
-            //            {
-            //                Token token = tweet.allTokens[tokenPosition];
-            //                token.posLabel = label;
-            //                tweet.allTokens[tokenPosition] = token;
-            //            }
-            //        }
-            //        sentenceTokens.Clear();
-            //        sentenceIndex++;
-            //    }
-            //}
         }
     }
 }
