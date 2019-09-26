@@ -1,11 +1,13 @@
 ﻿using LinqToTwitter;
 using MicroSent.Models;
 using MicroSent.Models.Analyser;
+using MicroSent.Models.Constants;
 using MicroSent.Models.TwitterConnection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MicroSent.Controllers
@@ -34,14 +36,21 @@ namespace MicroSent.Controllers
 
         public async Task<IActionResult> Index()
         {
-            List<Status> quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
-            //List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
-            //List<Status> quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
             List<Tweet> allTweets = new List<Tweet>();
+            List<Status> quotedRetweetStatuses = new List<Status>();
+            List <Status> linkStatuses = new List<Status>();
+            quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
+            //linkStatuses = await twitterCrawler.getLinks("AlanZucconi");
+            //List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
+            //quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
 
             foreach (Status status in quotedRetweetStatuses)
             {
-                Tweet tweet = new Tweet(status.FullText);
+                Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.StatusID);
+                if (status.FullText.StartsWith("Please @msexcel, don't be jealous."))
+                {
+                    int a = 0;
+                }
                 tokenizer.splitIntoTokens(ref tweet);
 
                 for (int i = 0; i < tweet.allTokens.Count; i++)
@@ -61,17 +70,42 @@ namespace MicroSent.Controllers
                 }
                 //single tweet analysis
                 tweetAnalyser.analyseFirstEndHashtagPosition(ref tweet);
-                posTagger.tagTweet(ref tweet);
+                //tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
+                posTagger.cutIntoSentences(ref tweet);
+                posTagger.parseTweet(ref tweet);
+                tweetAnalyser.applyParseTreeDependentNegation(ref tweet);
 
                 sentimentCalculator.calculateFinalSentiment(ref tweet);
                 allTweets.Add(tweet);
-                Console.WriteLine("_______________________________________________________________");
-                Console.WriteLine(tweet.fullText);
-                Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
-                Console.WriteLine($"Negative Rating: {tweet.negativeRating}");
             }
 
+            printOnConsole(allTweets);
+
             return View();
+        }
+
+        private void printOnConsole(List<Tweet> allTweets)
+        {
+            foreach(Tweet tweet in allTweets)
+            {
+                Console.WriteLine("_______________________________________________________________");
+                Console.WriteLine($"https://twitter.com/{tweet.userScreenName}/status/{tweet.userID}");
+                Console.WriteLine(tweet.fullText);
+                Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
+                var tokensPositiv = tweet.allTokens.Where(t => t.wordRating * t.negationRating > 0);
+                foreach (Token token in tokensPositiv)
+                {
+                    Console.Write(token.text + ", ");
+                }
+                Console.WriteLine("");
+                Console.WriteLine($"Negative Rating: {tweet.negativeRating}");
+                var tokensNegative = tweet.allTokens.Where(t => t.wordRating * t.negationRating < 0);
+                foreach (Token token in tokensNegative)
+                {
+                    Console.Write(token.text + ", ");
+                }
+                Console.WriteLine("");
+            }
         }
     }
 }

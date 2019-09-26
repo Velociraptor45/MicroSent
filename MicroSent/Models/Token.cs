@@ -8,7 +8,9 @@ namespace MicroSent.Models
     {
         public string text;
         public string originalText;
-        public int position;
+        public int indexInTweet;
+        public int indexInSentence;
+        public int sentenceIndex;
 
         public List<Token> hashtagSubTokens;
         public PosLabels posLabel;
@@ -38,7 +40,9 @@ namespace MicroSent.Models
         {
             this.text = text;
             originalText = text;
-            this.position = position;
+            this.indexInTweet = position;
+            this.indexInSentence = -1;
+            this.sentenceIndex = -1;
 
             hashtagSubTokens = new List<Token>();
             posLabel = PosLabels.Default;
