@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -6,16 +7,21 @@ namespace MicroSent.Models.Analyser
 {
     public class TokenAnalyser
     {
-        private const string HASHTAG = "#";
-        private const string MENTION = "@";
+        private const string Hashtag = "#";
+        private const string Mention = "@";
+
+        private const string HunspellDataPath = @".\data\nhunspell\";
 
         private Dictionary<string, string> abbreviations = new Dictionary<string, string>();
+        private NHunspell.Hunspell hunspell;
 
         public TokenAnalyser()
         {
             abbreviations.Add("r", "are");
             abbreviations.Add("u", "you");
             abbreviations.Add("y", "why"); // need papers for this
+
+            hunspell = new NHunspell.Hunspell($"{HunspellDataPath}en_us.aff", $"{HunspellDataPath}en_us.dic");
         }
 
         public void analyseTokenType(ref Token token)
@@ -57,7 +63,7 @@ namespace MicroSent.Models.Analyser
         #region tokentype
         private bool checkForHashtag(ref Token token)
         {
-            if (token.textBeforeSplittingIntoSubTokens.StartsWith(HASHTAG))
+            if (token.textBeforeSplittingIntoSubTokens.StartsWith(Hashtag))
             {
                 token.textBeforeSplittingIntoSubTokens = token.textBeforeSplittingIntoSubTokens.Remove(0, 1);
                 //analyseHashtag
@@ -68,7 +74,7 @@ namespace MicroSent.Models.Analyser
 
         private bool checkForMention(ref Token token)
         {
-            if (token.textBeforeSplittingIntoSubTokens.StartsWith(MENTION))
+            if (token.textBeforeSplittingIntoSubTokens.StartsWith(Mention))
             {
                 token.textBeforeSplittingIntoSubTokens = token.textBeforeSplittingIntoSubTokens.Remove(0, 1);
                 return token.isMention = true;
@@ -207,9 +213,95 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        private void splitHashtag(string hashtag)
+        public void splitHashtag(ref Token token)
         {
+            string hashtag = token.textBeforeSplittingIntoSubTokens;
+
+            List<string> forwardParsingList = new List<string>();
+            List<string> backwardParsingList = new List<string>();
+            bool lastForwardProcessedWordMakesSense = true;
+            bool lastBackwardProcessedWordMakesSense = true;
             //TODO
+            string restToAnalyse = hashtag;
+            string currentWord = hashtag;
+
+            Console.WriteLine("Forward parsing:");
+            while(restToAnalyse.Length > 0)
+            {
+                if(currentWord.Length == 0)
+                {
+                    Console.WriteLine($"Rest: {restToAnalyse}");
+                    lastForwardProcessedWordMakesSense = false;
+                    break;
+                }
+
+                if (hunspell.Spell(currentWord))
+                {
+                    Console.WriteLine($"{currentWord} is part of {hashtag}");
+                    forwardParsingList.Add(currentWord);
+                    restToAnalyse = restToAnalyse.Substring(currentWord.Length);
+                    currentWord = restToAnalyse;
+                }
+                else
+                {
+                    currentWord = currentWord.Substring(0, currentWord.Length - 2);
+                }
+            }
+
+            restToAnalyse = hashtag;
+            currentWord = hashtag;
+            //notverynice
+            Console.WriteLine("Backward parsing:");
+            while (restToAnalyse.Length > 0)
+            {
+                if (currentWord.Length == 0)
+                {
+                    Console.WriteLine($"Rest: {restToAnalyse}");
+                    lastBackwardProcessedWordMakesSense = false;
+                    break;
+                }
+
+                if (hunspell.Spell(currentWord))
+                {
+                    Console.WriteLine($"{currentWord} is part of {hashtag}");
+                    backwardParsingList.Insert(0, currentWord);
+                    restToAnalyse = restToAnalyse.Substring(0, restToAnalyse.Length - currentWord.Length);
+                    currentWord = restToAnalyse;
+                }
+                else
+                {
+                    currentWord = currentWord.Substring(1);
+                }
+            }
+
+            if (lastForwardProcessedWordMakesSense)
+            {
+                if (lastBackwardProcessedWordMakesSense)
+                {
+                    //both succeded
+                    token.subTokens.AddRange(generateSubTokens(backwardParsingList));
+                }
+                else
+                {
+                    //forward processing succeded
+                    token.subTokens.AddRange(generateSubTokens(forwardParsingList));
+                }
+            }
+            else
+            {
+                if (lastBackwardProcessedWordMakesSense)
+                {
+                    token.subTokens.AddRange(generateSubTokens(backwardParsingList));
+                }
+                else
+                {
+                    //both failed
+                    //longer list means more correct tokens
+                    List<string> longerList = forwardParsingList.Count > backwardParsingList.Count ? forwardParsingList : backwardParsingList;
+
+                    token.subTokens.AddRange(generateSubTokens(longerList));
+                }
+            }
         }
 
         public void splitToken(ref Token token)

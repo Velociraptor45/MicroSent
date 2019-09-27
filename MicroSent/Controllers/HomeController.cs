@@ -25,12 +25,12 @@ namespace MicroSent.Controllers
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
+            posTagger = new PosTagger();
             twitterCrawler = new TwitterCrawler(config);
             tokenizer = new Tokenizer();
             tokenAnalyser = new TokenAnalyser();
             tweetAnalyser = new TweetAnalyser();
             wordRater = new WordRater();
-            posTagger = new PosTagger();
             sentimentCalculator = new SentimentCalculator();
         }
 
