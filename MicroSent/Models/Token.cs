@@ -1,19 +1,18 @@
 ﻿using MicroSent.Models.Constants;
-using MicroSent.Models.Enums;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MicroSent.Models
 {
     public struct Token
     {
-        public string text;
+        public string textBeforeSplittingIntoSubTokens;
         public string originalText;
         public int indexInTweet;
         public int indexInSentence;
         public int sentenceIndex;
 
-        public List<Token> hashtagSubTokens;
-        public PosLabels posLabel;
+        public List<SubToken> subTokens;
 
         //token type
         public bool isMention;
@@ -30,7 +29,6 @@ namespace MicroSent.Models
         public float emoticonRating;
         public float ironyRating;
         public float negationRating;
-        public float wordRating;
 
         //token format
         public bool isAllUppercase;
@@ -38,14 +36,13 @@ namespace MicroSent.Models
 
         public Token(string text, int position)
         {
-            this.text = text;
+            this.textBeforeSplittingIntoSubTokens = text;
             originalText = text;
             this.indexInTweet = position;
             this.indexInSentence = -1;
             this.sentenceIndex = -1;
 
-            hashtagSubTokens = new List<Token>();
-            posLabel = PosLabels.Default;
+            subTokens = new List<SubToken>();
 
             isMention = false;
             isLink = false;
@@ -60,7 +57,6 @@ namespace MicroSent.Models
             emoticonRating = RatingConstants.NEUTRAL;
             ironyRating = RatingConstants.NEUTRAL;
             negationRating = RatingConstants.NEUTRAL;
-            wordRating = RatingConstants.WORD_NEUTRAL;
 
             isAllUppercase = false;
             hasRepeatedLetters = false;

@@ -13,7 +13,7 @@ namespace MicroSent.Models.Analyser
 
         public void splitIntoTokens(ref Tweet tweet)
         {
-            // " | link | smiley | emoticons | punctuation | sentence structure ()- | wörter
+            // link | smiley | emoticons | punctuation | wörter | sentence structure ()'-"
             Regex regex = new Regex(@"(https:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+|((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|: [\)\(])|\\U[a-f0-9]{4,8}|([\?!]+|\.+|,|:)|(@|#[a-z]|\\)?(\w([''-]\w)?)+|(\(|\)|-|""|'')");
             tweet.fullText = tweet.fullText.Replace('\n', ' ');
 

@@ -15,34 +15,37 @@ namespace MicroSent.Models.Analyser
         {
             foreach(Token token in tweet.allTokens)
             {
-                float tokenRating = token.negationRating * token.wordRating;
-                if (!tweet.isDefinitelySarcastic)
+                foreach (SubToken subToken in token.subTokens)
                 {
-                    tokenRating *= token.ironyRating;
-                }
-                else
-                {
-                    tokenRating *= -1;
-                }
-
-                if(token.hasRepeatedLetters)
-                {
-                    tokenRating *= 1.4f; //TODO
-                }
-                if(token.isAllUppercase)
-                {
-                    tokenRating *= 1.4f; //TODO
-                }
-
-                if(tokenRating != 0)
-                {
-                    if(tokenRating > 0)
+                    float subTokenRating = token.negationRating * subToken.wordRating;
+                    if (!tweet.isDefinitelySarcastic)
                     {
-                        tweet.positiveRating += tokenRating;
+                        subTokenRating *= token.ironyRating;
                     }
                     else
                     {
-                        tweet.negativeRating += tokenRating;
+                        subTokenRating *= -1;
+                    }
+
+                    if (token.hasRepeatedLetters)
+                    {
+                        subTokenRating *= 1.4f; //TODO
+                    }
+                    if (token.isAllUppercase)
+                    {
+                        subTokenRating *= 1.4f; //TODO
+                    }
+
+                    if (subTokenRating != 0)
+                    {
+                        if (subTokenRating > 0)
+                        {
+                            tweet.positiveRating += subTokenRating;
+                        }
+                        else
+                        {
+                            tweet.negativeRating += subTokenRating;
+                        }
                     }
                 }
             }
