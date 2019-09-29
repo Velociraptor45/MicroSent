@@ -187,22 +187,21 @@ namespace MicroSent.Models.Analyser
             //TODO: redo this
         }
 
+        #region repeated Letters
         public void removeRepeatedLetters(ref Token token)
         {
             for (int j = 0; j < token.subTokens.Count; j++)
             {
                 SubToken subToken = token.subTokens[j];
-                for (int i = 2; i < subToken.text.Length; i++)
-                {
-                    char currentLetter = subToken.text[i];
-                    char lastLetter = subToken.text[i - 1];
-                    char secondLastLetter = subToken.text[i - 2];
+                cutOutRepeatedLetters(ref token, ref subToken, out List<int> firstRepeatedLetterIndexes);
 
-                    if (currentLetter == lastLetter && currentLetter == secondLastLetter)
+                if (!hunspell.Spell(subToken.text))
+                {
+                    string text = subToken.text;
+                    string analysedWord = findEnglishWordFromRepeatedLetters(text, firstRepeatedLetterIndexes);
+                    if(analysedWord != null)
                     {
-                        token.hasRepeatedLetters = true;
-                        subToken.text = subToken.text.Remove(i, 1);
-                        i--;
+                        subToken.text = analysedWord;
                     }
                 }
 
@@ -212,6 +211,66 @@ namespace MicroSent.Models.Analyser
                 }
             }
         }
+
+        private void cutOutRepeatedLetters(ref Token token, ref SubToken subToken, out List<int> firstRepeatedLetterIndexes)
+        {
+            firstRepeatedLetterIndexes = new List<int>();
+            int sectionStartIndex = -1;
+
+            for (int i = 2; i < subToken.text.Length; i++)
+            {
+                char currentLetter = subToken.text[i];
+                char lastLetter = subToken.text[i - 1];
+                char secondLastLetter = subToken.text[i - 2];
+
+                if (currentLetter == lastLetter && currentLetter == secondLastLetter)
+                {
+                    sectionStartIndex = i - 2;
+                    token.hasRepeatedLetters = true;
+                    subToken.text = subToken.text.Remove(i, 1);
+                    i--;
+                }
+                else if (sectionStartIndex != -1)
+                {
+                    firstRepeatedLetterIndexes.Add(sectionStartIndex);
+                    sectionStartIndex = -1;
+                }
+            }
+
+            // if repeated letters are at the end of the word,
+            // the sectionStartIndex must be saved manually
+            // because the for-loop was exited already
+            if (sectionStartIndex != -1)
+            {
+                firstRepeatedLetterIndexes.Add(sectionStartIndex);
+            }
+        }
+
+        private string findEnglishWordFromRepeatedLetters(string originalText, List<int> indexesToCut)
+        {
+            if(indexesToCut.Count == 0)
+            {
+                if (hunspell.Spell(originalText))
+                {
+                    return originalText;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            int lastListIndex = indexesToCut.Count - 1;
+            List<int> updatedIndexesToCut = new List<int>(indexesToCut);
+            updatedIndexesToCut.RemoveAt(lastListIndex);
+            string removedLetterText = originalText.Remove(indexesToCut[lastListIndex], 1);
+
+            string valueRemovedLetter = findEnglishWordFromRepeatedLetters(removedLetterText, updatedIndexesToCut);
+            string valueNotRemovedLetter = findEnglishWordFromRepeatedLetters(originalText, updatedIndexesToCut);
+
+            return valueRemovedLetter ?? valueNotRemovedLetter;
+        }
+        #endregion
 
         public void splitToken(ref Token token)
         {
