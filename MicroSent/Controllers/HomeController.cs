@@ -37,21 +37,23 @@ namespace MicroSent.Controllers
         public async Task<IActionResult> Index()
         {
             List<Tweet> allTweets = new List<Tweet>();
-            List<Status> quotedRetweetStatuses = new List<Status>();
-            List <Status> linkStatuses = new List<Status>();
-            quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
-            //linkStatuses = await twitterCrawler.getLinks("AlanZucconi");
-            //List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
-            //quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
+            //allTweets = await getTweetsAsync();
 
-            foreach (Status status in quotedRetweetStatuses)
+            Tweet tw = new Tweet("@Men is so under control. He's new #new #cool #notveryinteresting", "aa", 0);
+            allTweets.Add(tw);
+
+            for (int tweetIndex = 0; tweetIndex < allTweets.Count; tweetIndex++)
             {
-                Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.StatusID);
-                if (status.FullText.StartsWith("Please @msexcel, don't be jealous."))
+                Tweet tweet = allTweets[tweetIndex];
+                tokenizer.splitIntoTokens(ref tweet);
+
+                //////////////////////////////////////////////////////////////
+                /// TEST AREA
+                if (tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
                 {
                     int a = 0;
                 }
-                tokenizer.splitIntoTokens(ref tweet);
+                //////////////////////////////////////////////////////////////
 
                 for (int i = 0; i < tweet.allTokens.Count; i++)
                 {
@@ -82,12 +84,32 @@ namespace MicroSent.Controllers
                 tweetAnalyser.applyParseTreeDependentNegation(ref tweet);
 
                 sentimentCalculator.calculateFinalSentiment(ref tweet);
-                allTweets.Add(tweet);
+
+                allTweets[tweetIndex] = tweet;
             }
 
             printOnConsole(allTweets);
 
             return View();
+        }
+
+        private async Task<List<Tweet>> getTweetsAsync()
+        {
+            List<Tweet> allTweets = new List<Tweet>();
+            List<Status> quotedRetweetStatuses = new List<Status>();
+            List<Status> linkStatuses = new List<Status>();
+            quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
+            //linkStatuses = await twitterCrawler.getLinks("AlanZucconi");
+            //List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
+            //quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
+
+            foreach(Status status in quotedRetweetStatuses)
+            {
+                Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.StatusID);
+                allTweets.Add(tweet);
+            }
+
+            return allTweets;
         }
 
         private void printOnConsole(List<Tweet> allTweets)

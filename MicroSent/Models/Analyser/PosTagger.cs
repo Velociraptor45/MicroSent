@@ -25,16 +25,23 @@ namespace MicroSent.Models.Analyser
             int sentenceTokensAmount = 0;
             for (int i = 0; i < tweet.allTokens.Count; i++)
             {
-                Token token = tweet.allTokens[i];
-                token.sentenceIndex = sentenceIndex;
-                token.indexInSentence = sentenceTokensAmount;
-                tweet.allTokens[i] = token;
-
                 Token currentToken = tweet.allTokens[i];
+                if (sentenceIndex == 0 && currentToken.isLink)
+                {
+                    continue;
+                }
+                if(currentToken.indexInTweet >= tweet.firstEndHashtagIndex)
+                {
+                    break;
+                }
+
+                currentToken.sentenceIndex = sentenceIndex;
+                currentToken.indexInSentence = sentenceTokensAmount;
+                tweet.allTokens[i] = currentToken;
+
                 sentenceTokensAmount++;
                 if (currentToken.isPunctuation && currentToken.textBeforeSplittingIntoSubTokens != ",")
                 {
-
                     sentenceTokensAmount = 0;
                     sentenceIndex++;
                 }
