@@ -25,12 +25,12 @@ namespace MicroSent.Controllers
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
+            posTagger = new PosTagger();
             twitterCrawler = new TwitterCrawler(config);
             tokenizer = new Tokenizer();
             tokenAnalyser = new TokenAnalyser();
             tweetAnalyser = new TweetAnalyser();
             wordRater = new WordRater();
-            posTagger = new PosTagger();
             sentimentCalculator = new SentimentCalculator();
         }
 
@@ -58,12 +58,18 @@ namespace MicroSent.Controllers
                     Token token = tweet.allTokens[i];
                     //single Token analysis
                     tokenAnalyser.analyseTokenType(ref token);
+                    tokenAnalyser.splitToken(ref token);
                     tokenAnalyser.checkForUppercase(ref token);
                     tokenAnalyser.replaceAbbreviations(ref token);
                     if (!token.isHashtag && !token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
                         tokenAnalyser.removeRepeatedLetters(ref token);
-                        token.wordRating = wordRater.getWordRating(token);
+                        for (int j = 0; j < token.subTokens.Count; j++)
+                        {
+                            SubToken subToken = token.subTokens[j];
+                            subToken.wordRating = wordRater.getWordRating(token.subTokens[j]);
+                            token.subTokens[j] = subToken;
+                        }
                     }
 
                     tweet.allTokens[i] = token;
@@ -92,17 +98,23 @@ namespace MicroSent.Controllers
                 Console.WriteLine($"https://twitter.com/{tweet.userScreenName}/status/{tweet.userID}");
                 Console.WriteLine(tweet.fullText);
                 Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
-                var tokensPositiv = tweet.allTokens.Where(t => t.wordRating * t.negationRating > 0);
-                foreach (Token token in tokensPositiv)
+                //var tokensPositiv = tweet.allTokens.Where(t => t.wordRating * t.negationRating > 0);
+                foreach (Token token in tweet.allTokens)
                 {
-                    Console.Write(token.text + ", ");
+                    foreach (SubToken subToken in token.subTokens.Where(st => st.wordRating * token.negationRating > 0))
+                    {
+                        Console.Write(token.textBeforeSplittingIntoSubTokens + ", ");
+                    }
                 }
                 Console.WriteLine("");
                 Console.WriteLine($"Negative Rating: {tweet.negativeRating}");
-                var tokensNegative = tweet.allTokens.Where(t => t.wordRating * t.negationRating < 0);
-                foreach (Token token in tokensNegative)
+                //var tokensNegative = tweet.allTokens.Where(t => t.wordRating * t.negationRating < 0);
+                foreach (Token token in tweet.allTokens)
                 {
-                    Console.Write(token.text + ", ");
+                    foreach (SubToken subToken in token.subTokens.Where(st => st.wordRating * token.negationRating < 0))
+                    {
+                        Console.Write(token.textBeforeSplittingIntoSubTokens + ", ");
+                    }
                 }
                 Console.WriteLine("");
             }

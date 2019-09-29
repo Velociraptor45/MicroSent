@@ -32,7 +32,7 @@ namespace MicroSent.Models.Analyser
 
                 Token currentToken = tweet.allTokens[i];
                 sentenceTokensAmount++;
-                if (currentToken.isPunctuation && currentToken.text != ",")
+                if (currentToken.isPunctuation && currentToken.textBeforeSplittingIntoSubTokens != ",")
                 {
 
                     sentenceTokensAmount = 0;
@@ -52,7 +52,7 @@ namespace MicroSent.Models.Analyser
             int sentenceIndex = 0;
             List<Token> sentenceTokens = new List<Token>();
 
-            for (int tokenIndex = 0; tokenIndex < tweet.allTokens.Count; tokenIndex++) //each (Token token in tweet.allTokens)
+            for (int tokenIndex = 0; tokenIndex < tweet.allTokens.Count; tokenIndex++)
             {
                 Token token = tweet.allTokens[tokenIndex];
                 sentenceTokens.Add(token);
@@ -60,24 +60,49 @@ namespace MicroSent.Models.Analyser
                 if (tokenIndex + 1 < tweet.allTokens.Count
                     && tweet.allTokens[tokenIndex + 1].sentenceIndex != sentenceIndex)
                 {
-                    var tags = nlpPosTagger.Tag(sentenceTokens.Select(t => t.text).ToArray());
-                    var parse = nlpParser.DoParse(sentenceTokens.Select(t => t.text).ToArray());
-                    tweet.parseTrees.Add(parse.GetChildren()[0]);
+                    fillWithAllSubTokensAsText(out List<string> allSentenceSubTokenAsText, sentenceTokens);
+                    
+                    var tags = nlpPosTagger.Tag(allSentenceSubTokenAsText.ToArray());
+                    var parseTree = nlpParser.DoParse(allSentenceSubTokenAsText.ToArray());
+                    tweet.parseTrees.Add(parseTree.GetChildren()[0]);
 
-                    for (int tagIndex = 0; tagIndex < tags.Length; tagIndex++)
+                    int currentTagIndex = 0;
+                    for(int i = 0; i < sentenceTokens.Count; i++)
                     {
-                        //translate the tag into PosLabels enum
-                        int tokenPosition = sentenceTokens[tagIndex].indexInTweet;
-                        if (Enum.TryParse(tags[tagIndex], out PosLabels label))
+                        Token sentenceToken = sentenceTokens[i];
+                        for (int j = 0; j < sentenceTokens[i].subTokens.Count; j++)
                         {
-                            Token t = tweet.allTokens[tokenPosition];
-                            t.posLabel = label;
-                            tweet.allTokens[tokenPosition] = t;
+                            SubToken subToken = sentenceToken.subTokens[j];
+                            if (Enum.TryParse(tags[currentTagIndex], out PosLabels label))
+                            {
+                                subToken.posLabel = label;
+                                sentenceToken.subTokens[j] = subToken;
+                            }
                         }
+                        sentenceTokens[i] = sentenceToken;
                     }
+
+                    saveSentenceTokensInTweet(ref tweet, sentenceTokens);
                     sentenceTokens.Clear();
                     sentenceIndex++;
                 }
+            }
+        }
+
+        private void saveSentenceTokensInTweet(ref Tweet tweet, List<Token> sentenceTokens)
+        {
+            foreach (Token sentenceToken in sentenceTokens)
+            {
+                tweet.allTokens[sentenceToken.indexInTweet] = sentenceToken;
+            }
+        }
+
+        private void fillWithAllSubTokensAsText(out List<string> allSentenceSubTokenAsText, List<Token> sentenceTokens)
+        {
+            allSentenceSubTokenAsText = new List<string>();
+            foreach (Token sentenceToken in sentenceTokens)
+            {
+                allSentenceSubTokenAsText.AddRange(sentenceToken.subTokens.Select(st => st.text));
             }
         }
     }

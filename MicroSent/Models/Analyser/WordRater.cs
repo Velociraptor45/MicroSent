@@ -39,13 +39,13 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        public float getWordRating(Token token)
+        public float getWordRating(SubToken subToken)
         {
-            if (positiveWords.Contains(token.text))
+            if (positiveWords.Contains(subToken.text))
             {
                 return RatingConstants.POSITIVE;
             }
-            else if (negativeWords.Contains(token.text))
+            else if (negativeWords.Contains(subToken.text))
             {
                 return RatingConstants.NEGATIVE;
             }

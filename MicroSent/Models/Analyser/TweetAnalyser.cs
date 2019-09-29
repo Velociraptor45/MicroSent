@@ -53,7 +53,7 @@ namespace MicroSent.Models.Analyser
 
             for(int i = tweet.firstEndHashtagIndex; i < tweet.allTokens.Count; i++)
             {
-                if(tweet.allTokens[i].text.ToLower() == IronyString)
+                if(tweet.allTokens[i].textBeforeSplittingIntoSubTokens.ToLower() == IronyString)
                 {
                     return true;
                 }
@@ -65,12 +65,11 @@ namespace MicroSent.Models.Analyser
         private List<int> getNegationWordIndexes(ref Tweet tweet, int sentenceIndex = -1)
         {
             List<int> tokenIndexes = new List<int>();
-
-            Regex negationWord = new Regex(@"\b((can)?not|no(\b|n))|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
+            Regex negationWord = new Regex(@"\b((can)?not|\bno(\b|n-))|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
             IEnumerable<Token> allTokens = sentenceIndex >= 0 ? tweet.allTokens.Where(t => t.sentenceIndex == sentenceIndex) : tweet.allTokens;
             foreach (Token token in allTokens)
             {
-                MatchCollection matches = negationWord.Matches(token.text);
+                MatchCollection matches = negationWord.Matches(token.subTokens.Last().text);
                 if(matches.Count > 0)
                 {
                     if (sentenceIndex >= 0)
