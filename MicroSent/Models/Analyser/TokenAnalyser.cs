@@ -213,45 +213,117 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        public void splitHashtag(ref Token token)
+        public void splitToken(ref Token token)
         {
-            string hashtag = token.textBeforeSplittingIntoSubTokens;
-
-            List<string> forwardParsingList = new List<string>();
-            List<string> backwardParsingList = new List<string>();
-            bool lastForwardProcessedWordMakesSense = true;
-            bool lastBackwardProcessedWordMakesSense = true;
-            //TODO
-            string restToAnalyse = hashtag;
-            string currentWord = hashtag;
-
-            Console.WriteLine("Forward parsing:");
-            while(restToAnalyse.Length > 0)
+            if (token.isHashtag)
             {
-                if(currentWord.Length == 0)
-                {
-                    Console.WriteLine($"Rest: {restToAnalyse}");
-                    lastForwardProcessedWordMakesSense = false;
-                    break;
-                }
+                splitHashtag(ref token);
+                return;
+            }
 
-                if (hunspell.Spell(currentWord))
+            splitWord(ref token);
+        }
+
+        private void splitWord(ref Token token)
+        {
+            List<string> singleWords = token.textBeforeSplittingIntoSubTokens.Split(" ").ToList();
+            for (int i = 0; i < singleWords.Count; i++)
+            {
+                string word = singleWords[i];
+
+                Tuple<string, string> negationWordParts = getSplitIfNegationWord(word);
+
+                if(negationWordParts != null)
                 {
-                    Console.WriteLine($"{currentWord} is part of {hashtag}");
-                    forwardParsingList.Add(currentWord);
-                    restToAnalyse = restToAnalyse.Substring(currentWord.Length);
-                    currentWord = restToAnalyse;
+                    singleWords[i] = negationWordParts.Item1;
+                    singleWords.Insert(i + 1, negationWordParts.Item2);
+                }
+            }
+            token.subTokens.AddRange(generateSubTokens(singleWords));
+        }
+
+        private Tuple<string, string> getSplitIfNegationWord(string word)
+        {
+            Regex negationWord = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
+            Match match = negationWord.Match(word);
+            if (match.Success)
+            {
+                string[] parts = new string[2];
+                Tuple<string, string> splitWord;
+                if (word.EndsWith("nt"))
+                {
+                    splitWord = new Tuple<string, string>(word.Substring(0, word.Length - 2), word.Substring(word.Length - 2));
                 }
                 else
                 {
-                    currentWord = currentWord.Substring(0, currentWord.Length - 2);
+                    splitWord = new Tuple<string, string>(word.Substring(0, word.Length - 3), word.Substring(word.Length - 3));
                 }
+                return splitWord;
             }
+            return null;
+        }
 
-            restToAnalyse = hashtag;
-            currentWord = hashtag;
+        #region hashtag parsing
+        private void splitHashtag(ref Token token)
+        {
+            string hashtag = token.textBeforeSplittingIntoSubTokens;
+
+
+            Console.WriteLine("Forward parsing:");
+            Tuple<bool, List<string>> forwardTuple = parseHashtagForward(hashtag);
+
             //notverynice
             Console.WriteLine("Backward parsing:");
+            Tuple<bool, List<string>> backwardTuple = parseHashtagBackwards(hashtag);
+
+            setBetterSubTokenList(ref token, forwardTuple, backwardTuple);
+        }
+
+        private void setBetterSubTokenList(ref Token token, Tuple<bool, List<string>> forwardTuple, Tuple<bool, List<string>> backwardTuple)
+        {
+            List<string> forwardParsingList = forwardTuple.Item2;
+            List<string> backwardParsingList = backwardTuple.Item2;
+            bool lastForwardProcessedWordMakesSense = forwardTuple.Item1;
+            bool lastBackwardProcessedWordMakesSense = backwardTuple.Item1;
+
+            if (lastForwardProcessedWordMakesSense)
+            {
+                if (lastBackwardProcessedWordMakesSense)
+                {
+                    //both succeded
+                    token.subTokens.AddRange(generateSubTokens(backwardParsingList));
+                }
+                else
+                {
+                    //forward processing succeded
+                    token.subTokens.AddRange(generateSubTokens(forwardParsingList));
+                }
+            }
+            else
+            {
+                if (lastBackwardProcessedWordMakesSense)
+                {
+                    //backward processing succeded
+                    token.subTokens.AddRange(generateSubTokens(backwardParsingList));
+                }
+                else
+                {
+                    //both failed
+                    //longer list means more correct tokens
+                    List<string> longerList = forwardParsingList.Count > backwardParsingList.Count ? forwardParsingList : backwardParsingList;
+
+                    token.subTokens.AddRange(generateSubTokens(longerList));
+                }
+            }
+        }
+
+        private Tuple<bool, List<string>> parseHashtagBackwards(string hashtag)
+        {
+            string restToAnalyse = hashtag;
+            string currentWord = hashtag;
+            List<string> backwardParsingList = new List<string>();
+            bool lastBackwardProcessedWordMakesSense = true;
+
             while (restToAnalyse.Length > 0)
             {
                 if (currentWord.Length == 0)
@@ -273,65 +345,40 @@ namespace MicroSent.Models.Analyser
                     currentWord = currentWord.Substring(1);
                 }
             }
-
-            if (lastForwardProcessedWordMakesSense)
-            {
-                if (lastBackwardProcessedWordMakesSense)
-                {
-                    //both succeded
-                    token.subTokens.AddRange(generateSubTokens(backwardParsingList));
-                }
-                else
-                {
-                    //forward processing succeded
-                    token.subTokens.AddRange(generateSubTokens(forwardParsingList));
-                }
-            }
-            else
-            {
-                if (lastBackwardProcessedWordMakesSense)
-                {
-                    token.subTokens.AddRange(generateSubTokens(backwardParsingList));
-                }
-                else
-                {
-                    //both failed
-                    //longer list means more correct tokens
-                    List<string> longerList = forwardParsingList.Count > backwardParsingList.Count ? forwardParsingList : backwardParsingList;
-
-                    token.subTokens.AddRange(generateSubTokens(longerList));
-                }
-            }
+            return new Tuple<bool, List<string>>(lastBackwardProcessedWordMakesSense, backwardParsingList);
         }
 
-        public void splitToken(ref Token token)
+        private Tuple<bool, List<string>> parseHashtagForward(string hashtag)
         {
-            List<string> singleWords = token.textBeforeSplittingIntoSubTokens.Split(" ").ToList();
-            for(int i = 0; i < singleWords.Count; i++)
+            string restToAnalyse = hashtag;
+            string currentWord = hashtag;
+            List<string> forwardParsingList = new List<string>();
+            bool lastForwardProcessedWordMakesSense = true;
+
+            while (restToAnalyse.Length > 0)
             {
-                string word = singleWords[i];
-                //can't
-                Regex negationWord = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
-                Match match = negationWord.Match(word);
-                if (match.Success)
+                if (currentWord.Length == 0)
                 {
-                    string[] parts = new string[2];
-                    if (word.EndsWith("nt"))
-                    {
-                        parts[0] = word.Substring(0, word.Length - 2);
-                        parts[1] = word.Substring(word.Length - 2);
-                    }
-                    else
-                    {
-                        parts[0] = word.Substring(0, word.Length - 3);
-                        parts[1] = word.Substring(word.Length - 3);
-                    }
-                    singleWords[i] = parts[0];
-                    singleWords.Insert(i + 1, parts[1]);
+                    Console.WriteLine($"Rest: {restToAnalyse}");
+                    lastForwardProcessedWordMakesSense = false;
+                    break;
+                }
+
+                if (hunspell.Spell(currentWord))
+                {
+                    Console.WriteLine($"{currentWord} is part of {hashtag}");
+                    forwardParsingList.Add(currentWord);
+                    restToAnalyse = restToAnalyse.Substring(currentWord.Length);
+                    currentWord = restToAnalyse;
+                }
+                else
+                {
+                    currentWord = currentWord.Substring(0, currentWord.Length - 2);
                 }
             }
-            token.subTokens.AddRange(generateSubTokens(singleWords));
+            return new Tuple<bool, List<string>>(lastForwardProcessedWordMakesSense, forwardParsingList);
         }
+        #endregion
 
         private List<SubToken> generateSubTokens(List<string> subTokenWords)
         {
