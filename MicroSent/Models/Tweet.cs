@@ -18,6 +18,7 @@ namespace MicroSent.Models
 
         public int firstEndHashtagIndex;
         public int sentenceCount;
+        public Dictionary<int, int> lastTokenIndexInSentence;
 
         public bool isDefinitelySarcastic;
         public float positiveRating;
@@ -34,6 +35,7 @@ namespace MicroSent.Models
 
             firstEndHashtagIndex = -1;
             sentenceCount = 0;
+            lastTokenIndexInSentence = new Dictionary<int, int>();
 
             isDefinitelySarcastic = false;
             positiveRating = 0f;

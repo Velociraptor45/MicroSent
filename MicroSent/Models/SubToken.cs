@@ -12,6 +12,8 @@ namespace MicroSent.Models
         public string originalText;
         public PosLabels posLabel;
 
+        public float totalRating;
+
         public int positionInToken;
 
         public float wordRating;
@@ -21,6 +23,8 @@ namespace MicroSent.Models
             this.text = text;
             this.originalText = text;
             posLabel = PosLabels.Default;
+
+            totalRating = 0f;
 
             this.positionInToken = positionInToken;
 

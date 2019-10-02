@@ -39,7 +39,7 @@ namespace MicroSent.Controllers
             List<Tweet> allTweets = new List<Tweet>();
             //allTweets = await getTweetsAsync();
 
-            Tweet tw = new Tweet("@Men is so under control. He's new #new #cool #notveryinteresting", "aa", 0);
+            Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
             allTweets.Add(tw);
 
             for (int tweetIndex = 0; tweetIndex < allTweets.Count; tweetIndex++)
@@ -63,7 +63,7 @@ namespace MicroSent.Controllers
                     tokenAnalyser.splitToken(ref token);
                     tokenAnalyser.checkForUppercase(ref token);
                     tokenAnalyser.replaceAbbreviations(ref token);
-                    if (!token.isHashtag && !token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
+                    if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
                         tokenAnalyser.removeRepeatedLetters(ref token);
                         for (int j = 0; j < token.subTokens.Count; j++)
@@ -76,12 +76,14 @@ namespace MicroSent.Controllers
 
                     tweet.allTokens[i] = token;
                 }
+
                 //single tweet analysis
                 tweetAnalyser.analyseFirstEndHashtagPosition(ref tweet);
                 //tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(ref tweet);
                 posTagger.parseTweet(ref tweet);
-                tweetAnalyser.applyParseTreeDependentNegation(ref tweet);
+                tweetAnalyser.applyParseTreeDependentNegation(ref tweet, true);
+                tweetAnalyser.applyEndHashtagNegation(ref tweet);
 
                 sentimentCalculator.calculateFinalSentiment(ref tweet);
 
@@ -123,9 +125,9 @@ namespace MicroSent.Controllers
                 //var tokensPositiv = tweet.allTokens.Where(t => t.wordRating * t.negationRating > 0);
                 foreach (Token token in tweet.allTokens)
                 {
-                    foreach (SubToken subToken in token.subTokens.Where(st => st.wordRating * token.negationRating > 0))
+                    foreach (SubToken subToken in token.subTokens.Where(st => st.totalRating > 0))
                     {
-                        Console.Write(token.textBeforeSplittingIntoSubTokens + ", ");
+                        Console.Write(token.textBeforeSplittingIntoSubTokens + $"({subToken.totalRating}), ");
                     }
                 }
                 Console.WriteLine("");
@@ -133,9 +135,9 @@ namespace MicroSent.Controllers
                 //var tokensNegative = tweet.allTokens.Where(t => t.wordRating * t.negationRating < 0);
                 foreach (Token token in tweet.allTokens)
                 {
-                    foreach (SubToken subToken in token.subTokens.Where(st => st.wordRating * token.negationRating < 0))
+                    foreach (SubToken subToken in token.subTokens.Where(st => st.totalRating < 0))
                     {
-                        Console.Write(token.textBeforeSplittingIntoSubTokens + ", ");
+                        Console.Write(token.textBeforeSplittingIntoSubTokens + $"({subToken.totalRating}), ");
                     }
                 }
                 Console.WriteLine("");

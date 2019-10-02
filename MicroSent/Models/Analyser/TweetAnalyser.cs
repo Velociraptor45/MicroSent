@@ -123,10 +123,40 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        public void applyParseTreeDependentNegation(ref Tweet tweet)
+        public void applyEndHashtagNegation(ref Tweet tweet)
+        {
+            if (tweet.firstEndHashtagIndex == -1)
+                return;
+
+            Regex negationWord = new Regex(@"\b(not|\bnon?\b)|\bnever\b|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)nt\b");
+            for (int i = tweet.firstEndHashtagIndex; i < tweet.allTokens.Count; i++)
+            {
+                Token token = tweet.allTokens[i];
+                if (token.isHashtag)
+                {
+                    foreach (SubToken subToken in token.subTokens)
+                    {
+                        Match match = negationWord.Match(subToken.text);
+                        if (match.Success)
+                        {
+                            token.negationRating = -1; //REPLACE
+                            break;
+                        }
+                    }
+                }
+                tweet.allTokens[i] = token;
+            }
+        }
+
+        public void applyParseTreeDependentNegation(ref Tweet tweet, bool negationBeforeQuestionmark)
         {
             for(int sentenceIndex = 0; sentenceIndex < tweet.sentenceCount; sentenceIndex++)
             {
+                if(!negationBeforeQuestionmark && isLastSentenceTokenQuestionmark(tweet, sentenceIndex))
+                {
+                    continue;
+                }
+
                 List<Token> allTokensInSentence = tweet.allTokens.Where(t => t.sentenceIndex == sentenceIndex).ToList();
                 List<int> negationWordSentenceIndexes = getNegationWordIndexes(ref tweet, sentenceIndex);
 
@@ -141,6 +171,18 @@ namespace MicroSent.Models.Analyser
                     }
                 }
             }
+        }
+
+        private bool isLastSentenceTokenQuestionmark(Tweet tweet, int sentenceIndex)
+        {
+            int lastSentenceTokenIndex = tweet.lastTokenIndexInSentence.GetValueOrDefault(sentenceIndex, -1);
+
+            if(lastSentenceTokenIndex != -1)
+            {
+                //TODO: more questionmarks still valid?
+                return tweet.allTokens[lastSentenceTokenIndex].subTokens.Last().text == "?";
+            }
+            return false;
         }
     }
 }
