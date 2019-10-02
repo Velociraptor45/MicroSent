@@ -125,9 +125,9 @@ namespace MicroSent.Controllers
                 //var tokensPositiv = tweet.allTokens.Where(t => t.wordRating * t.negationRating > 0);
                 foreach (Token token in tweet.allTokens)
                 {
-                    foreach (SubToken subToken in token.subTokens.Where(st => st.wordRating * token.negationRating > 0))
+                    foreach (SubToken subToken in token.subTokens.Where(st => st.totalRating > 0))
                     {
-                        Console.Write(token.textBeforeSplittingIntoSubTokens + ", ");
+                        Console.Write(token.textBeforeSplittingIntoSubTokens + $"({subToken.totalRating}), ");
                     }
                 }
                 Console.WriteLine("");
@@ -135,9 +135,9 @@ namespace MicroSent.Controllers
                 //var tokensNegative = tweet.allTokens.Where(t => t.wordRating * t.negationRating < 0);
                 foreach (Token token in tweet.allTokens)
                 {
-                    foreach (SubToken subToken in token.subTokens.Where(st => st.wordRating * token.negationRating < 0))
+                    foreach (SubToken subToken in token.subTokens.Where(st => st.totalRating < 0))
                     {
-                        Console.Write(token.textBeforeSplittingIntoSubTokens + ", ");
+                        Console.Write(token.textBeforeSplittingIntoSubTokens + $"({subToken.totalRating}), ");
                     }
                 }
                 Console.WriteLine("");

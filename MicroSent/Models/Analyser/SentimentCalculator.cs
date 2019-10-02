@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MicroSent.Models.Constants;
+using System;
 using System.Collections.Generic;
 
 namespace MicroSent.Models.Analyser
@@ -13,19 +14,21 @@ namespace MicroSent.Models.Analyser
 
         public void calculateFinalSentiment(ref Tweet tweet)
         {
-            foreach(Token token in tweet.allTokens)
+            for(int i = 0; i < tweet.allTokens.Count; i++)
             {
-                foreach (SubToken subToken in token.subTokens)
+                Token token = tweet.allTokens[i];
+                for(int j = 0; j < token.subTokens.Count; j++)
                 {
+                    SubToken subToken = token.subTokens[j];
                     float subTokenRating = token.negationRating * subToken.wordRating;
-                    if (!tweet.isDefinitelySarcastic)
-                    {
-                        subTokenRating *= token.ironyRating;
-                    }
-                    else
-                    {
-                        subTokenRating *= -1;
-                    }
+                    //if (!tweet.isDefinitelySarcastic)
+                    //{
+                    //    subTokenRating *= token.ironyRating;
+                    //}
+                    //else
+                    //{
+                    //    subTokenRating *= -1;
+                    //}
 
                     if (token.hasRepeatedLetters)
                     {
@@ -36,8 +39,14 @@ namespace MicroSent.Models.Analyser
                         subTokenRating *= 1.4f; //TODO
                     }
 
+                    if(token.indexInTweet >= tweet.firstEndHashtagIndex)
+                    {
+                        subTokenRating *= RatingConstants.END_HASHTAG_MULIPLIER;
+                    }
+
                     if (subTokenRating != 0)
                     {
+                        subToken.totalRating = subTokenRating;
                         if (subTokenRating > 0)
                         {
                             tweet.positiveRating += subTokenRating;
@@ -46,8 +55,11 @@ namespace MicroSent.Models.Analyser
                         {
                             tweet.negativeRating += subTokenRating;
                         }
+
+                        token.subTokens[j] = subToken;
                     }
                 }
+                tweet.allTokens[i] = token;
             }
         }
     }
