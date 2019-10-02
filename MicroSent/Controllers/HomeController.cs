@@ -39,7 +39,7 @@ namespace MicroSent.Controllers
             List<Tweet> allTweets = new List<Tweet>();
             //allTweets = await getTweetsAsync();
 
-            Tweet tw = new Tweet("@Men is so under control. He's new #new #cool #wontbeveryinteresting", "aa", 0);
+            Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
             allTweets.Add(tw);
 
             for (int tweetIndex = 0; tweetIndex < allTweets.Count; tweetIndex++)
@@ -63,7 +63,7 @@ namespace MicroSent.Controllers
                     tokenAnalyser.splitToken(ref token);
                     tokenAnalyser.checkForUppercase(ref token);
                     tokenAnalyser.replaceAbbreviations(ref token);
-                    if (!token.isHashtag && !token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
+                    if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
                         tokenAnalyser.removeRepeatedLetters(ref token);
                         for (int j = 0; j < token.subTokens.Count; j++)
