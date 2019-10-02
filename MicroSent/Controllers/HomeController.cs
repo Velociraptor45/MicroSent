@@ -39,7 +39,7 @@ namespace MicroSent.Controllers
             List<Tweet> allTweets = new List<Tweet>();
             //allTweets = await getTweetsAsync();
 
-            Tweet tw = new Tweet("@Men is so under control. He's new #new #cool #notveryinteresting", "aa", 0);
+            Tweet tw = new Tweet("@Men is so under control. He's new #new #cool #wontbeveryinteresting", "aa", 0);
             allTweets.Add(tw);
 
             for (int tweetIndex = 0; tweetIndex < allTweets.Count; tweetIndex++)
@@ -76,12 +76,14 @@ namespace MicroSent.Controllers
 
                     tweet.allTokens[i] = token;
                 }
+
                 //single tweet analysis
                 tweetAnalyser.analyseFirstEndHashtagPosition(ref tweet);
                 //tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(ref tweet);
                 posTagger.parseTweet(ref tweet);
-                tweetAnalyser.applyParseTreeDependentNegation(ref tweet);
+                tweetAnalyser.applyParseTreeDependentNegation(ref tweet, true);
+                tweetAnalyser.applyEndHashtagNegation(ref tweet);
 
                 sentimentCalculator.calculateFinalSentiment(ref tweet);
 

@@ -42,6 +42,7 @@ namespace MicroSent.Models.Analyser
                 sentenceTokensAmount++;
                 if (currentToken.isPunctuation && currentToken.textBeforeSplittingIntoSubTokens != ",")
                 {
+                    tweet.lastTokenIndexInSentence.Add(sentenceIndex, currentToken.indexInTweet);
                     sentenceTokensAmount = 0;
                     sentenceIndex++;
                 }
