@@ -17,7 +17,6 @@ namespace MicroSent.Models.Analyser
         public Preprocessor()
         {
             loadSlang(SlangFileName);
-            checkString("hey, f u u idiot");
         }
 
         private void loadSlang(string fileName)
@@ -29,26 +28,33 @@ namespace MicroSent.Models.Analyser
                 {
                     if (line != "")
                     {
-                        string[] parts = line.Split("-");
-                        if (parts.Length > 2)
-                        {
-                            int a = 0;
-                        }
+                        string[] parts = line.Split("---");
                         slangs.Add(parts[0], parts[1]);
                     }
                 }
             }
         }
 
-        private void checkString(string s)
+        public string replaceAbbrevations(string tweetText)
         {
             foreach(string key in slangs.Keys)
             {
-                Regex regex = new Regex($@"\b{key}\b");
-                MatchCollection matches = regex.Matches(s);
-                if(matches.Count > 0)
-                    s.Replace(key, slangs[key]);
+                string regexString = key.Replace(".", "\\.")
+                    .Replace("*", "\\*")
+                    .Replace("\\", "\\\\")
+                    .Replace("|", "\\>")
+                    .Replace(">", "\\>")
+                    .Replace("<", "\\<");
+
+                Regex regex = new Regex($@" {regexString} ");
+                MatchCollection matches = regex.Matches(tweetText);
+                if (matches.Count > 0)
+                {
+                    Console.WriteLine($"{tweetText}:: Replaced {key}");
+                    tweetText = tweetText.Replace(key, slangs[key]);
+                }
             }
+            return tweetText;
         }
     }
 }

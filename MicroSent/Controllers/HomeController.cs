@@ -39,14 +39,15 @@ namespace MicroSent.Controllers
         public async Task<IActionResult> Index()
         {
             List<Tweet> allTweets = new List<Tweet>();
-            //allTweets = await getTweetsAsync();
+            allTweets = await getTweetsAsync();
 
-            Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
-            allTweets.Add(tw);
+            //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
+            //allTweets.Add(tw);
 
             for (int tweetIndex = 0; tweetIndex < allTweets.Count; tweetIndex++)
             {
                 Tweet tweet = allTweets[tweetIndex];
+                tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
                 tokenizer.splitIntoTokens(ref tweet);
 
                 //////////////////////////////////////////////////////////////
