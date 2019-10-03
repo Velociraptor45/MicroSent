@@ -49,4 +49,4 @@ class Crawler(scrapy.Spider):
 
     def appendToFile(self, slang, meaning):
         with open("data/slang.txt", "a") as file:
-            file.write(slang + "-" + meaning + "\n")
+            file.write(slang + "---" + meaning + "\n")
