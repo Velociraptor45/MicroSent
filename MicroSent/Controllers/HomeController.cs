@@ -22,6 +22,7 @@ namespace MicroSent.Controllers
         private WordRater wordRater;
         private PosTagger posTagger;
         private SentimentCalculator sentimentCalculator;
+        private Preprocessor preprocessor;
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
@@ -32,6 +33,7 @@ namespace MicroSent.Controllers
             tweetAnalyser = new TweetAnalyser();
             wordRater = new WordRater();
             sentimentCalculator = new SentimentCalculator();
+            preprocessor = new Preprocessor();
         }
 
         public async Task<IActionResult> Index()
