@@ -46,7 +46,7 @@ namespace MicroSent.Models.Analyser
                     .Replace(">", "\\>")
                     .Replace("<", "\\<");
 
-                Regex regex = new Regex($@" {regexString} ");
+                Regex regex = new Regex($@"(^| |""|''){regexString}($| |""|'')", RegexOptions.Multiline);
                 MatchCollection matches = regex.Matches(tweetText);
                 if (matches.Count > 0)
                 {
