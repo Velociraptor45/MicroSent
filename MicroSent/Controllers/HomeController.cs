@@ -69,12 +69,6 @@ namespace MicroSent.Controllers
                     if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
                         tokenAnalyser.removeRepeatedLetters(ref token);
-                        for (int j = 0; j < token.subTokens.Count; j++)
-                        {
-                            SubToken subToken = token.subTokens[j];
-                            subToken.wordRating = wordRater.getWordRating(token.subTokens[j]);
-                            token.subTokens[j] = subToken;
-                        }
                     }
 
                     tweet.allTokens[i] = token;
@@ -87,6 +81,23 @@ namespace MicroSent.Controllers
                 posTagger.parseTweet(ref tweet);
                 tweetAnalyser.applyParseTreeDependentNegation(ref tweet, true);
                 tweetAnalyser.applyEndHashtagNegation(ref tweet);
+
+                for (int i = 0; i < tweet.allTokens.Count; i++)
+                {
+                    Token token = tweet.allTokens[i];
+                    //single Token analysis
+                    if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
+                    {
+                        for (int j = 0; j < token.subTokens.Count; j++)
+                        {
+                            SubToken subToken = token.subTokens[j];
+                            subToken.wordRating = wordRater.getWordRating(token.subTokens[j]);
+                            token.subTokens[j] = subToken;
+                        }
+                    }
+
+                    tweet.allTokens[i] = token;
+                }
 
                 sentimentCalculator.calculateFinalSentiment(ref tweet);
 

@@ -39,7 +39,7 @@ namespace MicroSent.Models.Analyser
                         subTokenRating *= 1.4f; //TODO
                     }
 
-                    if(token.indexInTweet >= tweet.firstEndHashtagIndex)
+                    if(tweet.firstEndHashtagIndex != -1 && token.indexInTweet >= tweet.firstEndHashtagIndex)
                     {
                         subTokenRating *= RatingConstants.END_HASHTAG_MULIPLIER;
                     }
