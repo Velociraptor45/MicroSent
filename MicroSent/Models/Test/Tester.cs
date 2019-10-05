@@ -44,11 +44,7 @@ namespace MicroSent.Models.Test
 
         public void checkTweetRating(List<Tweet> tweets)
         {
-            int correct = 0;
-            int falsePositive = 0;
-            int falseNegative = 0;
-            int falseNeutral = 0;
-            int indecisive = 0;
+            AnalyisContainer analyisContainer = new AnalyisContainer();
 
             foreach (Tweet tweet in tweets)
             {
@@ -56,20 +52,61 @@ namespace MicroSent.Models.Test
                 string expectedRating = getExpectedRating(tweet.testRating);
                 string actualRating = getActualRating(tweet.positiveRating, tweet.negativeRating, ref rating);
 
-                analyseResult(expectedRating, actualRating, ref correct, ref falsePositive, ref falseNegative,
-                    ref falseNeutral, ref indecisive);
-                                
-                Console.WriteLine("________________________________________________________________");
-                Console.WriteLine($"{tweet}");
-                Console.WriteLine($"Expected {expectedRating} and got {actualRating} ({rating})");
+                analyseResult(expectedRating, actualRating, ref analyisContainer);
+
+                printAnalysisInfo(tweet, expectedRating, actualRating, rating);
             }
+            float correctPercentage = ((float)analyisContainer.correct) / tweets.Count * 100;
+
             Console.WriteLine("######################################################################");
-            Console.WriteLine($"{correct} of {tweets.Count} ({((float)correct) / ((float)tweets.Count)}%) correct.");
-            Console.WriteLine($"False positives: {falsePositive}");
-            Console.WriteLine($"False negatives: {falseNegative}");
-            Console.WriteLine($"False neutrals: {falseNeutral}");
-            Console.WriteLine($"Indecisive: {indecisive}");
+            Console.WriteLine($"{analyisContainer.correct} of {tweets.Count} ({correctPercentage}%) correct.");
+            Console.WriteLine($"False positives: {analyisContainer.falsePositive}");
+            Console.WriteLine($"\t- should be negative: {analyisContainer.shouldNegativeButIsPositive}");
+            Console.WriteLine($"\t- should be neutral: {analyisContainer.shouldNeutralButIsPositive}");
+            Console.WriteLine($"False negatives: {analyisContainer.falseNegative}");
+            Console.WriteLine($"\t- should be positive: {analyisContainer.shouldPositiveButIsNegative}");
+            Console.WriteLine($"\t- should be neutral: {analyisContainer.shouldNeutralButIsNegative}");
+            Console.WriteLine($"False neutrals: {analyisContainer.falseNeutral}");
+            Console.WriteLine($"\t- should be positive: {analyisContainer.shouldPositiveButIsNeutral}");
+            Console.WriteLine($"\t- should be negative: {analyisContainer.shouldNegativeButIsNeutral}");
+            Console.WriteLine($"Indecisive: {analyisContainer.indecisive}");
+            Console.WriteLine($"\t- should be positive: {analyisContainer.shouldPositiveButIsEqual}");
+            Console.WriteLine($"\t- should be negative: {analyisContainer.shouldNegativeButIsEqual}");
+            Console.WriteLine($"\t- should be neutral: {analyisContainer.shouldNeutralButIsEqual}");
             Console.WriteLine("######################################################################");
+        }
+
+        private void printAnalysisInfo(Tweet tweet, string expectedRating, string actualRating, float rating)
+        {
+            Console.WriteLine("________________________________________________________________");
+            Console.WriteLine(tweet.fullText);
+
+            if(expectedRating != actualRating)
+                Console.ForegroundColor = ConsoleColor.Red;
+
+            Console.WriteLine($"Expected {expectedRating} and got {actualRating} ({rating})");
+
+            Console.ResetColor();
+
+
+            Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
+            foreach (Token token in tweet.allTokens)
+            {
+                foreach (SubToken subToken in token.subTokens.Where(st => st.totalRating > 0))
+                {
+                    Console.Write(token.textBeforeSplittingIntoSubTokens + $"({subToken.totalRating}), ");
+                }
+            }
+            Console.WriteLine("");
+            Console.WriteLine($"Negative Rating: {tweet.negativeRating}");
+            foreach (Token token in tweet.allTokens)
+            {
+                foreach (SubToken subToken in token.subTokens.Where(st => st.totalRating < 0))
+                {
+                    Console.Write(token.textBeforeSplittingIntoSubTokens + $"({subToken.totalRating}), ");
+                }
+            }
+            Console.WriteLine("");
         }
 
         private string getExpectedRating(float testRating)
@@ -113,29 +150,90 @@ namespace MicroSent.Models.Test
             }
         }
 
-        private void analyseResult(string expectedRating, string actualRating,
-            ref int correct, ref int falsePositive, ref int falseNegative, ref int falseNeutral, ref int indecisive)
+        private void analyseResult(string expectedRating, string actualRating, ref AnalyisContainer analyisContainer)
         {
             if (expectedRating == actualRating)
             {
-                correct++;
+                analyisContainer.correct++;
             }
             else if (actualRating == Positive)
             {
-                falsePositive++;
+                analyisContainer.falsePositive++;
+                if (expectedRating == Negative)
+                    analyisContainer.shouldNegativeButIsPositive++;
+                else if (expectedRating == Neutral)
+                    analyisContainer.shouldNeutralButIsPositive++;
             }
             else if (actualRating == Negative)
             {
-                falseNegative++;
+                analyisContainer.falseNegative++;
+                if (expectedRating == Positive)
+                    analyisContainer.shouldPositiveButIsNegative++;
+                else if (expectedRating == Positive)
+                    analyisContainer.shouldPositiveButIsNegative++;
             }
             else if (actualRating == Neutral)
             {
-                falseNeutral++;
+                analyisContainer.falseNeutral++;
+                if (expectedRating == Positive)
+                    analyisContainer.shouldPositiveButIsNeutral++;
+                else if (expectedRating == Negative)
+                    analyisContainer.shouldNegativeButIsNeutral++;
             }
             else if (actualRating == Equal)
             {
-                indecisive++;
+                analyisContainer.indecisive++;
+                if (expectedRating == Positive)
+                    analyisContainer.shouldPositiveButIsEqual++;
+                else if (expectedRating == Negative)
+                    analyisContainer.shouldNegativeButIsEqual++;
+                else
+                    analyisContainer.shouldNeutralButIsEqual++;
             }
+        }
+    }
+
+    public struct AnalyisContainer
+    {
+        public int correct;
+        public int falsePositive;
+        public int falseNegative;
+        public int falseNeutral;
+        public int indecisive;
+
+        public int shouldNeutralButIsPositive;
+        public int shouldNegativeButIsPositive;
+
+        public int shouldNeutralButIsNegative;
+        public int shouldPositiveButIsNegative;
+
+        public int shouldPositiveButIsNeutral;
+        public int shouldNegativeButIsNeutral;
+
+        public int shouldNeutralButIsEqual;
+        public int shouldNegativeButIsEqual;
+        public int shouldPositiveButIsEqual;
+
+        public AnalyisContainer(int a)
+        {
+            correct = 0;
+            falsePositive = 0;
+            falseNegative = 0;
+            falseNeutral = 0;
+            indecisive = 0;
+
+            shouldNeutralButIsPositive = 0;
+            shouldNegativeButIsPositive = 0;
+
+            shouldNeutralButIsNegative = 0;
+            shouldPositiveButIsNegative = 0;
+
+            shouldPositiveButIsNeutral = 0;
+            shouldNegativeButIsNeutral = 0;
+
+            shouldNeutralButIsEqual = 0;
+            shouldNegativeButIsEqual = 0;
+            shouldPositiveButIsEqual = 0;
         }
     }
 }

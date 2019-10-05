@@ -148,7 +148,7 @@ namespace MicroSent.Controllers
 
         private void printOnConsole(List<Tweet> allTweets)
         {
-            foreach(Tweet tweet in allTweets)
+            foreach (Tweet tweet in allTweets)
             {
                 Console.WriteLine("_______________________________________________________________");
                 Console.WriteLine($"https://twitter.com/{tweet.userScreenName}/status/{tweet.statusID}");
