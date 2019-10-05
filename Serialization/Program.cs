@@ -12,13 +12,17 @@ namespace Serialization
         static void Main(string[] args)
         {
             DictBuilder dictBuilder = new DictBuilder();
+            string inputPath = @"data\testdata.csv";
+            string outputPath = @"data\testdata.xml";
+            string rootName = "TestData";
 
             Console.WriteLine("Start serializing");
 
-            dictBuilder.buildSentiDict("data/sentiLexicon/lexicon.txt");
+            //dictBuilder.buildSentiDict(path);
+            dictBuilder.buildTestDict(inputPath);
 
-            XmlSerializer xmlSerializer = new XmlSerializer(typeof(Item[]), new XmlRootAttribute() { ElementName = "SentiWords" });
-            using (StreamWriter writer = new StreamWriter("data/sentiLexicon/lexicon.xml"))
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(Item[]), new XmlRootAttribute() { ElementName = rootName });
+            using (StreamWriter writer = new StreamWriter(outputPath))
             {
                 xmlSerializer.Serialize(writer, dictBuilder.dictionary.Select(e => new Item() { key = e.Key, value = e.Value }).ToArray());
             }
@@ -38,6 +42,44 @@ namespace Serialization
             dictionary = new Dictionary<string, float>();
         }
 
+
+        public void buildTestDict(string filePath)
+        {
+            using (StreamReader streamReader = new StreamReader(filePath))
+            {
+                string line;
+                string separator = "\",\"";
+                while ((line = streamReader.ReadLine()) != null)
+                {
+                    string[] parts = line.Split(separator);
+                    int partsLastIndex = parts.Length - 1;
+                    if (parts[0].StartsWith("\""))
+                    {
+                        parts[0] = parts[0].Remove(0, 1);
+                    }
+                    if (parts[partsLastIndex].EndsWith("\""))
+                    {
+                        parts[partsLastIndex] = parts[partsLastIndex].Remove(parts[partsLastIndex].Length - 1, 1);
+                    }
+
+                    int rating = int.Parse(parts[0]);
+                    string tweet = parts[5];
+
+                    if(partsLastIndex != 5)
+                    {
+                        // break here - shouldn't happen
+                        int a = 0;
+                    }
+
+                    tweet = tweet.Replace("&amp;", "&");
+                    tweet = tweet.Replace("&lt;", "<");
+                    tweet = tweet.Replace("&gt;", ">");
+
+                    dictionary.Add(tweet, rating);
+                    Console.WriteLine($"Added {tweet} with rating {rating}");
+                }
+            }
+        }
 
         public void buildSentiDict(string filePath)
         {
