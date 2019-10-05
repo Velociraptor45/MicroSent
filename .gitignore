@@ -15,8 +15,6 @@
 ExportedObj/
 .consulo/
 
-*.csproj
-
 *.sln
 
 *.suo
