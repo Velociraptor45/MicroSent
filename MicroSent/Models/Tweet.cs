@@ -11,7 +11,7 @@ namespace MicroSent.Models
 
         public string fullText;
         public string userScreenName;
-        public ulong userID;
+        public ulong statusID;
         public List<Token> allTokens;
         public List<Token> relevantForAnalysis;
         public List<Parse> parseTrees;
@@ -24,11 +24,14 @@ namespace MicroSent.Models
         public float positiveRating;
         public float negativeRating;
 
-        public Tweet(string fullText, string userScreenName, ulong userID)
+        // only needed for evaluation of algorithm
+        public float testRating;
+
+        public Tweet(string fullText, string userScreenName, ulong statusID)
         {
             this.fullText = fullText;
             this.userScreenName = userScreenName;
-            this.userID = userID;
+            this.statusID = statusID;
             allTokens = new List<Token>();
             relevantForAnalysis = new List<Token>();
             parseTrees = new List<Parse>();
@@ -40,6 +43,8 @@ namespace MicroSent.Models
             isDefinitelySarcastic = false;
             positiveRating = 0f;
             negativeRating = 0f;
+
+            testRating = 0f;
         }
 
         public List<int> getAllSiblingsIndexes(int tokenIndexInSentence, int sentenceIndex)

@@ -1,5 +1,6 @@
 ﻿using MicroSent.Models.Constants;
 using MicroSent.Models.Enums;
+using MicroSent.Models.Util;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,15 +12,16 @@ namespace MicroSent.Models.Analyser
     {
         private const string FilePath = @"data\wordPolarity\";
         private const string LexiconFileName = "polarityLexicon.xml";
+        private const string SentiLexiconRootName = "SentiWords";
 
         private const string SentWordLabelAdjective = "a";
         private const string SentWordLabelNoun = "n";
         private const string SentWordLabelAdverb = "r";
         private const string SentWordLabelVerb = "v";
 
-        private static Dictionary<string, float> polarityDictionary = new Dictionary<string, float>();
-        XmlSerializer xmlSerializer;
+        private static Dictionary<string, float> polarityDictionary;
 
+        private Deserializer deserializer = new Deserializer(SentiLexiconRootName, FilePath + LexiconFileName);
 
         //private const string PositiveWordsFileName = "positive-words.txt";
         //private const string NegativeWordsFileName = "negative-words.txt";
@@ -29,7 +31,7 @@ namespace MicroSent.Models.Analyser
 
         public WordRater()
         {
-            xmlSerializer = new XmlSerializer(typeof(Item[]), new XmlRootAttribute() { ElementName = "SentiWords" });
+            
             //if (positiveWords.Count == 0)
             //{
             //    loadWords(PositiveWordsFileName, positiveWords);
@@ -38,17 +40,9 @@ namespace MicroSent.Models.Analyser
             //{
             //    loadWords(NegativeWordsFileName, negativeWords);
             //}
-            if(polarityDictionary.Count == 0)
+            if(polarityDictionary == null)
             {
-                loadDictionary(LexiconFileName);
-            }
-        }
-
-        private void loadDictionary(string fileName)
-        {
-            using (StreamReader streamReader = new StreamReader(FilePath + fileName))
-            {
-                polarityDictionary = ((Item[])xmlSerializer.Deserialize(streamReader)).ToDictionary(e => e.key, e => e.value);
+                deserializer.loadDictionary(out polarityDictionary);
             }
         }
 

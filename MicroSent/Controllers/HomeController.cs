@@ -2,6 +2,7 @@
 using MicroSent.Models;
 using MicroSent.Models.Analyser;
 using MicroSent.Models.Constants;
+using MicroSent.Models.Test;
 using MicroSent.Models.TwitterConnection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -24,6 +25,10 @@ namespace MicroSent.Controllers
         private SentimentCalculator sentimentCalculator;
         private Preprocessor preprocessor;
 
+        private Tester tester;
+
+        private bool testing = true;
+
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
             posTagger = new PosTagger();
@@ -34,15 +39,25 @@ namespace MicroSent.Controllers
             wordRater = new WordRater();
             sentimentCalculator = new SentimentCalculator();
             preprocessor = new Preprocessor();
+
+            tester = new Tester();
         }
 
         public async Task<IActionResult> Index()
         {
             List<Tweet> allTweets = new List<Tweet>();
-            allTweets = await getTweetsAsync();
 
-            //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
-            //allTweets.Add(tw);
+            if(testing)
+            {
+                allTweets = tester.getTestTweets();
+            }
+            else
+            {
+                //allTweets = await getTweetsAsync();
+
+                Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
+                allTweets.Add(tw);
+            }
 
             for (int tweetIndex = 0; tweetIndex < allTweets.Count; tweetIndex++)
             {
@@ -104,7 +119,10 @@ namespace MicroSent.Controllers
                 allTweets[tweetIndex] = tweet;
             }
 
-            printOnConsole(allTweets);
+            if (testing)
+                tester.checkTweetRating(allTweets);
+            else
+                printOnConsole(allTweets);
 
             return View();
         }
@@ -133,7 +151,7 @@ namespace MicroSent.Controllers
             foreach(Tweet tweet in allTweets)
             {
                 Console.WriteLine("_______________________________________________________________");
-                Console.WriteLine($"https://twitter.com/{tweet.userScreenName}/status/{tweet.userID}");
+                Console.WriteLine($"https://twitter.com/{tweet.userScreenName}/status/{tweet.statusID}");
                 Console.WriteLine(tweet.fullText);
                 Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
                 //var tokensPositiv = tweet.allTokens.Where(t => t.wordRating * t.negationRating > 0);
