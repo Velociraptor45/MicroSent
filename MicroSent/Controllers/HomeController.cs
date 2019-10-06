@@ -80,7 +80,7 @@ namespace MicroSent.Controllers
                     tokenAnalyser.analyseTokenType(ref token);
                     tokenAnalyser.splitToken(ref token);
                     tokenAnalyser.checkForUppercase(ref token);
-                    tokenAnalyser.replaceAbbreviations(ref token);
+                    tokenAnalyser.convertToLowercase(ref token);
                     if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
                         tokenAnalyser.removeRepeatedLetters(ref token);
@@ -91,7 +91,7 @@ namespace MicroSent.Controllers
 
                 //single tweet analysis
                 tweetAnalyser.analyseFirstEndHashtagPosition(ref tweet);
-                tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
+                //tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(ref tweet);
                 posTagger.parseTweet(ref tweet);
                 tweetAnalyser.applyParseTreeDependentNegation(ref tweet, true);

@@ -182,9 +182,16 @@ namespace MicroSent.Models.Analyser
             token.isAllUppercase = isAllUppercase;
         }
 
-        public void replaceAbbreviations(ref Token token)
+        public void convertToLowercase(ref Token token)
         {
-            //TODO: redo this
+            for(int i = 0; i < token.subTokens.Count; i++)
+            {
+                SubToken subToken = token.subTokens[i];
+
+                subToken.text = subToken.text.ToLower();
+
+                token.subTokens[i] = subToken;
+            }
         }
 
         #region repeated Letters
