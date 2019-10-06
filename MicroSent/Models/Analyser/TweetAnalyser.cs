@@ -69,21 +69,39 @@ namespace MicroSent.Models.Analyser
             IEnumerable<Token> allTokens = sentenceIndex >= 0 ? tweet.allTokens.Where(t => t.sentenceIndex == sentenceIndex) : tweet.allTokens;
             foreach (Token token in allTokens)
             {
-                MatchCollection matches = negationWord.Matches(token.subTokens.Last().text);
+                int amountSubTokens = token.subTokens.Count;
+                SubToken lastSubToken = token.subTokens.Last();
+                SubToken secondLastSubToken;
+
+                MatchCollection matches = negationWord.Matches(lastSubToken.text);
                 if(matches.Count > 0)
                 {
-                    if (sentenceIndex >= 0)
+                    addIndexToList(token, tokenIndexes, sentenceIndex);
+                }
+                else if(amountSubTokens >= 2)
+                {
+                    secondLastSubToken = token.subTokens[amountSubTokens - 2];
+                    matches = negationWord.Matches(secondLastSubToken.text + lastSubToken.text);
+                    if(matches.Count > 0)
                     {
-                        tokenIndexes.Add(token.indexInSentence);
-                    }
-                    else
-                    {
-                        tokenIndexes.Add(token.indexInTweet);
+                        addIndexToList(token, tokenIndexes, sentenceIndex);
                     }
                 }
             }
 
             return tokenIndexes;
+        }
+
+        private void addIndexToList(Token token, List<int> tokenIndexes, int sentenceIndex)
+        {
+            if (sentenceIndex >= 0)
+            {
+                tokenIndexes.Add(token.indexInSentence);
+            }
+            else
+            {
+                tokenIndexes.Add(token.indexInTweet);
+            }
         }
 
         public void applyKWordNegation(ref Tweet tweet, int negatedWordDistance,
