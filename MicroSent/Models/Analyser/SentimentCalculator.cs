@@ -1,6 +1,7 @@
 ﻿using MicroSent.Models.Constants;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MicroSent.Models.Analyser
 {
@@ -39,7 +40,7 @@ namespace MicroSent.Models.Analyser
                         subTokenRating *= 1.4f; //TODO
                     }
 
-                    if(tweet.firstEndHashtagIndex != -1 && token.indexInTweet >= tweet.firstEndHashtagIndex)
+                    if(tweet.firstEndHashtagIndex != -1 && token.subTokens.First().indexInTweet >= tweet.firstEndHashtagIndex)
                     {
                         subTokenRating *= RatingConstants.END_HASHTAG_MULIPLIER;
                     }

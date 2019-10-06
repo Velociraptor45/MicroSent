@@ -30,19 +30,25 @@ namespace MicroSent.Models.Analyser
                 {
                     continue;
                 }
-                if(tweet.firstEndHashtagIndex != -1 && currentToken.indexInTweet >= tweet.firstEndHashtagIndex)
+                if(tweet.firstEndHashtagIndex != -1 && currentToken.subTokens.First().indexInTweet >= tweet.firstEndHashtagIndex)
                 {
                     break;
                 }
 
                 currentToken.sentenceIndex = sentenceIndex;
-                currentToken.indexInSentence = sentenceTokensAmount;
+                for (int j = 0; j < currentToken.subTokens.Count; j++)
+                {
+                    SubToken subToken = currentToken.subTokens[j];
+                    subToken.indexInSentence = sentenceTokensAmount;
+
+                    currentToken.subTokens[j] = subToken;
+                    sentenceTokensAmount++;
+                }
                 tweet.allTokens[i] = currentToken;
 
-                sentenceTokensAmount++;
                 if (currentToken.isPunctuation && currentToken.textBeforeSplittingIntoSubTokens != ",")
                 {
-                    tweet.lastTokenIndexInSentence.Add(sentenceIndex, currentToken.indexInTweet);
+                    tweet.lastTokenIndexInSentence.Add(sentenceIndex, currentToken.subTokens.Last().indexInTweet);
                     sentenceTokensAmount = 0;
                     sentenceIndex++;
                 }
@@ -101,7 +107,7 @@ namespace MicroSent.Models.Analyser
         {
             foreach (Token sentenceToken in sentenceTokens)
             {
-                tweet.allTokens[sentenceToken.indexInTweet] = sentenceToken;
+                tweet.allTokens[sentenceToken.indexInTokenList] = sentenceToken;
             }
         }
 

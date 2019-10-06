@@ -64,6 +64,7 @@ namespace MicroSent.Models.Analyser
             string sentiWordLabel = convertToSentiWordPosLabel(subToken.posLabel);
             if(sentiWordLabel == null)
             {
+                //return 0;
                 int validKeyAmount = 0;
                 float rating = 0;
 

@@ -8,8 +8,7 @@ namespace MicroSent.Models
     {
         public string textBeforeSplittingIntoSubTokens;
         public string originalText;
-        public int indexInTweet;
-        public int indexInSentence;
+        public int indexInTokenList;
         public int sentenceIndex;
 
         public List<SubToken> subTokens;
@@ -38,8 +37,7 @@ namespace MicroSent.Models
         {
             this.textBeforeSplittingIntoSubTokens = text;
             originalText = text;
-            this.indexInTweet = position;
-            this.indexInSentence = -1;
+            this.indexInTokenList = position;
             this.sentenceIndex = -1;
 
             subTokens = new List<SubToken>();

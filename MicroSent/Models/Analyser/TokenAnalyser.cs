@@ -279,20 +279,28 @@ namespace MicroSent.Models.Analyser
         }
         #endregion
 
-        public void splitToken(ref Token token)
+        public void splitToken(ref Token token, Tweet tweet)
         {
+            int currentSubTokenIndex;
+
+            if (token.indexInTokenList == 0)
+                currentSubTokenIndex = 0;
+            else
+                currentSubTokenIndex = tweet.allTokens[token.indexInTokenList - 1].subTokens.Last().indexInTweet + 1;
+
             if (token.isHashtag)
             {
-                splitHashtag(ref token);
+                splitHashtag(ref token, currentSubTokenIndex);
                 return;
             }
 
-            splitWord(ref token);
+            splitWord(ref token, currentSubTokenIndex);
         }
 
-        private void splitWord(ref Token token)
+        private void splitWord(ref Token token, int currentSubTokenIndex)
         {
             List<string> singleWords = token.textBeforeSplittingIntoSubTokens.Split(" ").ToList();
+
             for (int i = 0; i < singleWords.Count; i++)
             {
                 string word = singleWords[i];
@@ -305,7 +313,7 @@ namespace MicroSent.Models.Analyser
                     singleWords.Insert(i + 1, negationWordParts.Item2);
                 }
             }
-            token.subTokens.AddRange(generateSubTokens(singleWords));
+            token.subTokens.AddRange(generateSubTokens(singleWords, currentSubTokenIndex));
         }
 
         private Tuple<string, string> getSplitIfNegationWord(string word)
@@ -330,7 +338,7 @@ namespace MicroSent.Models.Analyser
         }
 
         #region hashtag parsing
-        private void splitHashtag(ref Token token)
+        private void splitHashtag(ref Token token, int currentSubTokenIndex)
         {
             string hashtag = token.textBeforeSplittingIntoSubTokens;
 
@@ -342,10 +350,10 @@ namespace MicroSent.Models.Analyser
             Console.WriteLine("Backward parsing:");
             Tuple<bool, List<string>> backwardTuple = parseHashtagBackwards(hashtag);
 
-            setBetterSubTokenList(ref token, forwardTuple, backwardTuple);
+            setBetterSubTokenList(ref token, currentSubTokenIndex, forwardTuple, backwardTuple);
         }
 
-        private void setBetterSubTokenList(ref Token token, Tuple<bool, List<string>> forwardTuple, Tuple<bool, List<string>> backwardTuple)
+        private void setBetterSubTokenList(ref Token token, int currentSubTokenIndex, Tuple<bool, List<string>> forwardTuple, Tuple<bool, List<string>> backwardTuple)
         {
             List<string> forwardParsingList = forwardTuple.Item2;
             List<string> backwardParsingList = backwardTuple.Item2;
@@ -357,12 +365,12 @@ namespace MicroSent.Models.Analyser
                 if (lastBackwardProcessedWordMakesSense)
                 {
                     //both succeded
-                    token.subTokens.AddRange(generateSubTokens(backwardParsingList));
+                    token.subTokens.AddRange(generateSubTokens(backwardParsingList, currentSubTokenIndex));
                 }
                 else
                 {
                     //forward processing succeded
-                    token.subTokens.AddRange(generateSubTokens(forwardParsingList));
+                    token.subTokens.AddRange(generateSubTokens(forwardParsingList, currentSubTokenIndex));
                 }
             }
             else
@@ -370,7 +378,7 @@ namespace MicroSent.Models.Analyser
                 if (lastBackwardProcessedWordMakesSense)
                 {
                     //backward processing succeded
-                    token.subTokens.AddRange(generateSubTokens(backwardParsingList));
+                    token.subTokens.AddRange(generateSubTokens(backwardParsingList, currentSubTokenIndex));
                 }
                 else
                 {
@@ -378,7 +386,7 @@ namespace MicroSent.Models.Analyser
                     //longer list means more correct tokens
                     List<string> longerList = forwardParsingList.Count > backwardParsingList.Count ? forwardParsingList : backwardParsingList;
 
-                    token.subTokens.AddRange(generateSubTokens(longerList));
+                    token.subTokens.AddRange(generateSubTokens(longerList, currentSubTokenIndex));
                 }
             }
         }
@@ -446,12 +454,13 @@ namespace MicroSent.Models.Analyser
         }
         #endregion
 
-        private List<SubToken> generateSubTokens(List<string> subTokenWords)
+        private List<SubToken> generateSubTokens(List<string> subTokenWords, int currentSubTokeIndex)
         {
             List<SubToken> subTokens = new List<SubToken>();
             for(int i = 0; i< subTokenWords.Count; i++)
             {
-                subTokens.Add(new SubToken(subTokenWords[i], i));
+                subTokens.Add(new SubToken(subTokenWords[i], currentSubTokeIndex, i));
+                currentSubTokeIndex++;
             }
             return subTokens;
         }
