@@ -56,10 +56,23 @@ namespace MicroSent.Models.Test
 
                 printAnalysisInfo(tweet, expectedRating, actualRating, rating);
             }
-            float correctPercentage = ((float)analyisContainer.correct) / tweets.Count * 100;
+            int correctTotal = analyisContainer.correctPositive + analyisContainer.correctNegative + analyisContainer.correctNeutral;
+            float correctPercentage = ((float)correctTotal) / tweets.Count * 100;
+
+            int totalPositive = tweets.Count(t => t.testRating == 4f);
+            float totalPositivePercentage = ((float)analyisContainer.correctPositive) / totalPositive * 100;
+
+            int totalNegative = tweets.Count(t => t.testRating == 0f);
+            float totalNegativePercentage = ((float)analyisContainer.correctNegative) / totalNegative * 100;
+
+            int totalNeutral = tweets.Count(t => t.testRating == 2f);
+            float totalNeutralPercentage = ((float)analyisContainer.correctNeutral) / totalNeutral * 100;
 
             Console.WriteLine("######################################################################");
-            Console.WriteLine($"{analyisContainer.correct} of {tweets.Count} ({correctPercentage}%) correct.");
+            Console.WriteLine($"{correctTotal} of {tweets.Count} ({correctPercentage}%) correct.");
+            Console.WriteLine($"Positive: {analyisContainer.correctPositive} of {totalPositive} ({totalPositivePercentage}%)");
+            Console.WriteLine($"Negative: {analyisContainer.correctNegative} of {totalNegative} ({totalNegativePercentage}%)");
+            Console.WriteLine($"Neutral: {analyisContainer.correctNeutral} of {totalNeutral} ({totalNeutralPercentage}%)");
             Console.WriteLine($"False positives: {analyisContainer.falsePositive}");
             Console.WriteLine($"\t- should be negative: {analyisContainer.shouldNegativeButIsPositive}");
             Console.WriteLine($"\t- should be neutral: {analyisContainer.shouldNeutralButIsPositive}");
@@ -154,7 +167,12 @@ namespace MicroSent.Models.Test
         {
             if (expectedRating == actualRating)
             {
-                analyisContainer.correct++;
+                if (actualRating == Positive)
+                    analyisContainer.correctPositive++;
+                else if (actualRating == Negative)
+                    analyisContainer.correctNegative++;
+                else
+                    analyisContainer.correctNeutral++;
             }
             else if (actualRating == Positive)
             {
@@ -195,7 +213,9 @@ namespace MicroSent.Models.Test
 
     public struct AnalyisContainer
     {
-        public int correct;
+        public int correctPositive;
+        public int correctNegative;
+        public int correctNeutral;
         public int falsePositive;
         public int falseNegative;
         public int falseNeutral;
@@ -216,7 +236,9 @@ namespace MicroSent.Models.Test
 
         public AnalyisContainer(int a)
         {
-            correct = 0;
+            correctPositive = 0;
+            correctNegative = 0;
+            correctNeutral = 0;
             falsePositive = 0;
             falseNegative = 0;
             falseNeutral = 0;
