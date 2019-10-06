@@ -30,7 +30,7 @@ namespace MicroSent.Models.Analyser
                 {
                     continue;
                 }
-                if(currentToken.indexInTweet >= tweet.firstEndHashtagIndex)
+                if(tweet.firstEndHashtagIndex != -1 && currentToken.indexInTweet >= tweet.firstEndHashtagIndex)
                 {
                     break;
                 }
@@ -65,8 +65,8 @@ namespace MicroSent.Models.Analyser
                 Token token = tweet.allTokens[tokenIndex];
                 sentenceTokens.Add(token);
 
-                if (tokenIndex + 1 < tweet.allTokens.Count
-                    && tweet.allTokens[tokenIndex + 1].sentenceIndex != sentenceIndex)
+                if ((tokenIndex + 1 < tweet.allTokens.Count -1 && tweet.allTokens[tokenIndex + 1].sentenceIndex != sentenceIndex)
+                    || tokenIndex == tweet.allTokens.Count - 1)
                 {
                     fillWithAllSubTokensAsText(out List<string> allSentenceSubTokenAsText, sentenceTokens);
                     

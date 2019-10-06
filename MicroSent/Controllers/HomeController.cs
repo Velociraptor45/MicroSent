@@ -67,7 +67,7 @@ namespace MicroSent.Controllers
 
                 //////////////////////////////////////////////////////////////
                 /// TEST AREA
-                if (tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
+                if (tweet.fullText.Contains("That didn't work out very well.")) //(tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
                 {
                     int a = 0;
                 }
@@ -91,7 +91,7 @@ namespace MicroSent.Controllers
 
                 //single tweet analysis
                 tweetAnalyser.analyseFirstEndHashtagPosition(ref tweet);
-                //tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
+                tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(ref tweet);
                 posTagger.parseTweet(ref tweet);
                 tweetAnalyser.applyParseTreeDependentNegation(ref tweet, true);
