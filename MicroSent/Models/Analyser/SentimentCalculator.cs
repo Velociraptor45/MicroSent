@@ -7,6 +7,7 @@ namespace MicroSent.Models.Analyser
 {
     public class SentimentCalculator
     {
+        private const float Threshold = .25f;
 
         public SentimentCalculator()
         {
@@ -50,11 +51,27 @@ namespace MicroSent.Models.Analyser
                         subToken.totalRating = subTokenRating;
                         if (subTokenRating > 0)
                         {
-                            tweet.positiveRating += subTokenRating;
+                            if (subTokenRating < Threshold)
+                            {
+                                subToken.wordRating = RatingConstants.NEUTRAL;
+                                subToken.totalRating = 0;
+                            }
+                            else
+                            {
+                                tweet.positiveRating += subTokenRating;
+                            }
                         }
                         else
                         {
-                            tweet.negativeRating += subTokenRating;
+                            if (subTokenRating > -Threshold)
+                            {
+                                subToken.wordRating = RatingConstants.NEUTRAL;
+                                subToken.totalRating = 0;
+                            }
+                            else
+                            {
+                                tweet.negativeRating += subTokenRating;
+                            }
                         }
 
                         token.subTokens[j] = subToken;
