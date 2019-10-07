@@ -305,32 +305,41 @@ namespace MicroSent.Models.Analyser
             {
                 string word = singleWords[i];
 
-                Tuple<string, string> negationWordParts = getSplitIfNegationWord(word);
+                Tuple<string, string> splitWordParts = getSplitWord(word);
 
-                if(negationWordParts != null)
+                if(splitWordParts != null)
                 {
-                    singleWords[i] = negationWordParts.Item1;
-                    singleWords.Insert(i + 1, negationWordParts.Item2);
+                    singleWords[i] = splitWordParts.Item1;
+                    singleWords.Insert(i + 1, splitWordParts.Item2);
+                    i++;
                 }
             }
             token.subTokens.AddRange(generateSubTokens(singleWords, currentSubTokenIndex));
         }
 
-        private Tuple<string, string> getSplitIfNegationWord(string word)
+        private Tuple<string, string> getSplitWord(string word)
         {
-            Regex negationWord = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
-            Match match = negationWord.Match(word);
+            Regex split = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)nt\b|\w'\w");
+            Match match = split.Match(word);
             if (match.Success)
             {
-                string[] parts = new string[2];
+                string[] parts;
                 Tuple<string, string> splitWord;
-                if (word.EndsWith("nt"))
+                if (word.Contains('\'') && !word.EndsWith("n't"))
                 {
-                    splitWord = new Tuple<string, string>(word.Substring(0, word.Length - 2), word.Substring(word.Length - 2));
+                    parts = word.Split('\'');
+                    splitWord = new Tuple<string, string>(parts[0], parts[1]);
                 }
                 else
                 {
-                    splitWord = new Tuple<string, string>(word.Substring(0, word.Length - 3), word.Substring(word.Length - 3));
+                    if (word.EndsWith("nt"))
+                    {
+                        splitWord = new Tuple<string, string>(word.Substring(0, word.Length - 2), word.Substring(word.Length - 2));
+                    }
+                    else
+                    {
+                        splitWord = new Tuple<string, string>(word.Substring(0, word.Length - 3), word.Substring(word.Length - 3));
+                    }
                 }
                 return splitWord;
             }
