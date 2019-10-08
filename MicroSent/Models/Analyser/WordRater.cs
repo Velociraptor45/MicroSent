@@ -1,6 +1,7 @@
 ﻿using MicroSent.Models.Constants;
 using MicroSent.Models.Enums;
 using MicroSent.Models.Util;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -59,11 +60,12 @@ namespace MicroSent.Models.Analyser
         //    }
         //}
 
-        public float getWordRating(SubToken subToken)
+        public float getWordRating(SubToken subToken, bool useOnlyAverageScore = true)
         {
             string sentiWordLabel = convertToSentiWordPosLabel(subToken.posLabel);
-            if(sentiWordLabel == null)
+            if(sentiWordLabel == null || useOnlyAverageScore)
             {
+                //return 0;
                 int validKeyAmount = 0;
                 float rating = 0;
 

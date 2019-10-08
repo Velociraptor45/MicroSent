@@ -27,7 +27,7 @@ namespace MicroSent.Models.Analyser
                 {
                     if (!previousToken.isHashtag)
                     {
-                        tweet.firstEndHashtagIndex = currentToken.indexInTweet;
+                        tweet.firstEndHashtagIndex = currentToken.subTokens.First().indexInTweet;
                     }
                     else
                     {
@@ -69,21 +69,39 @@ namespace MicroSent.Models.Analyser
             IEnumerable<Token> allTokens = sentenceIndex >= 0 ? tweet.allTokens.Where(t => t.sentenceIndex == sentenceIndex) : tweet.allTokens;
             foreach (Token token in allTokens)
             {
-                MatchCollection matches = negationWord.Matches(token.subTokens.Last().text);
+                int amountSubTokens = token.subTokens.Count;
+                SubToken lastSubToken = token.subTokens.Last();
+                SubToken secondLastSubToken;
+
+                MatchCollection matches = negationWord.Matches(lastSubToken.text);
                 if(matches.Count > 0)
                 {
-                    if (sentenceIndex >= 0)
+                    addIndexToList(lastSubToken, tokenIndexes, sentenceIndex);
+                }
+                else if(amountSubTokens >= 2)
+                {
+                    secondLastSubToken = token.subTokens[amountSubTokens - 2];
+                    matches = negationWord.Matches(secondLastSubToken.text + lastSubToken.text);
+                    if(matches.Count > 0)
                     {
-                        tokenIndexes.Add(token.indexInSentence);
-                    }
-                    else
-                    {
-                        tokenIndexes.Add(token.indexInTweet);
+                        addIndexToList(lastSubToken, tokenIndexes, sentenceIndex);
                     }
                 }
             }
 
             return tokenIndexes;
+        }
+
+        private void addIndexToList(SubToken subToken, List<int> tokenIndexes, int sentenceIndex)
+        {
+            if (sentenceIndex >= 0)
+            {
+                tokenIndexes.Add(subToken.indexInSentence);
+            }
+            else
+            {
+                tokenIndexes.Add(subToken.indexInTweet);
+            }
         }
 
         public void applyKWordNegation(ref Tweet tweet, int negatedWordDistance,
@@ -165,9 +183,9 @@ namespace MicroSent.Models.Analyser
                     var tokenIndexesInSentenceToNegate = tweet.getAllSiblingsIndexes(negationWordSentenceIndex, sentenceIndex);
                     foreach(int tokenIndexInSentenceToNegate in tokenIndexesInSentenceToNegate)
                     {
-                        Token token = allTokensInSentence.Where(t => t.indexInSentence == tokenIndexInSentenceToNegate).First();
+                        Token token = allTokensInSentence.Where(t => t.subTokens.Where(st => st.indexInSentence == tokenIndexInSentenceToNegate).ToList().Count != 0).First(); //SelectMany(t => t.subTokens).Where(t => t.indexInSentence == tokenIndexInSentenceToNegate).First();
                         token.negationRating *= -1;
-                        tweet.allTokens[token.indexInTweet] = token;
+                        tweet.allTokens[token.indexInTokenList] = token;
                     }
                 }
             }

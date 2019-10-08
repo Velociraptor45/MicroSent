@@ -67,7 +67,8 @@ namespace MicroSent.Controllers
 
                 //////////////////////////////////////////////////////////////
                 /// TEST AREA
-                if (tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
+                //if (tweet.fullText.Contains("That didn't work out very well.")) //(tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
+                if (tweet.fullText.StartsWith("cant sleep..."))
                 {
                     int a = 0;
                 }
@@ -78,9 +79,9 @@ namespace MicroSent.Controllers
                     Token token = tweet.allTokens[i];
                     //single Token analysis
                     tokenAnalyser.analyseTokenType(ref token);
-                    tokenAnalyser.splitToken(ref token);
+                    tokenAnalyser.splitToken(ref token, tweet);
                     tokenAnalyser.checkForUppercase(ref token);
-                    tokenAnalyser.replaceAbbreviations(ref token);
+                    tokenAnalyser.convertToLowercase(ref token);
                     if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
                         tokenAnalyser.removeRepeatedLetters(ref token);
@@ -126,6 +127,8 @@ namespace MicroSent.Controllers
 
             return View();
         }
+
+
 
         private async Task<List<Tweet>> getTweetsAsync()
         {

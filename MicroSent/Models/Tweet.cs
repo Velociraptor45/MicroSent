@@ -56,8 +56,8 @@ namespace MicroSent.Models
 
         private int depthSearch(Parse tree, int tokenIndexInSentence, int lastFoundIndex, List<int> siblingIndexes)
         {
-            int smallestChildrenIndex = int.MaxValue;
-            int highestChildrenIndex = int.MinValue;
+            int smallestChildrenIndex = tokenIndexInSentence;
+            int highestChildrenIndex = tokenIndexInSentence;
             bool foundToken = false;
             if (tree.ChildCount == 0)
             {

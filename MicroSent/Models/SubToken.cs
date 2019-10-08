@@ -14,11 +14,13 @@ namespace MicroSent.Models
 
         public float totalRating;
 
-        public int positionInToken;
+        public int indexInTweet;
+        public int indexInSentence;
+        public int indexInToken;
 
         public float wordRating;
 
-        public SubToken(string text, int positionInToken)
+        public SubToken(string text, int indexInTweet, int indexInToken)
         {
             this.text = text;
             this.originalText = text;
@@ -26,7 +28,9 @@ namespace MicroSent.Models
 
             totalRating = 0f;
 
-            this.positionInToken = positionInToken;
+            this.indexInTweet = indexInTweet;
+            this.indexInSentence = -1;
+            this.indexInToken = indexInToken;
 
             wordRating = RatingConstants.WORD_NEUTRAL;
         }
