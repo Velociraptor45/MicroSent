@@ -24,68 +24,68 @@ namespace MicroSent.Models.Analyser
             hunspell = new NHunspell.Hunspell($"{HunspellDataPath}en_us.aff", $"{HunspellDataPath}en_us.dic");
         }
 
-        public void analyseTokenType(ref Token token)
+        public void analyseTokenType(Token token)
         {
-            if (checkForHashtag(ref token))
+            if (checkForHashtag(token))
             {
                 return;
             }
-            else if (checkForMention(ref token))
+            else if (checkForMention(token))
             {
                 return;
             }
-            else if (checkForLink(ref token))
+            else if (checkForLink(token))
             {
                 return;
             }
-            else if (checkForPunctuation(ref token))
+            else if (checkForPunctuation(token))
             {
                 return;
             }
-            else if (checkForSentenceStructure(ref token))
+            else if (checkForSentenceStructure(token))
             {
                 return;
             }
-            else if (checkForSmiley(ref token))
+            else if (checkForSmiley(token))
             {
                 return;
             }
-            else if (checkForEmoticon(ref token))
+            else if (checkForEmoticon(token))
             {
                 return;
             }
-            else if (checkForLaughingExpression(ref token))
+            else if (checkForLaughingExpression(token))
             {
                 return;
             }
         }
 
         #region tokentype
-        private bool checkForHashtag(ref Token token)
+        private bool checkForHashtag(Token token)
         {
-            if (token.textBeforeSplittingIntoSubTokens.StartsWith(Hashtag))
+            if (token.text.StartsWith(Hashtag))
             {
-                token.textBeforeSplittingIntoSubTokens = token.textBeforeSplittingIntoSubTokens.Remove(0, 1);
+                token.text = token.text.Remove(0, 1);
                 //analyseHashtag
                 return token.isHashtag = true;
             }
             return false;
         }
 
-        private bool checkForMention(ref Token token)
+        private bool checkForMention(Token token)
         {
-            if (token.textBeforeSplittingIntoSubTokens.StartsWith(Mention))
+            if (token.text.StartsWith(Mention))
             {
-                token.textBeforeSplittingIntoSubTokens = token.textBeforeSplittingIntoSubTokens.Remove(0, 1);
+                token.text = token.text.Remove(0, 1);
                 return token.isMention = true;
             }
             return false;
         }
 
-        private bool checkForLink(ref Token token)
+        private bool checkForLink(Token token)
         {
             Regex linkRegex = new Regex(@"(https:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
-            MatchCollection linkMatches = linkRegex.Matches(token.textBeforeSplittingIntoSubTokens);
+            MatchCollection linkMatches = linkRegex.Matches(token.text);
 
             if (linkMatches.Count > 0)
             {
@@ -94,10 +94,10 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
-        private bool checkForPunctuation(ref Token token)
+        private bool checkForPunctuation(Token token)
         {
             Regex puntuationRegex = new Regex(@"([\?!]+|\.+|,|:)");
-            MatchCollection punktuationMatches = puntuationRegex.Matches(token.textBeforeSplittingIntoSubTokens);
+            MatchCollection punktuationMatches = puntuationRegex.Matches(token.text);
 
             if (punktuationMatches.Count > 0)
             {
@@ -106,10 +106,10 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
-        private bool checkForSentenceStructure(ref Token token)
+        private bool checkForSentenceStructure(Token token)
         {
             Regex sentenceStructureRegex = new Regex(@"(\(|\)|-)");
-            MatchCollection sentenceStructureMatches = sentenceStructureRegex.Matches(token.textBeforeSplittingIntoSubTokens);
+            MatchCollection sentenceStructureMatches = sentenceStructureRegex.Matches(token.text);
 
             if (sentenceStructureMatches.Count > 0)
             {
@@ -118,10 +118,10 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
-        private bool checkForSmiley(ref Token token)
+        private bool checkForSmiley(Token token)
         {
             Regex smileyRegex = new Regex(@"((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|:\s[\)\(])");
-            MatchCollection smileyMatches = smileyRegex.Matches(token.textBeforeSplittingIntoSubTokens);
+            MatchCollection smileyMatches = smileyRegex.Matches(token.text);
 
             if (smileyMatches.Count > 0)
             {
@@ -130,10 +130,10 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
-        private bool checkForEmoticon(ref Token token)
+        private bool checkForEmoticon(Token token)
         {
             Regex emoticonRegex = new Regex(@"\\U[a-f0-9]{4,8}");
-            MatchCollection emoticonMatches = emoticonRegex.Matches(token.textBeforeSplittingIntoSubTokens);
+            MatchCollection emoticonMatches = emoticonRegex.Matches(token.text);
 
             if (emoticonMatches.Count > 0)
             {
@@ -142,12 +142,12 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
-        private bool checkForLaughingExpression(ref Token token)
+        private bool checkForLaughingExpression(Token token)
         {
             Regex hahaRegex = new Regex(@"a?(ha){2,}");
             Regex hihiRegex = new Regex(@"i?(hi){2,}");
-            MatchCollection hahaMatches = hahaRegex.Matches(token.textBeforeSplittingIntoSubTokens);
-            MatchCollection hihiMatches = hihiRegex.Matches(token.textBeforeSplittingIntoSubTokens);
+            MatchCollection hahaMatches = hahaRegex.Matches(token.text);
+            MatchCollection hihiMatches = hihiRegex.Matches(token.text);
 
             if (hahaMatches.Count > 0 || hihiMatches.Count > 0)
             {
@@ -157,89 +157,68 @@ namespace MicroSent.Models.Analyser
         }
         #endregion
 
-        public void checkForUppercase(ref Token token)
+        public void checkForUppercase(Token token)
         {
-            bool isAllUppercase = false;
-            for (int j = 0; j < token.subTokens.Count; j++)
+            if (token.text == "I")
+                return;
+
+            foreach (char letter in token.text)
             {
-                SubToken subToken = token.subTokens[j];
-
-                if (subToken.text == "I")
-                    return;
-
-                foreach (char letter in subToken.text)
+                if (!char.IsUpper(letter))
                 {
-                    if (!char.IsUpper(letter))
-                    {
-                        return;
-                    }
+                    return;
                 }
-
-                subToken.text = subToken.text.ToLower();
-                isAllUppercase = true;
-                token.subTokens[j] = subToken;
             }
-            token.isAllUppercase = isAllUppercase;
+
+            token.isAllUppercase = true;
         }
 
-        public void convertToLowercase(ref Token token)
+        public void convertToLowercase(Token token)
         {
-            for(int i = 0; i < token.subTokens.Count; i++)
+            token.text = token.text.ToLower();
+            foreach(SubToken subToken in token.subTokens)
             {
-                SubToken subToken = token.subTokens[i];
-
                 subToken.text = subToken.text.ToLower();
-
-                token.subTokens[i] = subToken;
             }
         }
 
         #region repeated Letters
-        public void removeRepeatedLetters(ref Token token)
+        public void removeRepeatedLetters(Token token)
         {
-            for (int j = 0; j < token.subTokens.Count; j++)
+            cutOutRepeatedLetters(token, out List<int> firstIndexesOfRepeatSections);
+
+            if (!hunspell.Spell(token.text))
             {
-                SubToken subToken = token.subTokens[j];
-                cutOutRepeatedLetters(ref token, ref subToken, out List<int> firstRepeatedLetterIndexes);
-
-                if (!hunspell.Spell(subToken.text))
+                string text = token.text;
+                string analysedWord = findEnglishWordFromRepeatedLetters(text, firstIndexesOfRepeatSections);
+                if(analysedWord != null)
                 {
-                    string text = subToken.text;
-                    string analysedWord = findEnglishWordFromRepeatedLetters(text, firstRepeatedLetterIndexes);
-                    if(analysedWord != null)
-                    {
-                        subToken.text = analysedWord;
-                    }
-                }
-
-                if(subToken.text != token.subTokens[j].text)
-                {
-                    token.subTokens[j] = subToken;
+                    token.text = analysedWord;
                 }
             }
         }
 
-        private void cutOutRepeatedLetters(ref Token token, ref SubToken subToken, out List<int> firstRepeatedLetterIndexes)
+        private void cutOutRepeatedLetters(Token token, out List<int> firstIndexesOfRepeatSections)
         {
-            firstRepeatedLetterIndexes = new List<int>();
+            firstIndexesOfRepeatSections = new List<int>();
             int sectionStartIndex = -1;
 
-            for (int i = 2; i < subToken.text.Length; i++)
+            for (int i = 2; i < token.text.Length; i++)
             {
-                char currentLetter = subToken.text[i];
-                char lastLetter = subToken.text[i - 1];
-                char secondLastLetter = subToken.text[i - 2];
+                char currentLetter = token.text[i];
+                char lastLetter = token.text[i - 1];
+                char secondLastLetter = token.text[i - 2];
 
                 if (currentLetter == lastLetter && currentLetter == secondLastLetter)
                 {
                     sectionStartIndex = i - 2;
                     token.hasRepeatedLetters = true;
-                    subToken.text = subToken.text.Remove(i, 1);
+                    token.text = token.text.Remove(i, 1);
                     i--;
                 }
                 else if (sectionStartIndex != -1)
                 {
-                    firstRepeatedLetterIndexes.Add(sectionStartIndex);
+                    firstIndexesOfRepeatSections.Add(sectionStartIndex);
                     sectionStartIndex = -1;
                 }
             }
@@ -249,7 +228,7 @@ namespace MicroSent.Models.Analyser
             // because the for-loop was exited already
             if (sectionStartIndex != -1)
             {
-                firstRepeatedLetterIndexes.Add(sectionStartIndex);
+                firstIndexesOfRepeatSections.Add(sectionStartIndex);
             }
         }
 
@@ -278,91 +257,23 @@ namespace MicroSent.Models.Analyser
             return valueRemovedLetter ?? valueNotRemovedLetter;
         }
         #endregion
-
-        public void splitToken(ref Token token, Tweet tweet)
-        {
-            int currentSubTokenIndex;
-
-            if (token.indexInTokenList == 0)
-                currentSubTokenIndex = 0;
-            else
-                currentSubTokenIndex = tweet.allTokens[token.indexInTokenList - 1].subTokens.Last().indexInTweet + 1;
-
-            if (token.isHashtag)
-            {
-                splitHashtag(ref token, currentSubTokenIndex);
-                return;
-            }
-
-            splitWord(ref token, currentSubTokenIndex);
-        }
-
-        private void splitWord(ref Token token, int currentSubTokenIndex)
-        {
-            List<string> singleWords = token.textBeforeSplittingIntoSubTokens.Split(" ").ToList();
-
-            for (int i = 0; i < singleWords.Count; i++)
-            {
-                string word = singleWords[i];
-
-                Tuple<string, string> splitWordParts = getSplitWord(word);
-
-                if(splitWordParts != null)
-                {
-                    singleWords[i] = splitWordParts.Item1;
-                    singleWords.Insert(i + 1, splitWordParts.Item2);
-                    i++;
-                }
-            }
-            token.subTokens.AddRange(generateSubTokens(singleWords, currentSubTokenIndex));
-        }
-
-        private Tuple<string, string> getSplitWord(string word)
-        {
-            Regex split = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)nt\b|\w'\w");
-            Match match = split.Match(word);
-            if (match.Success)
-            {
-                string[] parts;
-                Tuple<string, string> splitWord;
-                if (word.Contains('\'') && !word.EndsWith("n't"))
-                {
-                    parts = word.Split('\'');
-                    splitWord = new Tuple<string, string>(parts[0], parts[1]);
-                }
-                else
-                {
-                    if (word.EndsWith("nt"))
-                    {
-                        splitWord = new Tuple<string, string>(word.Substring(0, word.Length - 2), word.Substring(word.Length - 2));
-                    }
-                    else
-                    {
-                        splitWord = new Tuple<string, string>(word.Substring(0, word.Length - 3), word.Substring(word.Length - 3));
-                    }
-                }
-                return splitWord;
-            }
-            return null;
-        }
-
+        
         #region hashtag parsing
-        private void splitHashtag(ref Token token, int currentSubTokenIndex)
+        public void splitHashtag(Token token)
         {
-            string hashtag = token.textBeforeSplittingIntoSubTokens;
+            string hashtag = token.text;
 
-
+            Console.WriteLine("----------------- start analysis --------------------------");
             Console.WriteLine("Forward parsing:");
             Tuple<bool, List<string>> forwardTuple = parseHashtagForward(hashtag);
 
-            //notverynice
             Console.WriteLine("Backward parsing:");
             Tuple<bool, List<string>> backwardTuple = parseHashtagBackwards(hashtag);
 
-            setBetterSubTokenList(ref token, currentSubTokenIndex, forwardTuple, backwardTuple);
+            setBetterSubTokenList(token, forwardTuple, backwardTuple);
         }
 
-        private void setBetterSubTokenList(ref Token token, int currentSubTokenIndex, Tuple<bool, List<string>> forwardTuple, Tuple<bool, List<string>> backwardTuple)
+        private void setBetterSubTokenList(Token token, Tuple<bool, List<string>> forwardTuple, Tuple<bool, List<string>> backwardTuple)
         {
             List<string> forwardParsingList = forwardTuple.Item2;
             List<string> backwardParsingList = backwardTuple.Item2;
@@ -374,12 +285,12 @@ namespace MicroSent.Models.Analyser
                 if (lastBackwardProcessedWordMakesSense)
                 {
                     //both succeded
-                    token.subTokens.AddRange(generateSubTokens(backwardParsingList, currentSubTokenIndex));
+                    token.subTokens.AddRange(generateSubTokens(backwardParsingList));
                 }
                 else
                 {
                     //forward processing succeded
-                    token.subTokens.AddRange(generateSubTokens(forwardParsingList, currentSubTokenIndex));
+                    token.subTokens.AddRange(generateSubTokens(forwardParsingList));
                 }
             }
             else
@@ -387,7 +298,7 @@ namespace MicroSent.Models.Analyser
                 if (lastBackwardProcessedWordMakesSense)
                 {
                     //backward processing succeded
-                    token.subTokens.AddRange(generateSubTokens(backwardParsingList, currentSubTokenIndex));
+                    token.subTokens.AddRange(generateSubTokens(backwardParsingList));
                 }
                 else
                 {
@@ -395,7 +306,7 @@ namespace MicroSent.Models.Analyser
                     //longer list means more correct tokens
                     List<string> longerList = forwardParsingList.Count > backwardParsingList.Count ? forwardParsingList : backwardParsingList;
 
-                    token.subTokens.AddRange(generateSubTokens(longerList, currentSubTokenIndex));
+                    token.subTokens.AddRange(generateSubTokens(longerList));
                 }
             }
         }
@@ -463,13 +374,12 @@ namespace MicroSent.Models.Analyser
         }
         #endregion
 
-        private List<SubToken> generateSubTokens(List<string> subTokenWords, int currentSubTokeIndex)
+        private List<SubToken> generateSubTokens(List<string> subTokenWords)
         {
             List<SubToken> subTokens = new List<SubToken>();
             for(int i = 0; i< subTokenWords.Count; i++)
             {
-                subTokens.Add(new SubToken(subTokenWords[i], currentSubTokeIndex, i));
-                currentSubTokeIndex++;
+                subTokens.Add(new SubToken(subTokenWords[i], i));
             }
             return subTokens;
         }
