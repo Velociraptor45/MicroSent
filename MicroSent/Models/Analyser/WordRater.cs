@@ -60,10 +60,10 @@ namespace MicroSent.Models.Analyser
         //    }
         //}
 
-        public float getWordRating(SubToken subToken)
+        public float getWordRating(SubToken subToken, bool useOnlyAverageScore = true)
         {
             string sentiWordLabel = convertToSentiWordPosLabel(subToken.posLabel);
-            if(sentiWordLabel == null)
+            if(sentiWordLabel == null || useOnlyAverageScore)
             {
                 //return 0;
                 int validKeyAmount = 0;

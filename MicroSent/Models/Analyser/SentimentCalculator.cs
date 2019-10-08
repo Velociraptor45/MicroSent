@@ -7,14 +7,15 @@ namespace MicroSent.Models.Analyser
 {
     public class SentimentCalculator
     {
-        private const float Threshold = .25f;
+        private const float SingleTokenThreshold = .25f;
+        private const float TotalThreshold = .5f;
 
         public SentimentCalculator()
         {
 
         }
 
-        public void calculateFinalSentiment(ref Tweet tweet)
+        public void calculateFinalSentiment(ref Tweet tweet, bool useSingleThreshold = true, bool useTotalThreshold = true)
         {
             for(int i = 0; i < tweet.allTokens.Count; i++)
             {
@@ -51,7 +52,7 @@ namespace MicroSent.Models.Analyser
                         subToken.totalRating = subTokenRating;
                         if (subTokenRating > 0)
                         {
-                            if (subTokenRating < Threshold)
+                            if (subTokenRating < SingleTokenThreshold && useSingleThreshold)
                             {
                                 subToken.wordRating = RatingConstants.NEUTRAL;
                                 subToken.totalRating = 0;
@@ -63,7 +64,7 @@ namespace MicroSent.Models.Analyser
                         }
                         else
                         {
-                            if (subTokenRating > -Threshold)
+                            if (subTokenRating > -SingleTokenThreshold && useSingleThreshold)
                             {
                                 subToken.wordRating = RatingConstants.NEUTRAL;
                                 subToken.totalRating = 0;
@@ -78,6 +79,14 @@ namespace MicroSent.Models.Analyser
                     }
                 }
                 tweet.allTokens[i] = token;
+            }
+
+            if (useTotalThreshold)
+            {
+                if (tweet.positiveRating < TotalThreshold)
+                    tweet.positiveRating = 0;
+                if (tweet.negativeRating > -TotalThreshold)
+                    tweet.negativeRating = 0;
             }
         }
     }
