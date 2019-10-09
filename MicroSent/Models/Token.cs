@@ -1,4 +1,5 @@
 ﻿using MicroSent.Models.Constants;
+using MicroSent.Models.Enums;
 using System.Collections.Generic;
 
 namespace MicroSent.Models
@@ -8,8 +9,10 @@ namespace MicroSent.Models
         public string text;
         public string originalText;
 
-        public int indexInTweet;
+        public int indexInTweet = -1;
         public int indexInSentence = -1;
+
+        public PosLabels posLabel;
 
         public List<SubToken> subTokens = new List<SubToken>();
 

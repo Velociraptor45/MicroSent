@@ -18,17 +18,17 @@ namespace MicroSent.Models.Analyser
             int tokenIndex = 0;
 
             // link | smiley | emoticons | punctuation | wörter | sentence structure ()'-"
-            Regex tokenDetection = new Regex(@"(https:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+|((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|: [\)\(])|\\U[a-f0-9]{4,8}|([\?!]+|\.+|,|:)|(@|#[a-z]|\\)?(\w([''-]\w)?)+|(\(|\)|-|""|'')");
-            Regex negationDetection = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)nt\b");
+            Regex tokenDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+|((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|: [\)\(])|\\U[a-f0-9]{4,8}|([\?!]+|\.+|,|:)|(@|#[a-z]|\\)?(\w([''-]\w)?)+|(\(|\)|-|""|'')");
+            Regex negationDetection = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
 
             tweet.fullText = tweet.fullText.Replace('\n', ' ');
 
             MatchCollection tokenMatches = tokenDetection.Matches(tweet.fullText);
-            MatchCollection negationMatches = negationDetection.Matches(tweet.fullText);
 
             foreach(Match match in tokenMatches)
             {
                 string text = match.Value;
+                MatchCollection negationMatches = negationDetection.Matches(text);
                 if (negationMatches.Count > 0)
                 {
                     string firstPart;
@@ -55,15 +55,20 @@ namespace MicroSent.Models.Analyser
                 else if(tweet.fullText.Contains("'"))
                 {
                     string[] parts = text.Split("'");
-                    foreach(string part in parts)
+                    for(int i = 0; i < parts.Length; i++)
                     {
-                        Token token = new Token(part, tokenIndex);
+                        Token token;
+                        if (i > 0)
+                            token = new Token('\'' + parts[i], tokenIndex);
+                        else
+                            token = new Token(parts[i], tokenIndex);
                         allTokens.Add(token);
                         tokenIndex++;
                     }
                     continue;
                 }
                 Token t = new Token(text, tokenIndex);
+                tokenIndex++;
                 allTokens.Add(t);
             }
 

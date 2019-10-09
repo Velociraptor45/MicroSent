@@ -60,37 +60,37 @@ namespace MicroSent.Models.Analyser
         //    }
         //}
 
-        public float getWordRating(SubToken subToken, bool useOnlyAverageScore = true)
+        public float getWordRating(Token token, bool useOnlyAverageScore = true)
         {
-            string sentiWordLabel = convertToSentiWordPosLabel(subToken.posLabel);
+            string sentiWordLabel = convertToSentiWordPosLabel(token.posLabel);
             if(sentiWordLabel == null || useOnlyAverageScore)
             {
                 //return 0;
                 int validKeyAmount = 0;
                 float rating = 0;
 
-                string adjectiveKey = $"{subToken.text}!{SentWordLabelAdjective}";
+                string adjectiveKey = $"{token.text}!{SentWordLabelAdjective}";
                 if (polarityDictionary.ContainsKey(adjectiveKey))
                 {
                     rating += polarityDictionary[adjectiveKey];
                     validKeyAmount++;
                 }
 
-                string nounKey = $"{subToken.text}!{SentWordLabelNoun}";
+                string nounKey = $"{token.text}!{SentWordLabelNoun}";
                 if (polarityDictionary.ContainsKey(nounKey))
                 {
                     rating += polarityDictionary[nounKey];
                     validKeyAmount++;
                 }
 
-                string adverbKey = $"{subToken.text}!{SentWordLabelAdverb}";
+                string adverbKey = $"{token.text}!{SentWordLabelAdverb}";
                 if (polarityDictionary.ContainsKey(adverbKey))
                 {
                     rating += polarityDictionary[adverbKey];
                     validKeyAmount++;
                 }
 
-                string verbKey = $"{subToken.text}!{SentWordLabelVerb}";
+                string verbKey = $"{token.text}!{SentWordLabelVerb}";
                 if (polarityDictionary.ContainsKey(verbKey))
                 {
                     rating += polarityDictionary[verbKey];
@@ -104,7 +104,7 @@ namespace MicroSent.Models.Analyser
             }
             else
             {
-                string dictionaryKey = $"{subToken.text}!{sentiWordLabel}";
+                string dictionaryKey = $"{token.text}!{sentiWordLabel}";
                 if (polarityDictionary.ContainsKey(dictionaryKey))
                 {
                     float rating = polarityDictionary[dictionaryKey];

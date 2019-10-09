@@ -84,7 +84,7 @@ namespace MicroSent.Models.Analyser
 
         private bool checkForLink(Token token)
         {
-            Regex linkRegex = new Regex(@"(https:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
+            Regex linkRegex = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
             MatchCollection linkMatches = linkRegex.Matches(token.text);
 
             if (linkMatches.Count > 0)

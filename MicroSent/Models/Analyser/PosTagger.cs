@@ -19,104 +19,93 @@ namespace MicroSent.Models.Analyser
             nlpParser = new EnglishTreebankParser(nbinFilePath, true, false);
         }
 
-        public void cutIntoSentences(ref Tweet tweet)
+        public void cutIntoSentences(Tweet tweet, List<Token> tokens)
         {
             int sentenceIndex = 0;
-            int sentenceTokensAmount = 0;
-            for (int i = 0; i < tweet.allTokens.Count; i++)
+            int tokenInSentenceIndex = 0;
+
+            foreach(Token token in tokens)
             {
-                Token currentToken = tweet.allTokens[i];
-                if (sentenceIndex == 0 && currentToken.isLink)
+                if (token.isLink || (tokenInSentenceIndex == 0 && token.isPunctuation))
                 {
+                    tweet.rest.Add(token);
                     continue;
                 }
-                if(tweet.firstEndHashtagIndex != -1 && currentToken.subTokens.First().indexInTweet >= tweet.firstEndHashtagIndex)
+
+                if(tweet.firstEndHashtagIndex != -1 && token.indexInTweet >= tweet.firstEndHashtagIndex)
                 {
-                    break;
+                    tweet.rest.Add(token);
+                    continue;
                 }
 
-                currentToken.sentenceIndex = sentenceIndex;
-                for (int j = 0; j < currentToken.subTokens.Count; j++)
-                {
-                    SubToken subToken = currentToken.subTokens[j];
-                    subToken.indexInSentence = sentenceTokensAmount;
+                if (tokenInSentenceIndex == 0)
+                    tweet.sentences.Add(new List<Token>());
 
-                    currentToken.subTokens[j] = subToken;
-                    sentenceTokensAmount++;
-                }
-                tweet.allTokens[i] = currentToken;
+                token.indexInSentence = tokenInSentenceIndex;
+                tweet.sentences[sentenceIndex].Add(token);
 
-                if (currentToken.isPunctuation && currentToken.textBeforeSplittingIntoSubTokens != ",")
+
+                if (token.isPunctuation && token.text != ",")
                 {
-                    tweet.lastTokenIndexInSentence.Add(sentenceIndex, currentToken.subTokens.Last().indexInTweet);
-                    sentenceTokensAmount = 0;
+                    tokenInSentenceIndex = 0;
                     sentenceIndex++;
+                    continue;
                 }
+                tokenInSentenceIndex++;
             }
-            tweet.sentenceCount = sentenceIndex + 1;
         }
 
-        public void parseTweet(ref Tweet tweet)
-        {
-            if (tweet.sentenceCount == 0)
+        public void parseTweet(Tweet tweet)
+        {            
+            foreach(List<Token> sentenceTokens in tweet.sentences)
             {
-                return;
+                string[] sentenceTokenText = sentenceTokens.Select(t => t.text).ToArray();
+                
+                var parseTree = nlpParser.DoParse(sentenceTokenText);
+                Node rootNode = translateToNodeTree(parseTree.GetChildren()[0], tweet);
+                tweet.parseTrees.Add(rootNode);
+            }
+        }
+
+        private Node translateToNodeTree(Parse parseTree, Tweet tweet)
+        {
+            Node root = new Node();
+
+            int lastUsedIndex = -1;
+            foreach (var child in parseTree.GetChildren())
+            {
+                lastUsedIndex = buildTreePart(child, root, tweet, lastUsedIndex);
             }
 
-            int sentenceIndex = 0;
-            List<Token> sentenceTokens = new List<Token>();
+            return root;
+        }
 
-            for (int tokenIndex = 0; tokenIndex < tweet.allTokens.Count; tokenIndex++)
+        private int buildTreePart(Parse partialTree, Node parentNode, Tweet tweet, int lastTokenId)
+        {
+            var children = partialTree.GetChildren();
+            if(children.Length == 1 && children.First().GetChildren().Length == 0)
             {
-                Token token = tweet.allTokens[tokenIndex];
-                sentenceTokens.Add(token);
-
-                if ((tokenIndex + 1 < tweet.allTokens.Count -1 && tweet.allTokens[tokenIndex + 1].sentenceIndex != sentenceIndex)
-                    || tokenIndex == tweet.allTokens.Count - 1)
+                var firstChild = children.First();
+                Node node = new Node(tweet.getTokenByIndex(lastTokenId + 1), parentNode);
+                if(!Enum.TryParse(partialTree.Type, out PosLabels posLabel))
                 {
-                    fillWithAllSubTokensAsText(out List<string> allSentenceSubTokenAsText, sentenceTokens);
-                    
-                    var tags = nlpPosTagger.Tag(allSentenceSubTokenAsText.ToArray());
-                    var parseTree = nlpParser.DoParse(allSentenceSubTokenAsText.ToArray());
-                    tweet.parseTrees.Add(parseTree.GetChildren()[0]);
-
-                    int currentTagIndex = 0;
-                    for(int i = 0; i < sentenceTokens.Count; i++)
-                    {
-                        Token sentenceToken = sentenceTokens[i];
-                        for (int j = 0; j < sentenceTokens[i].subTokens.Count; j++)
-                        {
-                            SubToken subToken = sentenceToken.subTokens[j];
-                            if (Enum.TryParse(tags[currentTagIndex], out PosLabels label))
-                            {
-                                subToken.posLabel = label;
-                                sentenceToken.subTokens[j] = subToken;
-                            }
-                        }
-                        sentenceTokens[i] = sentenceToken;
-                    }
-
-                    saveSentenceTokensInTweet(ref tweet, sentenceTokens);
-                    sentenceTokens.Clear();
-                    sentenceIndex++;
+                    posLabel = PosLabels.Default;
                 }
+                node.correspondingToken.posLabel = posLabel;
+                parentNode.addChild(node);
+                return lastTokenId + 1;
             }
-        }
-
-        private void saveSentenceTokensInTweet(ref Tweet tweet, List<Token> sentenceTokens)
-        {
-            foreach (Token sentenceToken in sentenceTokens)
+            else
             {
-                tweet.allTokens[sentenceToken.indexInTokenList] = sentenceToken;
-            }
-        }
+                int lastUsedIndex = lastTokenId;
+                Node node = new Node(parentNode);
+                parentNode.addChild(node);
+                foreach(var child in children)
+                {
+                    lastUsedIndex = buildTreePart(child, node, tweet, lastUsedIndex);
+                }
 
-        private void fillWithAllSubTokensAsText(out List<string> allSentenceSubTokenAsText, List<Token> sentenceTokens)
-        {
-            allSentenceSubTokenAsText = new List<string>();
-            foreach (Token sentenceToken in sentenceTokens)
-            {
-                allSentenceSubTokenAsText.AddRange(sentenceToken.subTokens.Select(st => st.text));
+                return lastUsedIndex;
             }
         }
     }

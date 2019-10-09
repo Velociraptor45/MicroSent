@@ -15,70 +15,14 @@ namespace MicroSent.Models.Analyser
 
         }
 
-        public void calculateFinalSentiment(ref Tweet tweet, bool useSingleThreshold = true, bool useTotalThreshold = true)
+        public void calculateFinalSentiment(Tweet tweet, bool useSingleThreshold = true, bool useTotalThreshold = true)
         {
-            for(int i = 0; i < tweet.allTokens.Count; i++)
+            foreach (List<Token> sentence in tweet.sentences)
             {
-                Token token = tweet.allTokens[i];
-                for(int j = 0; j < token.subTokens.Count; j++)
+                foreach(Token token in sentence)
                 {
-                    SubToken subToken = token.subTokens[j];
-                    float subTokenRating = token.negationRating * subToken.wordRating;
-                    //if (!tweet.isDefinitelySarcastic)
-                    //{
-                    //    subTokenRating *= token.ironyRating;
-                    //}
-                    //else
-                    //{
-                    //    subTokenRating *= -1;
-                    //}
-
-                    if (token.hasRepeatedLetters)
-                    {
-                        subTokenRating *= 1.4f; //TODO
-                    }
-                    if (token.isAllUppercase)
-                    {
-                        subTokenRating *= 1.4f; //TODO
-                    }
-
-                    if(tweet.firstEndHashtagIndex != -1 && token.subTokens.First().indexInTweet >= tweet.firstEndHashtagIndex)
-                    {
-                        subTokenRating *= RatingConstants.END_HASHTAG_MULIPLIER;
-                    }
-
-                    if (subTokenRating != 0)
-                    {
-                        subToken.totalRating = subTokenRating;
-                        if (subTokenRating > 0)
-                        {
-                            if (subTokenRating < SingleTokenThreshold && useSingleThreshold)
-                            {
-                                subToken.wordRating = RatingConstants.NEUTRAL;
-                                subToken.totalRating = 0;
-                            }
-                            else
-                            {
-                                tweet.positiveRating += subTokenRating;
-                            }
-                        }
-                        else
-                        {
-                            if (subTokenRating > -SingleTokenThreshold && useSingleThreshold)
-                            {
-                                subToken.wordRating = RatingConstants.NEUTRAL;
-                                subToken.totalRating = 0;
-                            }
-                            else
-                            {
-                                tweet.negativeRating += subTokenRating;
-                            }
-                        }
-
-                        token.subTokens[j] = subToken;
-                    }
+                    calculateTokenRating(tweet, token, useSingleThreshold);
                 }
-                tweet.allTokens[i] = token;
             }
 
             if (useTotalThreshold)
@@ -87,6 +31,69 @@ namespace MicroSent.Models.Analyser
                     tweet.positiveRating = 0;
                 if (tweet.negativeRating > -TotalThreshold)
                     tweet.negativeRating = 0;
+            }
+        }
+
+        private void calculateTokenRating(Tweet tweet, Token token, bool useSingleThreshold)
+        {
+            float tokenRating;
+            if (token.subTokens.Count > 0)
+            {
+                float wordRatingSum = token.subTokens.Sum(st => st.wordRating);
+                tokenRating = token.negationRating * token.wordRating;
+            }
+            else
+            {
+                tokenRating = token.negationRating * token.wordRating;
+            }
+
+            //if (!tweet.isDefinitelySarcastic)
+            //{
+            //    subTokenRating *= token.ironyRating;
+            //}
+            //else
+            //{
+            //    subTokenRating *= -1;
+            //}
+
+            if (token.hasRepeatedLetters)
+            {
+                tokenRating *= 1.4f; //TODO
+            }
+            if (token.isAllUppercase)
+            {
+                tokenRating *= 1.4f; //TODO
+            }
+
+            if (tweet.firstEndHashtagIndex != -1 && token.indexInTweet >= tweet.firstEndHashtagIndex)
+            {
+                tokenRating *= RatingConstants.END_HASHTAG_MULIPLIER;
+            }
+
+            token.totalRating = tokenRating;
+            if (tokenRating > 0)
+            {
+                if (tokenRating < SingleTokenThreshold && useSingleThreshold)
+                {
+                    token.wordRating = RatingConstants.NEUTRAL;
+                    token.totalRating = 0;
+                }
+                else
+                {
+                    tweet.positiveRating += tokenRating;
+                }
+            }
+            else
+            {
+                if (tokenRating > -SingleTokenThreshold && useSingleThreshold)
+                {
+                    token.wordRating = RatingConstants.NEUTRAL;
+                    token.totalRating = 0;
+                }
+                else
+                {
+                    tweet.negativeRating += tokenRating;
+                }
             }
         }
     }

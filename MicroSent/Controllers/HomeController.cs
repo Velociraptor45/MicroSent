@@ -55,69 +55,63 @@ namespace MicroSent.Controllers
             {
                 //allTweets = await getTweetsAsync();
 
-                Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
+                //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
+                Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
                 allTweets.Add(tw);
             }
 
-            for (int tweetIndex = 0; tweetIndex < allTweets.Count; tweetIndex++)
+            foreach (Tweet tweet in allTweets)//.Where(t => t.fullText.Contains("and don't want you to die")))
             {
-                Tweet tweet = allTweets[tweetIndex];
                 tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
-                tokenizer.splitIntoTokens(ref tweet);
-
+                
                 //////////////////////////////////////////////////////////////
                 /// TEST AREA
                 //if (tweet.fullText.Contains("That didn't work out very well.")) //(tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
-                if (tweet.fullText.StartsWith("cant sleep..."))
+                if (tweet.fullText.Contains("and don't want you to die"))
                 {
                     int a = 0;
                 }
                 //////////////////////////////////////////////////////////////
 
-                for (int i = 0; i < tweet.allTokens.Count; i++)
+                List<Token> allTokens = tokenizer.splitIntoTokens(tweet);
+                tweet.tokenCount = allTokens.Count;
+
+                foreach (Token token in allTokens)
                 {
-                    Token token = tweet.allTokens[i];
                     //single Token analysis
-                    tokenAnalyser.analyseTokenType(ref token);
-                    tokenAnalyser.splitToken(ref token, tweet);
-                    tokenAnalyser.checkForUppercase(ref token);
-                    tokenAnalyser.convertToLowercase(ref token);
+
+                    tokenAnalyser.analyseTokenType(token);
+                    if (token.isHashtag)
+                        tokenAnalyser.splitHashtag(token);
+                    tokenAnalyser.checkForUppercase(token);
+                    tokenAnalyser.convertToLowercase(token);
                     if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
-                        tokenAnalyser.removeRepeatedLetters(ref token);
+                        tokenAnalyser.removeRepeatedLetters(token);
                     }
-
-                    tweet.allTokens[i] = token;
                 }
 
                 //single tweet analysis
-                tweetAnalyser.analyseFirstEndHashtagPosition(ref tweet);
-                //tweetAnalyser.applyKWordNegation(ref tweet, NegationConstants.FOUR_WORDS);
-                posTagger.cutIntoSentences(ref tweet);
-                posTagger.parseTweet(ref tweet);
-                tweetAnalyser.applyParseTreeDependentNegation(ref tweet, true);
-                tweetAnalyser.applyEndHashtagNegation(ref tweet);
+                tweetAnalyser.analyseFirstEndHashtagPosition(allTokens, tweet);
+                //tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
+                posTagger.cutIntoSentences(tweet, allTokens);
+                posTagger.parseTweet(tweet);
+                tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
+                tweetAnalyser.applyEndHashtagNegation(tweet);
 
-                for (int i = 0; i < tweet.allTokens.Count; i++)
+                foreach (List<Token> sentence in tweet.sentences)
                 {
-                    Token token = tweet.allTokens[i];
-                    //single Token analysis
-                    if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
+                    foreach (Token token in sentence)
                     {
-                        for (int j = 0; j < token.subTokens.Count; j++)
+                        //single Token analysis
+                        if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                         {
-                            SubToken subToken = token.subTokens[j];
-                            subToken.wordRating = wordRater.getWordRating(token.subTokens[j]);
-                            token.subTokens[j] = subToken;
+                            token.wordRating = wordRater.getWordRating(token);
                         }
                     }
-
-                    tweet.allTokens[i] = token;
                 }
 
-                sentimentCalculator.calculateFinalSentiment(ref tweet);
-
-                allTweets[tweetIndex] = tweet;
+                sentimentCalculator.calculateFinalSentiment(tweet);
             }
 
             if (testing)
@@ -158,22 +152,16 @@ namespace MicroSent.Controllers
                 Console.WriteLine(tweet.fullText);
                 Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
                 //var tokensPositiv = tweet.allTokens.Where(t => t.wordRating * t.negationRating > 0);
-                foreach (Token token in tweet.allTokens)
+                foreach (Token token in tweet.sentences.SelectMany(s => s).Where(t => t.totalRating > 0))
                 {
-                    foreach (SubToken subToken in token.subTokens.Where(st => st.totalRating > 0))
-                    {
-                        Console.Write(token.textBeforeSplittingIntoSubTokens + $"({subToken.totalRating}), ");
-                    }
+                    Console.Write(token.text + $"({token.totalRating}), ");
                 }
                 Console.WriteLine("");
                 Console.WriteLine($"Negative Rating: {tweet.negativeRating}");
                 //var tokensNegative = tweet.allTokens.Where(t => t.wordRating * t.negationRating < 0);
-                foreach (Token token in tweet.allTokens)
+                foreach (Token token in tweet.sentences.SelectMany(s => s).Where(t => t.totalRating < 0))
                 {
-                    foreach (SubToken subToken in token.subTokens.Where(st => st.totalRating < 0))
-                    {
-                        Console.Write(token.textBeforeSplittingIntoSubTokens + $"({subToken.totalRating}), ");
-                    }
+                    Console.Write(token.text + $"({token.totalRating}), ");
                 }
                 Console.WriteLine("");
             }
