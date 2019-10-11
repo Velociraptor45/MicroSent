@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -7,18 +8,21 @@ namespace MicroSent.Models.Analyser
     public class TweetAnalyser
     {
         private const string IronyString = "irony";
+        private const string Questionmark = "?";
+
+        private const float NegationRating = -1f;
 
         public TweetAnalyser()
         {
 
         }
 
-        public void analyseFirstEndHashtagPosition(ref Tweet tweet)
+        public void analyseFirstEndHashtagPosition(List<Token> tokens, Tweet tweet)
         {
-            for(int i = tweet.allTokens.Count - 1; i > 0; i--)
+            for(int i = tokens.Count - 1; i > 0; i--)
             {
-                Token currentToken = tweet.allTokens[i];
-                Token previousToken = tweet.allTokens[i - 1];
+                Token currentToken = tokens[i];
+                Token previousToken = tokens[i - 1];
                 if (currentToken.isLink)
                 {
                     continue;
@@ -27,7 +31,7 @@ namespace MicroSent.Models.Analyser
                 {
                     if (!previousToken.isHashtag)
                     {
-                        tweet.firstEndHashtagIndex = currentToken.subTokens.First().indexInTweet;
+                        tweet.firstEndHashtagIndex = currentToken.indexInTweet;
                     }
                     else
                     {
@@ -38,11 +42,11 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        public void checkforIrony(ref Tweet tweet)
+        public void checkforIrony(Tweet tweet)
         {
             if (isIronyEndHashtag(tweet))
             {
-                tweet.isDefinitelySarcastic = true;
+                // TODO: set irony rating
             }
         }
 
@@ -51,9 +55,9 @@ namespace MicroSent.Models.Analyser
             if (tweet.firstEndHashtagIndex == -1)
                 return false;
 
-            for(int i = tweet.firstEndHashtagIndex; i < tweet.allTokens.Count; i++)
+            foreach(Token token in tweet.rest)
             {
-                if(tweet.allTokens[i].textBeforeSplittingIntoSubTokens.ToLower() == IronyString)
+                if(token.text == IronyString)
                 {
                     return true;
                 }
@@ -62,94 +66,70 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
-        private List<int> getNegationWordIndexes(ref Tweet tweet, int sentenceIndex = -1)
+        private List<int> getSentenceIndexesOfNegationWord(List<Token> sentenceTokens)
         {
             List<int> tokenIndexes = new List<int>();
-            Regex negationWord = new Regex(@"\b((can)?not|\bno(\b|n-))|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
-            IEnumerable<Token> allTokens = sentenceIndex >= 0 ? tweet.allTokens.Where(t => t.sentenceIndex == sentenceIndex) : tweet.allTokens;
-            foreach (Token token in allTokens)
+            Regex negationWord = new Regex(@"\b(not|\bno(\b|n-))|\bn'?t\b");
+            foreach (Token token in sentenceTokens)
             {
-                int amountSubTokens = token.subTokens.Count;
-                SubToken lastSubToken = token.subTokens.Last();
-                SubToken secondLastSubToken;
-
-                MatchCollection matches = negationWord.Matches(lastSubToken.text);
+                MatchCollection matches = negationWord.Matches(token.text);
                 if(matches.Count > 0)
                 {
-                    addIndexToList(lastSubToken, tokenIndexes, sentenceIndex);
-                }
-                else if(amountSubTokens >= 2)
-                {
-                    secondLastSubToken = token.subTokens[amountSubTokens - 2];
-                    matches = negationWord.Matches(secondLastSubToken.text + lastSubToken.text);
-                    if(matches.Count > 0)
-                    {
-                        addIndexToList(lastSubToken, tokenIndexes, sentenceIndex);
-                    }
+                    tokenIndexes.Add(token.indexInSentence);
                 }
             }
-
             return tokenIndexes;
         }
 
-        private void addIndexToList(SubToken subToken, List<int> tokenIndexes, int sentenceIndex)
-        {
-            if (sentenceIndex >= 0)
-            {
-                tokenIndexes.Add(subToken.indexInSentence);
-            }
-            else
-            {
-                tokenIndexes.Add(subToken.indexInTweet);
-            }
-        }
-
-        public void applyKWordNegation(ref Tweet tweet, int negatedWordDistance,
+        public void applyKWordNegation(Tweet tweet, int negatedWordDistance,
             bool negateLeftSide = true, bool negateRightSide = true, bool ignoreSentenceBoundaries = false)
         {
-            foreach(int tokenIndex in getNegationWordIndexes(ref tweet))
+            foreach (List<Token> sentenceTokens in tweet.sentences)
             {
-                Token token = tweet.allTokens[tokenIndex];
-                int tokenSentenceIndex = token.sentenceIndex;
-
-                int firstNegationIndex = negateLeftSide ? tokenIndex - negatedWordDistance : tokenIndex;
-                int lastNegationIndex = negateRightSide ? tokenIndex + negatedWordDistance : tokenIndex;
-                firstNegationIndex = firstNegationIndex < 0 ? 0 : firstNegationIndex;
-                lastNegationIndex = lastNegationIndex > tweet.allTokens.Count - 1 ? tweet.allTokens.Count - 1 : lastNegationIndex;
-                if (!ignoreSentenceBoundaries)
+                foreach (int tokenSentenceIndex in getSentenceIndexesOfNegationWord(sentenceTokens))
                 {
-                    while(tweet.allTokens[firstNegationIndex].sentenceIndex != token.sentenceIndex)
-                    {
-                        firstNegationIndex++;
-                    }
-                    while (tweet.allTokens[lastNegationIndex].sentenceIndex != token.sentenceIndex)
-                    {
-                        lastNegationIndex--;
-                    }
-                }
+                    Token token = sentenceTokens[tokenSentenceIndex];
 
-                for(int i = firstNegationIndex; i <= lastNegationIndex; i++)
-                {
-                    if(i == tokenIndex)
+                    int firstNegationIndex = negateLeftSide ? token.indexInTweet - negatedWordDistance : token.indexInTweet;
+                    int lastNegationIndex = negateRightSide ? token.indexInTweet + negatedWordDistance : token.indexInTweet;
+
+                    //tweet boundaries
+                    firstNegationIndex = firstNegationIndex < 0 ? 0 : firstNegationIndex;
+                    lastNegationIndex = lastNegationIndex > tweet.tokenCount - 1 ? tweet.tokenCount - 1 : lastNegationIndex;
+
+                    //sentence boundaries
+                    if (!ignoreSentenceBoundaries)
                     {
-                        continue;
+                        if (sentenceTokens.Count(t => t.indexInTweet == firstNegationIndex) == 0)
+                        {
+                            firstNegationIndex = sentenceTokens.First().indexInTweet;
+                        }
+                        while (sentenceTokens.Count(t => t.indexInTweet == lastNegationIndex) == 0)
+                        {
+                            lastNegationIndex = sentenceTokens.Last().indexInTweet;
+                        }
                     }
-                    Token newToken = tweet.allTokens[i];
-                    newToken.negationRating = -1f;
-                    tweet.allTokens[i] = newToken;
+
+                    for (int i = firstNegationIndex; i <= lastNegationIndex; i++)
+                    {
+                        if (i == tokenSentenceIndex)
+                        {
+                            continue;
+                        }
+                        tweet.getTokenByIndex(i).negationRating = NegationRating;
+                    }
                 }
             }
         }
 
-        public void applyEndHashtagNegation(ref Tweet tweet)
+        public void applyEndHashtagNegation(Tweet tweet)
         {
             if (tweet.firstEndHashtagIndex == -1)
                 return;
 
             Regex negationWord = new Regex(@"\b(not|\bnon?\b)|\bnever\b|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)nt\b");
-            for (int i = tweet.firstEndHashtagIndex; i < tweet.allTokens.Count; i++)
+            foreach(Token token in tweet.rest.Where(t => t.indexInTweet >= tweet.firstEndHashtagIndex))
             {
-                Token token = tweet.allTokens[i];
                 if (token.isHashtag)
                 {
                     foreach (SubToken subToken in token.subTokens)
@@ -157,50 +137,85 @@ namespace MicroSent.Models.Analyser
                         Match match = negationWord.Match(subToken.text);
                         if (match.Success)
                         {
-                            token.negationRating = -1; //REPLACE
+                            token.negationRating = NegationRating;
                             break;
                         }
                     }
                 }
-                tweet.allTokens[i] = token;
             }
         }
 
-        public void applyParseTreeDependentNegation(ref Tweet tweet, bool negationBeforeQuestionmark)
+        public void applyParseTreeDependentNegation(Tweet tweet, bool negationBeforeQuestionmark)
         {
-            for(int sentenceIndex = 0; sentenceIndex < tweet.sentenceCount; sentenceIndex++)
+            for(int sentenceIndex = 0; sentenceIndex < tweet.sentences.Count; sentenceIndex++)
             {
-                if(!negationBeforeQuestionmark && isLastSentenceTokenQuestionmark(tweet, sentenceIndex))
+                List<Token> sentenceTokens = tweet.sentences[sentenceIndex];
+                if (!negationBeforeQuestionmark && sentenceTokens.Last().text == Questionmark)
                 {
                     continue;
                 }
 
-                List<Token> allTokensInSentence = tweet.allTokens.Where(t => t.sentenceIndex == sentenceIndex).ToList();
-                List<int> negationWordSentenceIndexes = getNegationWordIndexes(ref tweet, sentenceIndex);
+                List<int> negationWordIndexes = getSentenceIndexesOfNegationWord(sentenceTokens);
 
-                foreach(int negationWordSentenceIndex in negationWordSentenceIndexes)
+                foreach(int negationWordIndex in negationWordIndexes)
                 {
-                    var tokenIndexesInSentenceToNegate = tweet.getAllSiblingsIndexes(negationWordSentenceIndex, sentenceIndex);
-                    foreach(int tokenIndexInSentenceToNegate in tokenIndexesInSentenceToNegate)
+                    List<int> tokenSentenceIndexesToNegate = getNegationRangeIndexes(tweet.parseTrees[sentenceIndex], negationWordIndex);
+                    foreach(int tokenSentenceIndexToNegate in tokenSentenceIndexesToNegate)
                     {
-                        Token token = allTokensInSentence.Where(t => t.subTokens.Where(st => st.indexInSentence == tokenIndexInSentenceToNegate).ToList().Count != 0).First(); //SelectMany(t => t.subTokens).Where(t => t.indexInSentence == tokenIndexInSentenceToNegate).First();
-                        token.negationRating *= -1;
-                        tweet.allTokens[token.indexInTokenList] = token;
+                        Token token = sentenceTokens.Where(t => t.indexInSentence == tokenSentenceIndexToNegate).ToList().FirstOrDefault();
+                        if (token.indexInTweet > -1)
+                        {
+                            token.negationRating *= NegationRating;
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine($"Couldn't find token in sentence {sentenceIndex} with index {tokenSentenceIndexToNegate}");
+                            Console.ResetColor();
+                        }
                     }
                 }
             }
         }
 
-        private bool isLastSentenceTokenQuestionmark(Tweet tweet, int sentenceIndex)
+        private List<int> getNegationRangeIndexes(Node root, int negationWordSentenceIndex)
         {
-            int lastSentenceTokenIndex = tweet.lastTokenIndexInSentence.GetValueOrDefault(sentenceIndex, -1);
+            List<int> indexRange = new List<int>();
+            depthSearch(root, negationWordSentenceIndex, indexRange);
 
-            if(lastSentenceTokenIndex != -1)
+            return indexRange;
+        }
+
+        private Tuple<int, int> depthSearch(Node node, int negationWordSentenceIndex, List<int> allIndexes)
+        {
+            int smallestChildrenIndex = int.MaxValue;
+            int highestChildrenIndex = int.MinValue;
+            
+            if (node.children.Count == 0)
             {
-                //TODO: more questionmarks still valid?
-                return tweet.allTokens[lastSentenceTokenIndex].subTokens.Last().text == "?";
+                int thisTokenIndex = node.correspondingToken.indexInSentence;
+                return new Tuple<int, int>(thisTokenIndex, thisTokenIndex);
             }
-            return false;
+            else
+            {
+                foreach (var child in node.children)
+                {
+                    var indexRange = depthSearch(child, negationWordSentenceIndex, allIndexes);
+                    if(smallestChildrenIndex > indexRange.Item1)
+                        smallestChildrenIndex = indexRange.Item1;
+                    if(highestChildrenIndex < indexRange.Item2)
+                        highestChildrenIndex = indexRange.Item2;
+                }
+            }
+
+            if (allIndexes.Count == 0
+                && smallestChildrenIndex <= negationWordSentenceIndex && highestChildrenIndex >= negationWordSentenceIndex)
+            {
+                int amount = highestChildrenIndex - smallestChildrenIndex + 1;
+                allIndexes.AddRange(Enumerable.Range(smallestChildrenIndex, amount));
+            }
+
+            return new Tuple<int, int>(smallestChildrenIndex, highestChildrenIndex);
         }
     }
 }

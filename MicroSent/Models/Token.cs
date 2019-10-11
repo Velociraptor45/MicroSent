@@ -1,63 +1,49 @@
 ﻿using MicroSent.Models.Constants;
+using MicroSent.Models.Enums;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace MicroSent.Models
 {
-    public struct Token
+    public class Token
     {
-        public string textBeforeSplittingIntoSubTokens;
+        public string text;
         public string originalText;
-        public int indexInTokenList;
-        public int sentenceIndex;
 
-        public List<SubToken> subTokens;
+        public int indexInTweet = -1;
+        public int indexInSentence = -1;
+
+        public PosLabels posLabel;
+
+        public List<SubToken> subTokens = new List<SubToken>();
 
         //token type
-        public bool isMention;
-        public bool isLink;
-        public bool isHashtag;
-        public bool isPunctuation;
-        public bool isStructureToken; // ')' '(' '-'
-        public bool isSmiley;
-        public bool isEmoticon;
-        public bool isLaughingExpression;
+        public bool isMention = false;
+        public bool isLink = false;
+        public bool isHashtag = false;
+        public bool isPunctuation = false;
+        public bool isStructureToken = false; // ')' '(' '-'
+        public bool isSmiley = false;
+        public bool isEmoticon = false;
+        public bool isLaughingExpression = false;
 
         //ratings
-        public float smileyRating;
-        public float emoticonRating;
-        public float ironyRating;
-        public float negationRating;
+        public float totalRating;
+
+        public float smileyRating = RatingConstants.NEUTRAL;
+        public float emojiRating = RatingConstants.NEUTRAL;
+        public float ironyRating = RatingConstants.NEUTRAL;
+        public float negationRating = RatingConstants.NEUTRAL;
+        public float wordRating = RatingConstants.WORD_NEUTRAL;
 
         //token format
-        public bool isAllUppercase;
-        public bool hasRepeatedLetters;
+        public bool isAllUppercase = false;
+        public bool hasRepeatedLetters = false;
 
         public Token(string text, int position)
         {
-            this.textBeforeSplittingIntoSubTokens = text;
+            this.text = text;
             originalText = text;
-            this.indexInTokenList = position;
-            this.sentenceIndex = -1;
-
-            subTokens = new List<SubToken>();
-
-            isMention = false;
-            isLink = false;
-            isHashtag = false;
-            isPunctuation = false;
-            isStructureToken = false;
-            isSmiley = false;
-            isEmoticon = false;
-            isLaughingExpression = false;
-
-            smileyRating = RatingConstants.NEUTRAL;
-            emoticonRating = RatingConstants.NEUTRAL;
-            ironyRating = RatingConstants.NEUTRAL;
-            negationRating = RatingConstants.NEUTRAL;
-
-            isAllUppercase = false;
-            hasRepeatedLetters = false;
+            this.indexInTweet = position;
         }
     }
 }

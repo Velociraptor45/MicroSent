@@ -4,23 +4,20 @@ using System.Linq;
 
 namespace MicroSent.Models
 {
-    public struct Tweet
+    public class Tweet
     {
-        private const int ExitCode = -2;
-        private const int FoundTokenCode = -3;
-
         public string fullText;
         public string userScreenName;
         public ulong statusID;
-        public List<Token> allTokens;
-        public List<Token> relevantForAnalysis;
-        public List<Parse> parseTrees;
 
+        public int tokenCount;
         public int firstEndHashtagIndex;
-        public int sentenceCount;
-        public Dictionary<int, int> lastTokenIndexInSentence;
-
-        public bool isDefinitelySarcastic;
+          
+        public List<List<Token>> sentences;
+        public List<Token> rest;
+          
+        public List<Node> parseTrees;
+          
         public float positiveRating;
         public float negativeRating;
 
@@ -32,87 +29,28 @@ namespace MicroSent.Models
             this.fullText = fullText;
             this.userScreenName = userScreenName;
             this.statusID = statusID;
-            allTokens = new List<Token>();
-            relevantForAnalysis = new List<Token>();
-            parseTrees = new List<Parse>();
+
+            sentences = new List<List<Token>>();
+            rest = new List<Token>();
+            parseTrees = new List<Node>();
 
             firstEndHashtagIndex = -1;
-            sentenceCount = 0;
-            lastTokenIndexInSentence = new Dictionary<int, int>();
-
-            isDefinitelySarcastic = false;
             positiveRating = 0f;
             negativeRating = 0f;
 
             testRating = 0f;
         }
 
-        public List<int> getAllSiblingsIndexes(int tokenIndexInSentence, int sentenceIndex)
+        public Token getTokenByIndex(int indexInTweet)
         {
-            List<int> siblingIndexes = new List<int>();
-            depthSearch(parseTrees[sentenceIndex], tokenIndexInSentence, -1, siblingIndexes);
-            return siblingIndexes;
-        }
-
-        private int depthSearch(Parse tree, int tokenIndexInSentence, int lastFoundIndex, List<int> siblingIndexes)
-        {
-            int smallestChildrenIndex = tokenIndexInSentence;
-            int highestChildrenIndex = tokenIndexInSentence;
-            bool foundToken = false;
-            if (tree.ChildCount == 0)
+            var tokenList = sentences.SelectMany(s => s).Where(t => t.indexInTweet == indexInTweet).ToList();
+            if(tokenList.Count == 0)
             {
-                return lastFoundIndex + 1;
+                tokenList = rest.Where(t => t.indexInTweet == indexInTweet).ToList();
+                if (tokenList.Count == 0)
+                    return null;
             }
-
-            foreach (Parse child in tree.GetChildren())
-            {
-                lastFoundIndex = lastFoundIndex == FoundTokenCode ? tokenIndexInSentence : lastFoundIndex; //filter out FoundTokenCode
-                lastFoundIndex = depthSearch(child, tokenIndexInSentence, lastFoundIndex, siblingIndexes);
-                if (lastFoundIndex == ExitCode)
-                {
-                    return ExitCode;
-                }
-                else if (lastFoundIndex == FoundTokenCode)
-                {
-                    if (tree.ChildCount > 1)
-                        foundToken = true;
-                    else
-                        return FoundTokenCode;
-                }
-                else if (lastFoundIndex == tokenIndexInSentence)
-                {
-                    return FoundTokenCode;
-                }
-
-                if (lastFoundIndex >= 0)
-                {
-                    if (lastFoundIndex < smallestChildrenIndex)
-                        smallestChildrenIndex = lastFoundIndex;
-                    else
-                        highestChildrenIndex = lastFoundIndex;
-                }
-            }
-
-            if (foundToken)
-            {
-                fillListWithIndexes(siblingIndexes, smallestChildrenIndex, highestChildrenIndex);
-                return ExitCode;
-            }
-
-            return lastFoundIndex;
-        }
-
-        private void fillListWithIndexes(List<int> list, int startIndex, int endIndex)
-        {
-            if (endIndex == int.MinValue)
-            {
-                list.Add(startIndex);
-            }
-            else
-            {
-                int amount = (endIndex - startIndex) + 1;
-                list.AddRange(Enumerable.Range(startIndex, amount));
-            }
+            return tokenList.First();
         }
     }
 }

@@ -103,21 +103,23 @@ namespace MicroSent.Models.Test
 
 
             Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
-            foreach (Token token in tweet.allTokens)
+            foreach (Token token in tweet.sentences.SelectMany(s => s).Where(t => t.totalRating > 0))
             {
-                foreach (SubToken subToken in token.subTokens.Where(st => st.totalRating > 0))
-                {
-                    Console.Write(token.textBeforeSplittingIntoSubTokens + $"({subToken.totalRating}), ");
-                }
+                Console.Write(token.text + $"({token.totalRating}), ");
+            }
+            foreach(Token token in tweet.rest.Where(t => t.totalRating > 0))
+            {
+                Console.Write(token.text + $"({token.totalRating}), ");
             }
             Console.WriteLine("");
             Console.WriteLine($"Negative Rating: {tweet.negativeRating}");
-            foreach (Token token in tweet.allTokens)
+            foreach (Token token in tweet.sentences.SelectMany(s => s).Where(t => t.totalRating < 0))
             {
-                foreach (SubToken subToken in token.subTokens.Where(st => st.totalRating < 0))
-                {
-                    Console.Write(token.textBeforeSplittingIntoSubTokens + $"({subToken.totalRating}), ");
-                }
+                Console.Write(token.text + $"({token.totalRating}), ");
+            }
+            foreach (Token token in tweet.rest.Where(t => t.totalRating < 0))
+            {
+                Console.Write(token.text + $"({token.totalRating}), ");
             }
             Console.WriteLine("");
         }
