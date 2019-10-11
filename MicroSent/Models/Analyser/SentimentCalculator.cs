@@ -58,11 +58,11 @@ namespace MicroSent.Models.Analyser
 
             if (token.hasRepeatedLetters)
             {
-                tokenRating *= 1.4f; //TODO
+                tokenRating *= RatingConstants.REPEATED_LETTER_MULTIPLIER;
             }
             if (token.isAllUppercase)
             {
-                tokenRating *= 1.4f; //TODO
+                tokenRating *= RatingConstants.UPPERCASE_MULTIPLIER;
             }
 
             if (tweet.firstEndHashtagIndex != -1 && token.indexInTweet >= tweet.firstEndHashtagIndex)

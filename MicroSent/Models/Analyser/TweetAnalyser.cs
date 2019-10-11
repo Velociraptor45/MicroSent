@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MicroSent.Models.Constants;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -8,10 +9,12 @@ namespace MicroSent.Models.Analyser
     public class TweetAnalyser
     {
         private const string IronyString = "irony";
-        private const string Questionmark = "?";
 
         private const float NegationRating = -1f;
-
+        
+        private Regex negationToken = new Regex(@"\bno(t|n-?)?\b|\bnever\b|\bn'?t\b");
+        private Regex negationHashtagPart = new Regex(@"\bno(t|n)?\b|\bnever\b|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)nt\b");
+        
         public TweetAnalyser()
         {
 
@@ -69,10 +72,9 @@ namespace MicroSent.Models.Analyser
         private List<int> getSentenceIndexesOfNegationWord(List<Token> sentenceTokens)
         {
             List<int> tokenIndexes = new List<int>();
-            Regex negationWord = new Regex(@"\b(not|\bno(\b|n-))|\bn'?t\b");
             foreach (Token token in sentenceTokens)
             {
-                MatchCollection matches = negationWord.Matches(token.text);
+                MatchCollection matches = negationToken.Matches(token.text);
                 if(matches.Count > 0)
                 {
                     tokenIndexes.Add(token.indexInSentence);
@@ -92,6 +94,11 @@ namespace MicroSent.Models.Analyser
 
                     int firstNegationIndex = negateLeftSide ? token.indexInTweet - negatedWordDistance : token.indexInTweet;
                     int lastNegationIndex = negateRightSide ? token.indexInTweet + negatedWordDistance : token.indexInTweet;
+
+                    //the first part of the negation word is eg. do, did, could, ...
+                    //this counts as token but shouldn't, so the negation distance must be increased
+                    if (token.text == TokenPartConstants.NEGATION_TOKEN_ENDING_WITH_APOSTROPHE|| token.text == TokenPartConstants.NEGATION_TOKEN_ENDING_WITHOUT_APOSTROPHE)
+                        firstNegationIndex--;
 
                     //tweet boundaries
                     firstNegationIndex = firstNegationIndex < 0 ? 0 : firstNegationIndex;
@@ -127,14 +134,13 @@ namespace MicroSent.Models.Analyser
             if (tweet.firstEndHashtagIndex == -1)
                 return;
 
-            Regex negationWord = new Regex(@"\b(not|\bnon?\b)|\bnever\b|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)nt\b");
             foreach(Token token in tweet.rest.Where(t => t.indexInTweet >= tweet.firstEndHashtagIndex))
             {
                 if (token.isHashtag)
                 {
                     foreach (SubToken subToken in token.subTokens)
                     {
-                        Match match = negationWord.Match(subToken.text);
+                        Match match = negationHashtagPart.Match(subToken.text);
                         if (match.Success)
                         {
                             token.negationRating = NegationRating;
@@ -150,7 +156,7 @@ namespace MicroSent.Models.Analyser
             for(int sentenceIndex = 0; sentenceIndex < tweet.sentences.Count; sentenceIndex++)
             {
                 List<Token> sentenceTokens = tweet.sentences[sentenceIndex];
-                if (!negationBeforeQuestionmark && sentenceTokens.Last().text == Questionmark)
+                if (!negationBeforeQuestionmark && sentenceTokens.Last().text == (TokenPartConstants.QUESTIONMARK).ToString())
                 {
                     continue;
                 }

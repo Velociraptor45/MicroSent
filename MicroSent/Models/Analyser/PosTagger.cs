@@ -9,13 +9,11 @@ namespace MicroSent.Models.Analyser
 {
     public class PosTagger
     {
-        private EnglishMaximumEntropyPosTagger nlpPosTagger;
         private EnglishTreebankParser nlpParser;
         private string nbinFilePath = @"data\NBIN_files\";
 
         public PosTagger()
         {
-            nlpPosTagger = new EnglishMaximumEntropyPosTagger(nbinFilePath + "EnglishPOS.nbin", nbinFilePath + "tagdict");
             nlpParser = new EnglishTreebankParser(nbinFilePath, true, false);
         }
 

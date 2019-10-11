@@ -63,7 +63,7 @@ namespace MicroSent.Controllers
             foreach (Tweet tweet in allTweets)//.Where(t => t.fullText.Contains("and don't want you to die")))
             {
                 tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
-                
+
                 //////////////////////////////////////////////////////////////
                 /// TEST AREA
                 //if (tweet.fullText.Contains("That didn't work out very well.")) //(tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
@@ -93,10 +93,10 @@ namespace MicroSent.Controllers
 
                 //single tweet analysis
                 tweetAnalyser.analyseFirstEndHashtagPosition(allTokens, tweet);
-                //tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(tweet, allTokens);
                 posTagger.parseTweet(tweet);
-                tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
+                //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
+                tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
                 tweetAnalyser.applyEndHashtagNegation(tweet);
 
                 foreach (List<Token> sentence in tweet.sentences)
