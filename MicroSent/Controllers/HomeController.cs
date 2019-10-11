@@ -27,7 +27,7 @@ namespace MicroSent.Controllers
 
         private Tester tester;
 
-        private bool testing = true;
+        private bool testing = false;
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
@@ -56,7 +56,8 @@ namespace MicroSent.Controllers
                 //allTweets = await getTweetsAsync();
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
-                Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
+                //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
+                Tweet tw = new Tweet("He cease to understand what was going on. But he quit smoking the next day.", "aa", 0);
                 allTweets.Add(tw);
             }
 

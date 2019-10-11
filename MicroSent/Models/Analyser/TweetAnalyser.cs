@@ -69,7 +69,12 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
-        private List<int> getSentenceIndexesOfNegationWord(List<Token> sentenceTokens)
+        #region negation word detection
+        //////////////////////////////////////////////////////////////////////////
+        /// NEGATION WORD DETECTION
+        //////////////////////////////////////////////////////////////////////////
+
+        private List<int> getSentenceIndexesOfNegationWord(List<Token> sentenceTokens, Tweet tweet)
         {
             List<int> tokenIndexes = new List<int>();
             foreach (Token token in sentenceTokens)
@@ -79,16 +84,58 @@ namespace MicroSent.Models.Analyser
                 {
                     tokenIndexes.Add(token.indexInSentence);
                 }
+                else
+                {
+                    checkForMultiTokenNegation(tokenIndexes, token, sentenceTokens, tweet);
+                }
             }
             return tokenIndexes;
         }
+
+        private void checkForMultiTokenNegation(List<int> tokenIndexes, Token token, List<Token> sentenceTokens, Tweet tweet)
+        {
+            if (token != sentenceTokens.Last())
+            {
+                Token nextToken = tweet.getTokenByIndex(token.indexInTweet + 1);
+                if (isTwoTokenNegation(token, nextToken))
+                {
+                    // quit vb-ing && stop vb-ing
+                    tokenIndexes.Add(token.indexInSentence);
+                }
+                else if (nextToken != sentenceTokens.Last())
+                {
+                    Token secondNextToken = tweet.getTokenByIndex(token.indexInTweet + 1);
+                    if (isThreeTokenNegation(token, nextToken, secondNextToken))
+                    {
+                        //cease to vb
+                        tokenIndexes.Add(token.indexInSentence);
+                    }
+                }
+            }
+        }
+
+        private bool isTwoTokenNegation(Token token, Token nextToken)
+        {
+            return (token.text == "stop" || token.text == "quit") && nextToken.text.EndsWith("ing") && nextToken.posLabel == Enums.PosLabels.VBG;
+        }
+
+        private bool isThreeTokenNegation(Token token, Token nextToken, Token secondNextToken)
+        {
+            return token.text == "cease" && nextToken.text == "to" && secondNextToken.posLabel == Enums.PosLabels.VB;
+        }
+        #endregion
+
+        #region negation application
+        //////////////////////////////////////////////////////////////////////////
+        /// NEGATION APPLICATION
+        //////////////////////////////////////////////////////////////////////////
 
         public void applyKWordNegation(Tweet tweet, int negatedWordDistance,
             bool negateLeftSide = true, bool negateRightSide = true, bool ignoreSentenceBoundaries = false)
         {
             foreach (List<Token> sentenceTokens in tweet.sentences)
             {
-                foreach (int tokenSentenceIndex in getSentenceIndexesOfNegationWord(sentenceTokens))
+                foreach (int tokenSentenceIndex in getSentenceIndexesOfNegationWord(sentenceTokens, tweet))
                 {
                     Token token = sentenceTokens[tokenSentenceIndex];
 
@@ -161,7 +208,7 @@ namespace MicroSent.Models.Analyser
                     continue;
                 }
 
-                List<int> negationWordIndexes = getSentenceIndexesOfNegationWord(sentenceTokens);
+                List<int> negationWordIndexes = getSentenceIndexesOfNegationWord(sentenceTokens, tweet);
 
                 foreach(int negationWordIndex in negationWordIndexes)
                 {
@@ -183,6 +230,12 @@ namespace MicroSent.Models.Analyser
                 }
             }
         }
+        #endregion
+
+        #region tree parsing for negation
+        //////////////////////////////////////////////////////////////////////////
+        /// TREE PARSING FOR NEGATION
+        //////////////////////////////////////////////////////////////////////////
 
         private List<int> getNegationRangeIndexes(Node root, int negationWordSentenceIndex)
         {
@@ -223,5 +276,6 @@ namespace MicroSent.Models.Analyser
 
             return new Tuple<int, int>(smallestChildrenIndex, highestChildrenIndex);
         }
+        #endregion
     }
 }
