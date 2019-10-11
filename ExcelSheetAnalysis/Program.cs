@@ -3,6 +3,7 @@ using System.Linq;
 using NPOI.XSSF.UserModel;
 using NPOI.SS.UserModel;
 using System.IO;
+using System;
 
 namespace ExcelSheetAnalysis
 {
@@ -11,9 +12,10 @@ namespace ExcelSheetAnalysis
         static void Main(string[] args)
         {
             const string FilePath = @"data\emojis.xlsx";
-
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
             Program p = new Program();
             p.readFile(FilePath);
+            p.printOnConsole();
         }
 
         private Dictionary<char[], int> positiveEmojis = new Dictionary<char[], int>();
@@ -109,6 +111,37 @@ namespace ExcelSheetAnalysis
             {
                 // shoudn't happen
                 return;
+            }
+        }
+
+        private void printOnConsole()
+        {
+            Console.WriteLine("####################### POSITIVE EMOJIS #######################");
+            List<KeyValuePair<char[], int>> posEmojisList = positiveEmojis.OrderBy(v => v).ToList();
+            foreach (var pair in posEmojisList)
+            {
+                Console.WriteLine($"{pair.Value}");
+            }
+
+            Console.WriteLine("####################### NEGATIVE EMOJIS #######################");
+            List<KeyValuePair<char[], int>> negEmojisList = positiveEmojis.OrderBy(v => v).ToList();
+            foreach (var pair in negEmojisList)
+            {
+                Console.WriteLine($"{pair.Value}");
+            }
+
+            Console.WriteLine("####################### POSITIVE SMILEYS ######################");
+            List<KeyValuePair<string, int>> posSmileyList = positiveSmileys.OrderBy(e => e.Value).ToList();
+            foreach (var pair in posSmileyList)
+            {
+                Console.WriteLine($"{pair.Key}\t{pair.Key}");
+            }
+
+            Console.WriteLine("####################### NEGATIVE SMILEYS ######################");
+            List<KeyValuePair<string, int>> negSmileyList = negativeSmileys.OrderBy(e => e.Value).ToList();
+            foreach (var pair in negSmileyList)
+            {
+                Console.WriteLine($"{pair.Key}\t{pair.Value}");
             }
         }
     }
