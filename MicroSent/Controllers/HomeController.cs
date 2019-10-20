@@ -2,6 +2,7 @@
 using MicroSent.Models;
 using MicroSent.Models.Analyser;
 using MicroSent.Models.Constants;
+using MicroSent.Models.Network;
 using MicroSent.Models.Test;
 using MicroSent.Models.TwitterConnection;
 using Microsoft.AspNetCore.Mvc;
@@ -25,9 +26,13 @@ namespace MicroSent.Controllers
         private SentimentCalculator sentimentCalculator;
         private Preprocessor preprocessor;
 
+        private NetworkClientSocket networkClientSocket;
+
         private Tester tester;
 
         private bool testing = true;
+
+        private int NetworkPort = 6048;
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
@@ -40,11 +45,17 @@ namespace MicroSent.Controllers
             sentimentCalculator = new SentimentCalculator();
             preprocessor = new Preprocessor();
 
+            networkClientSocket = new NetworkClientSocket(NetworkPort);
+
             tester = new Tester();
         }
 
         public async Task<IActionResult> Index()
         {
+            List<string> list = await networkClientSocket.getParseTreeFromServer("This is not a simple english sentence to understand the parser further.");
+
+            return View();
+
             List<Tweet> allTweets = new List<Tweet>();
 
             if(testing)
@@ -95,7 +106,12 @@ namespace MicroSent.Controllers
                 tweetAnalyser.analyseFirstEndHashtagPosition(allTokens, tweet);
                 //tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(tweet, allTokens);
+
+                Task<List<string>> serverAnswere = networkClientSocket.getParseTreeFromServer("");
+                await serverAnswere;
+
                 posTagger.parseTweet(tweet);
+
                 tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
                 tweetAnalyser.applyEndHashtagNegation(tweet);
 
