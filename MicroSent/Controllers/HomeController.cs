@@ -27,12 +27,14 @@ namespace MicroSent.Controllers
         private Preprocessor preprocessor;
 
         private NetworkClientSocket networkClientSocket;
+        private NetworkServerSocket networkServerSocket;
 
         private Tester tester;
 
         private bool testing = true;
 
-        private int NetworkPort = 6048;
+        private int NetworkClientPort = 6048;
+        private int NetworkServerPort = 6047;
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
@@ -45,14 +47,19 @@ namespace MicroSent.Controllers
             sentimentCalculator = new SentimentCalculator();
             preprocessor = new Preprocessor();
 
-            networkClientSocket = new NetworkClientSocket(NetworkPort);
+            networkClientSocket = new NetworkClientSocket(NetworkClientPort);
+            networkServerSocket = new NetworkServerSocket(NetworkServerPort);
 
             tester = new Tester();
         }
 
         public async Task<IActionResult> Index()
         {
-            List<string> list = await networkClientSocket.getParseTreeFromServer("This is not a simple english sentence to understand the parser further.");
+            Task<string> s = networkServerSocket.getSyntaxNetParseTree();
+            networkClientSocket.sendStringToServer("This is not a simple english sentence to understand the parser further.");
+
+            await s;
+            string s1 = s.Result;
 
             return View();
 
@@ -107,8 +114,8 @@ namespace MicroSent.Controllers
                 //tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(tweet, allTokens);
 
-                Task<List<string>> serverAnswere = networkClientSocket.getParseTreeFromServer("");
-                await serverAnswere;
+                //Task<List<string>> serverAnswere = networkClientSocket.sendStringToServer("");
+                //await serverAnswere;
 
                 posTagger.parseTweet(tweet);
 
