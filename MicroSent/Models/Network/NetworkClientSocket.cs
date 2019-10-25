@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 
@@ -13,6 +10,9 @@ namespace MicroSent.Models.Network
     public class NetworkClientSocket
     {
         private readonly int Port;
+        private int MaxRespondeSize = 4096;
+
+        private const string HOST = "localhost";
 
         public NetworkClientSocket(int port)
         {
@@ -21,7 +21,7 @@ namespace MicroSent.Models.Network
 
         public void sendStringToServer(string sentence)
         {
-            TcpClient connection = new TcpClient("localhost", Port);
+            TcpClient connection = new TcpClient(HOST, Port);
 
             try
             {
@@ -37,6 +37,41 @@ namespace MicroSent.Models.Network
                 Console.WriteLine($"Exception occured wile sending message:\n{e.StackTrace}");
                 Console.ResetColor();
             }
+        }
+
+        public Task<string> receiveParseTree()
+        {
+            return Task<string>.Factory.StartNew(() =>
+            {
+                while (true)
+                {
+                    TcpClient connection = new TcpClient(HOST, Port);
+                    byte[] serverAnswere = new byte[MaxRespondeSize];
+
+                    try
+                    {
+                        using (NetworkStream stream = connection.GetStream())
+                        {
+                            Console.WriteLine("Connected to stream 2");
+                            int length = stream.Read(serverAnswere, 0, serverAnswere.Length);
+                            if (length == 0)
+                                continue;
+
+                            byte[] incommingData = new byte[length];
+                            Array.Copy(serverAnswere, 0, incommingData, 0, length);
+                            string clientMessage = Encoding.ASCII.GetString(incommingData);
+                            return clientMessage;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"Exception occured wile sending message:\n{e.StackTrace}");
+                        Console.ResetColor();
+                    }
+                    return null;
+                }
+            });
         }
 
         private void sendMessageToServer(string message, NetworkStream stream)

@@ -26,15 +26,15 @@ namespace MicroSent.Controllers
         private SentimentCalculator sentimentCalculator;
         private Preprocessor preprocessor;
 
-        private NetworkClientSocket networkClientSocket;
-        private NetworkServerSocket networkServerSocket;
+        private NetworkClientSocket networkSendClientSocket;
+        private NetworkClientSocket networkReceiveClientSocket;
 
         private Tester tester;
 
         private bool testing = true;
 
-        private int NetworkClientPort = 6048;
-        private int NetworkServerPort = 6047;
+        private int NetworkSendClientPort = 6048;
+        private int NetworkReceiveClientPort = 6050;
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
@@ -47,19 +47,19 @@ namespace MicroSent.Controllers
             sentimentCalculator = new SentimentCalculator();
             preprocessor = new Preprocessor();
 
-            networkClientSocket = new NetworkClientSocket(NetworkClientPort);
-            networkServerSocket = new NetworkServerSocket(NetworkServerPort);
+            networkSendClientSocket = new NetworkClientSocket(NetworkSendClientPort);
+            networkReceiveClientSocket = new NetworkClientSocket(NetworkReceiveClientPort);
 
             tester = new Tester();
         }
 
         public async Task<IActionResult> Index()
         {
-            Task<string> s = networkServerSocket.getSyntaxNetParseTree();
-            networkClientSocket.sendStringToServer("This is not a simple english sentence to understand the parser further.");
+            networkSendClientSocket.sendStringToServer("This is not a simple english sentence to understand the parser further.");
+            Task<string> parseTreeString = networkReceiveClientSocket.receiveParseTree();
 
-            await s;
-            string s1 = s.Result;
+            await parseTreeString;
+            string parseTree = parseTreeString.Result;
 
             return View();
 
