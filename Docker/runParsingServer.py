@@ -1,27 +1,33 @@
 import socket
-
+import os
 
 #src: https://docs.python.org/2/library/simplehttpserver.html
 #src: https://realpython.com/python-sockets/#tcp-sockets
 
-HOST = '0.0.0.0'
-PORT = 6048
+class RunParsingServer:
+    HOST = '0.0.0.0'
+    PORT = 6048
+    incommingByteSize = 512
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket:
-    socket.bind((HOST, PORT))
-    socket.listen(1)
-    conn, addr = socket.accept()
-    with conn:
-        print("Connection established with ", addr)
-        while True:
-            data = conn.recv(512)
-            print("received data:")
-            print(data)
-            if not data:
-                print("exiting")
-                break
-            print("sending data")
-            conn.sendall(data)
-            print("sent data")
+    def openServer(self):
+        print("starting to listen on {}:{}".format(self.HOST, self.PORT))
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as soc:
+            soc.bind((self.HOST, self.PORT))
+            soc.listen(1)
+            con, addr = soc.accept()
+            with con:
+                print("Connection established with ", addr)
+                self.connection = con
+                data = con.recv(self.incommingByteSize)
+                if data:
+                    print("RECEIVED DATA: {}".format(data))
+                    string = "".join(map(chr, data))
+                    os.system("echo {} | syntaxnet/demo.sh".format(string))
+        print("connection closed")
+        print("-------------------------------------------------------------")
 
-    print("end script")
+    
+if __name__ == '__main__':
+    server = RunParsingServer()
+    while True:
+        server.openServer()

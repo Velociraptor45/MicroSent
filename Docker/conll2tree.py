@@ -15,6 +15,9 @@
 """A program to generate ASCII trees from conll files."""
 
 import collections
+import os
+
+import json
 
 import asciitree
 import tensorflow as tf
@@ -83,7 +86,6 @@ def main(unused_argv):
       for d in documents:
         sentence.ParseFromString(d)
         tr = asciitree.LeftAligned()
-        print("sentence is {}".format(sentence))
         sendAnswere(sentence)
         d = to_dict(sentence)
         print ('Input: %s' % sentence.text)
@@ -94,16 +96,29 @@ def main(unused_argv):
         break
 
 
-def sendAnswere(message):
-    print("Establishing socket")
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print("Connecting to server")
-    s.connect(('0.0.0.0', 6047))
-    print("Connection established")
-    b = bytes(message, 'utf-8')
-    s.sendall(b)
-    s.close()
+def sendAnswere(sentence):
+    map = sentence_to_dict(sentence)
+    jsonMap = json.dumps(map)
+    print("Conversion successful - calling script")
+    os.system("python3.4 /root/models/syntaxnet/responseServer.py '{}'".format(jsonMap))
 
+
+#src: https://stackoverflow.com/questions/46351284/how-to-get-dependency-tree-in-json-format-in-syntaxnet/51764112
+def token_to_dict(token):
+    return {
+        'word': token.word,
+        'start': token.start,
+        'end': token.end,
+        'head': token.head,
+        'tag': token.tag,
+        'deprel': token.label
+    }
+
+def sentence_to_dict(sentence):
+    return {
+        'tokens': [token_to_dict(token) for token in sentence.token]
+    }
+#src end
 
 if __name__ == '__main__':
   tf.app.run()
