@@ -97,9 +97,10 @@ def main(unused_argv):
 
 def sendAnswere(sentence):
     map = sentence_to_dict(sentence)
-    jsonMap = json.dumps(map)
+    jsonMap = json.dumps(map).replace("'", "\\'").replace('"', '\\"')
     print("Conversion successful - calling script")
-    os.system("python3.4 /root/models/syntaxnet/responseServer.py '{}'".format(jsonMap))
+    print(jsonMap)
+    os.system("python3.4 /root/models/syntaxnet/responseServer.py \"{}\"".format(jsonMap))
 
 
 #src: https://stackoverflow.com/questions/46351284/how-to-get-dependency-tree-in-json-format-in-syntaxnet/51764112

@@ -1,4 +1,5 @@
 ﻿using MicroSent.Models.Enums;
+using Newtonsoft.Json.Linq;
 using OpenNLP.Tools.Parser;
 using OpenNLP.Tools.PosTagger;
 using System;
@@ -53,6 +54,41 @@ namespace MicroSent.Models.Analyser
                 }
                 tokenInSentenceIndex++;
             }
+        }
+
+        public void buildTreeFromGoogleParser(Tweet tweet, JArray tokens, int sentenceIndex)
+        {
+            List<Node> allNodes = new List<Node>();
+            for(int i = 0; i < tokens.Count; i++)
+            {
+                JToken token = tokens[i];
+                if(i > 0)
+                {
+                    JToken previousToken = tokens[i - 1];
+                    if(previousToken.Value<string>("tag") == "."
+                        && token.Value<string>("tag") == ".")
+                    {
+                        tokens.RemoveAt(i);
+                        i--;
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"Removed punctuation from sentence: {tweet.getFullSentence(sentenceIndex)}");
+                        Console.ResetColor();
+                        continue;
+                    }
+                }
+                Node node = new Node(tweet.sentences[sentenceIndex][i], null);
+                allNodes.Add(node);
+            }
+
+            for(int i = 0; i < tokens.Count; i++)
+            {
+                JToken token = tokens[i];
+                int parentIndex = token.Value<int>("head");
+                if(parentIndex != -1)
+                    allNodes[i].setParent(allNodes[parentIndex]);
+            }
+
+            tweet.parseTrees.Add(allNodes.Where(n => n.parent == null).First());
         }
 
         public void parseTweet(Tweet tweet)

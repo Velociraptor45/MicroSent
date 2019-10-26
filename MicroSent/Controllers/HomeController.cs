@@ -7,6 +7,7 @@ using MicroSent.Models.Test;
 using MicroSent.Models.TwitterConnection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,6 +33,7 @@ namespace MicroSent.Controllers
         private Tester tester;
 
         private bool testing = true;
+        private bool useGoogleParser = true;
 
         private int NetworkSendClientPort = 6048;
         private int NetworkReceiveClientPort = 6050;
@@ -55,14 +57,6 @@ namespace MicroSent.Controllers
 
         public async Task<IActionResult> Index()
         {
-            networkSendClientSocket.sendStringToServer("This is not a simple english sentence to understand the parser further.");
-            Task<string> parseTreeString = networkReceiveClientSocket.receiveParseTree();
-
-            await parseTreeString;
-            string parseTree = parseTreeString.Result;
-
-            return View();
-
             List<Tweet> allTweets = new List<Tweet>();
 
             if(testing)
@@ -114,12 +108,28 @@ namespace MicroSent.Controllers
                 //tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(tweet, allTokens);
 
-                //Task<List<string>> serverAnswere = networkClientSocket.sendStringToServer("");
-                //await serverAnswere;
+                List<JArray> parsedTokens = new List<JArray>();
+                if (useGoogleParser)
+                {
+                    for (int i = 0; i < tweet.sentences.Count; i++)
+                    {
+                        networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i)/*.Replace("'", "\'").Replace("\"", "\\\"")*/);
+                        Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
 
-                posTagger.parseTweet(tweet);
+                        await serverAnswere;
+                        JObject treeJSON = JObject.Parse(serverAnswere.Result);
 
-                tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
+                        parsedTokens.Add(treeJSON.Value<JArray>("tokens"));
+                        Console.WriteLine(parsedTokens.Last());
+                        posTagger.buildTreeFromGoogleParser(tweet, parsedTokens[i], i);
+                    }
+                }
+                else
+                {
+                    posTagger.parseTweet(tweet);
+                }
+
+                //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
                 tweetAnalyser.applyEndHashtagNegation(tweet);
 
                 foreach (List<Token> sentence in tweet.sentences)

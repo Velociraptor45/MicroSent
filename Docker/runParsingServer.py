@@ -9,6 +9,7 @@ class RunParsingServer:
     HOST = '0.0.0.0'
     PORT = 6048
     incommingByteSize = 512
+    OK = bytes('200', 'utf-8')
 
     def openServer(self):
         print("starting to listen on {}:{}".format(self.HOST, self.PORT))
@@ -21,9 +22,11 @@ class RunParsingServer:
                 with con:
                     print("Connection established with ", addr)
                     data = con.recv(self.incommingByteSize)
+                    con.sendall(self.OK)
                     if data:
-                        print("RECEIVED DATA: {}".format(data))
                         receivedSentence = "".join(map(chr, data))
+                        receivedSentence = receivedSentence.replace("'", "\\'").replace('"', '\\"').replace('(', '\\(').replace(')', '\\)').replace('|', '\\|')
+                        print("RECEIVED DATA: {}".format(receivedSentence))
                         _thread.start_new_thread (self.processData, (receivedSentence, None))
                         con.close()
                 print("-------------------------------------------------------------")

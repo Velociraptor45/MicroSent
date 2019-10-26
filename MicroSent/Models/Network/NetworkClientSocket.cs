@@ -22,20 +22,37 @@ namespace MicroSent.Models.Network
         public void sendStringToServer(string sentence)
         {
             TcpClient connection = new TcpClient(HOST, Port);
+            byte[] serverAnswere = new byte[MaxRespondeSize];
 
-            try
+            while (true)
             {
-                using (NetworkStream stream = connection.GetStream())
+                try
                 {
-                    Console.WriteLine("Connected to stream");
-                    sendMessageToServer(sentence, stream);
+                    using (NetworkStream stream = connection.GetStream())
+                    {
+                        Console.WriteLine("Connected to sending stream");
+                        sendMessageToServer(sentence, stream);
+
+                        if(stream.Read(serverAnswere, 0, serverAnswere.Length) > 0)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("Server response: OK");
+                            Console.ResetColor();
+                            break;
+                        }
+
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("No server response - will try again");
+                        Console.ResetColor();
+                        continue;
+                    }
                 }
-            }
-            catch(Exception e)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Exception occured wile sending message:\n{e.StackTrace}");
-                Console.ResetColor();
+                catch (Exception e)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"Exception occured wile sending message:\n{e.StackTrace}");
+                    Console.ResetColor();
+                }
             }
         }
 
@@ -52,11 +69,11 @@ namespace MicroSent.Models.Network
                     {
                         using (NetworkStream stream = connection.GetStream())
                         {
-                            Console.WriteLine("Connected to stream 2");
                             int length = stream.Read(serverAnswere, 0, serverAnswere.Length);
                             if (length == 0)
                                 continue;
 
+                            Console.WriteLine("Connected to receiving stream");
                             byte[] incommingData = new byte[length];
                             Array.Copy(serverAnswere, 0, incommingData, 0, length);
                             string clientMessage = Encoding.ASCII.GetString(incommingData);

@@ -52,5 +52,19 @@ namespace MicroSent.Models
             }
             return tokenList.First();
         }
+
+        public string getFullSentence(int index)
+        {
+            string fullSentence = "";
+
+            foreach(Token token in sentences[index])
+            {
+                if (token == sentences[index][0] || token.isPunctuation)
+                    fullSentence += token.text;
+                else
+                    fullSentence += $" {token.text}";
+            }
+            return fullSentence;
+        }
     }
 }
