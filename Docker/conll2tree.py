@@ -28,7 +28,6 @@ from tensorflow.python.platform import tf_logging as logging
 from syntaxnet import sentence_pb2
 from syntaxnet.ops import gen_parser_ops
 
-from runParsingServer import RunParsingServer
 import socket
 
 flags = tf.app.flags

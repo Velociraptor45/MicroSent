@@ -7,6 +7,7 @@ class ResponseServer:
 
     def openServer(self, message):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as soc:
+            soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             soc.bind((self.HOST, self.PORT))
             soc.listen(1)
             con, addr = soc.accept()
@@ -15,6 +16,8 @@ class ResponseServer:
                 byteMessage = bytes(message, 'utf-8')
                 print("sending message: {}".format(message))
                 con.sendall(byteMessage)
+                con.close()
+            soc.close()
 
 
 if __name__ == '__main__':
