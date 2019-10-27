@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,7 +31,7 @@ namespace MicroSent.Models.Network
                 {
                     using (NetworkStream stream = connection.GetStream())
                     {
-                        Console.WriteLine("Connected to sending stream");
+                        Console.WriteLine($"Connected to 127:0.0.1:{Port} (sending stream)");
                         sendMessageToServer(sentence, stream);
 
                         if(stream.Read(serverAnswere, 0, serverAnswere.Length) > 0)
@@ -38,6 +39,7 @@ namespace MicroSent.Models.Network
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Server response: OK");
                             Console.ResetColor();
+                            Console.WriteLine($"Closing connection to 127:0.0.1:{Port}");
                             break;
                         }
 
@@ -73,10 +75,13 @@ namespace MicroSent.Models.Network
                             if (length == 0)
                                 continue;
 
-                            Console.WriteLine("Connected to receiving stream");
+                            Console.WriteLine($"Connected to 127:0.0.1:{Port} (receiving stream)");
+                            
                             byte[] incommingData = new byte[length];
                             Array.Copy(serverAnswere, 0, incommingData, 0, length);
                             string clientMessage = Encoding.ASCII.GetString(incommingData);
+                            
+                            Console.WriteLine($"Closing connection to 127:0.0.1:{Port}");
                             return clientMessage;
                         }
                     }
@@ -96,7 +101,7 @@ namespace MicroSent.Models.Network
             byte[] byteMessage = Encoding.UTF8.GetBytes(message);
             try
             {
-                Console.WriteLine("Sending message");
+                Console.WriteLine("Sending message to server");
                 if (stream.CanWrite)
                 {
                     stream.Write(byteMessage, 0, byteMessage.Length);

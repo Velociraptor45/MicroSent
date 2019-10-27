@@ -72,8 +72,13 @@ namespace MicroSent.Controllers
                 allTweets.Add(tw);
             }
 
-            foreach (Tweet tweet in allTweets)//.Where(t => t.fullText.Contains("and don't want you to die")))
+            foreach (Tweet tweet in allTweets.Skip(70))//.Where(t => t.fullText.Contains("and don't want you to die")))
             {
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                Console.WriteLine("###########################################################################################################");
+                Console.WriteLine($"PROCESSING TWEET {allTweets.IndexOf(tweet) + 1}/{allTweets.Count}");
+                Console.ResetColor();
+
                 tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
                 
                 //////////////////////////////////////////////////////////////
@@ -119,8 +124,7 @@ namespace MicroSent.Controllers
                         await serverAnswere;
                         JObject treeJSON = JObject.Parse(serverAnswere.Result);
 
-                        parsedTokens.Add(treeJSON.Value<JArray>("tokens"));
-                        Console.WriteLine(parsedTokens.Last());
+                        parsedTokens.Add(treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY));
                         posTagger.buildTreeFromGoogleParser(tweet, parsedTokens[i], i);
                     }
                 }
