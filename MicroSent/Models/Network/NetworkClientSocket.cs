@@ -1,5 +1,5 @@
-﻿using System;
-using System.Net;
+﻿using MicroSent.Models.Util;
+using System;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,38 +22,35 @@ namespace MicroSent.Models.Network
 
         public void sendStringToServer(string sentence)
         {
-            TcpClient connection = new TcpClient(HOST, Port);
+            TcpClient connection;
+            try
+            {
+                connection = new TcpClient(HOST, Port);
+            }
+            catch(SocketException e)
+            {
+                ConsolePrinter.printServerConnectionFailed(HOST, Port, e);
+                return;
+            }
+
             byte[] serverAnswere = new byte[MaxRespondeSize];
 
             while (true)
             {
-                try
+                using (NetworkStream stream = connection.GetStream())
                 {
-                    using (NetworkStream stream = connection.GetStream())
+                    ConsolePrinter.printConnectionEstablished(HOST, Port, true);
+                    sendMessageToServer(sentence, stream);
+
+                    if(stream.Read(serverAnswere, 0, serverAnswere.Length) > 0)
                     {
-                        Console.WriteLine($"Connected to 127:0.0.1:{Port} (sending stream)");
-                        sendMessageToServer(sentence, stream);
-
-                        if(stream.Read(serverAnswere, 0, serverAnswere.Length) > 0)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine("Server response: OK");
-                            Console.ResetColor();
-                            Console.WriteLine($"Closing connection to 127:0.0.1:{Port}");
-                            break;
-                        }
-
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("No server response - will try again");
-                        Console.ResetColor();
-                        continue;
+                        ConsolePrinter.printServerResponseOK();
+                        ConsolePrinter.printConnectionClosed(HOST, Port);
+                        break;
                     }
-                }
-                catch (Exception e)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"Exception occured wile sending message:\n{e.StackTrace}");
-                    Console.ResetColor();
+
+                    ConsolePrinter.printNoServerResponse();
+                    continue;
                 }
             }
         }
@@ -64,34 +61,33 @@ namespace MicroSent.Models.Network
             {
                 while (true)
                 {
-                    TcpClient connection = new TcpClient(HOST, Port);
-                    byte[] serverAnswere = new byte[MaxRespondeSize];
-
+                    TcpClient connection;
                     try
                     {
-                        using (NetworkStream stream = connection.GetStream())
-                        {
-                            int length = stream.Read(serverAnswere, 0, serverAnswere.Length);
-                            if (length == 0)
-                                continue;
-
-                            Console.WriteLine($"Connected to 127:0.0.1:{Port} (receiving stream)");
-                            
-                            byte[] incommingData = new byte[length];
-                            Array.Copy(serverAnswere, 0, incommingData, 0, length);
-                            string clientMessage = Encoding.ASCII.GetString(incommingData);
-                            
-                            Console.WriteLine($"Closing connection to 127:0.0.1:{Port}");
-                            return clientMessage;
-                        }
+                        connection = new TcpClient(HOST, Port);
                     }
-                    catch (Exception e)
+                    catch (SocketException e)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"Exception occured wile sending message:\n{e.StackTrace}");
-                        Console.ResetColor();
+                        ConsolePrinter.printServerConnectionFailed(HOST, Port, e);
+                        return null;
                     }
-                    return null;
+                    byte[] serverAnswere = new byte[MaxRespondeSize];
+
+                    using (NetworkStream stream = connection.GetStream())
+                    {
+                        int length = stream.Read(serverAnswere, 0, serverAnswere.Length);
+                        if (length == 0)
+                            continue;
+
+                        ConsolePrinter.printConnectionEstablished(HOST, Port, false);
+
+                        byte[] incommingData = new byte[length];
+                        Array.Copy(serverAnswere, 0, incommingData, 0, length);
+                        string clientMessage = Encoding.ASCII.GetString(incommingData);
+
+                        ConsolePrinter.printConnectionClosed(HOST, Port);
+                        return clientMessage;
+                    }
                 }
             });
         }
@@ -101,18 +97,16 @@ namespace MicroSent.Models.Network
             byte[] byteMessage = Encoding.UTF8.GetBytes(message);
             try
             {
-                Console.WriteLine("Sending message to server");
+                ConsolePrinter.printSendingMessage(HOST, Port);
                 if (stream.CanWrite)
                 {
                     stream.Write(byteMessage, 0, byteMessage.Length);
                 }
-                Console.WriteLine("Message successfully sent");
+                ConsolePrinter.printMessageSuccessfullySent(HOST, Port);
             }
             catch(Exception e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Exception occured wile sending message:\n{e.StackTrace}");
-                Console.ResetColor();
+                ConsolePrinter.printMessageSendingFailed(HOST, Port, e);
             }
         }
     }

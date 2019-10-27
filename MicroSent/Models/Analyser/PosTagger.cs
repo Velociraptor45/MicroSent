@@ -1,5 +1,6 @@
 ﻿using MicroSent.Models.Constants;
 using MicroSent.Models.Enums;
+using MicroSent.Models.Util;
 using Newtonsoft.Json.Linq;
 using OpenNLP.Tools.Parser;
 using OpenNLP.Tools.PosTagger;
@@ -98,9 +99,7 @@ namespace MicroSent.Models.Analyser
                         if (currentJTokenText + nextJTokenWord == thisSentenceTokenWord || $"{currentJTokenText}'{nextJTokenWord}" == thisSentenceTokenWord)
                         {
                             removeTokens(currentTokenIndex + 1, deleteUnitilThisIndex, tokens);
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine($"Corrected sentence: {tweet.getFullSentence(sentenceIndex)}");
-                            Console.ResetColor();
+                            ConsolePrinter.printCorrectedGoogleParsing(tweet.getFullSentence(sentenceIndex));
                             break;
                         }
                         currentJTokenText += nextJTokenWord;

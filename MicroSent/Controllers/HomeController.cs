@@ -5,6 +5,7 @@ using MicroSent.Models.Constants;
 using MicroSent.Models.Network;
 using MicroSent.Models.Test;
 using MicroSent.Models.TwitterConnection;
+using MicroSent.Models.Util;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -72,12 +73,9 @@ namespace MicroSent.Controllers
                 allTweets.Add(tw);
             }
 
-            foreach (Tweet tweet in allTweets.Skip(70))//.Where(t => t.fullText.Contains("and don't want you to die")))
+            foreach (Tweet tweet in allTweets)
             {
-                Console.ForegroundColor = ConsoleColor.DarkYellow;
-                Console.WriteLine("###########################################################################################################");
-                Console.WriteLine($"PROCESSING TWEET {allTweets.IndexOf(tweet) + 1}/{allTweets.Count}");
-                Console.ResetColor();
+                ConsolePrinter.printAnalysisStart(allTweets, tweet);
 
                 tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
                 
@@ -184,23 +182,11 @@ namespace MicroSent.Controllers
         {
             foreach (Tweet tweet in allTweets)
             {
-                Console.WriteLine("_______________________________________________________________");
-                Console.WriteLine($"https://twitter.com/{tweet.userScreenName}/status/{tweet.statusID}");
-                Console.WriteLine(tweet.fullText);
-                Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
-                //var tokensPositiv = tweet.allTokens.Where(t => t.wordRating * t.negationRating > 0);
-                foreach (Token token in tweet.sentences.SelectMany(s => s).Where(t => t.totalRating > 0))
-                {
-                    Console.Write(token.text + $"({token.totalRating}), ");
-                }
-                Console.WriteLine("");
-                Console.WriteLine($"Negative Rating: {tweet.negativeRating}");
-                //var tokensNegative = tweet.allTokens.Where(t => t.wordRating * t.negationRating < 0);
-                foreach (Token token in tweet.sentences.SelectMany(s => s).Where(t => t.totalRating < 0))
-                {
-                    Console.Write(token.text + $"({token.totalRating}), ");
-                }
-                Console.WriteLine("");
+                ConsolePrinter.printTweetAnalysisHead(tweet);
+                ConsolePrinter.printPositiveRating(tweet);
+                ConsolePrinter.printEmptyLine();
+                ConsolePrinter.printNegativeRating(tweet);
+                ConsolePrinter.printEmptyLine();
             }
         }
     }
