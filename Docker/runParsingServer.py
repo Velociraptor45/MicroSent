@@ -15,6 +15,7 @@ class RunParsingServer:
         print("starting to listen on {}:{}".format(self.HOST, self.PORT))
         receivedSentence = None
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as soc:
+            soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             soc.bind((self.HOST, self.PORT))
             soc.listen(1)
             while True:
