@@ -111,19 +111,18 @@ namespace MicroSent.Controllers
                 //tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(tweet, allTokens);
 
-                List<JArray> parsedTokens = new List<JArray>();
                 if (useGoogleParser)
                 {
                     for (int i = 0; i < tweet.sentences.Count; i++)
                     {
-                        networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i)/*.Replace("'", "\'").Replace("\"", "\\\"")*/);
+                        networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
                         Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
 
                         await serverAnswere;
                         JObject treeJSON = JObject.Parse(serverAnswere.Result);
 
-                        parsedTokens.Add(treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY));
-                        posTagger.buildTreeFromGoogleParser(tweet, parsedTokens[i], i);
+                        JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
+                        posTagger.buildTreeFromGoogleParser(tweet, tokens, i);
                     }
                 }
                 else
