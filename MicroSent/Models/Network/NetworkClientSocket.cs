@@ -13,11 +13,12 @@ namespace MicroSent.Models.Network
         private readonly int Port;
         private int MaxRespondeSize = 4096;
 
-        private const string HOST = "localhost";
+        private readonly string Host;
 
-        public NetworkClientSocket(int port)
+        public NetworkClientSocket(int port, string host)
         {
             this.Port = port;
+            this.Host = host;
         }
 
         public void sendStringToServer(string sentence)
@@ -25,11 +26,11 @@ namespace MicroSent.Models.Network
             TcpClient connection;
             try
             {
-                connection = new TcpClient(HOST, Port);
+                connection = new TcpClient(Host, Port);
             }
             catch(SocketException e)
             {
-                ConsolePrinter.printServerConnectionFailed(HOST, Port, e);
+                ConsolePrinter.printServerConnectionFailed(Host, Port, e);
                 return;
             }
 
@@ -39,13 +40,13 @@ namespace MicroSent.Models.Network
             {
                 using (NetworkStream stream = connection.GetStream())
                 {
-                    ConsolePrinter.printConnectionEstablished(HOST, Port, true);
+                    ConsolePrinter.printConnectionEstablished(Host, Port, true);
                     sendMessageToServer(sentence, stream);
 
                     if(stream.Read(serverAnswere, 0, serverAnswere.Length) > 0)
                     {
                         ConsolePrinter.printServerResponseOK();
-                        ConsolePrinter.printConnectionClosed(HOST, Port);
+                        ConsolePrinter.printConnectionClosed(Host, Port);
                         break;
                     }
 
@@ -64,11 +65,11 @@ namespace MicroSent.Models.Network
                     TcpClient connection;
                     try
                     {
-                        connection = new TcpClient(HOST, Port);
+                        connection = new TcpClient(Host, Port);
                     }
                     catch (SocketException e)
                     {
-                        ConsolePrinter.printServerConnectionFailed(HOST, Port, e);
+                        ConsolePrinter.printServerConnectionFailed(Host, Port, e);
                         return null;
                     }
                     byte[] serverAnswere = new byte[MaxRespondeSize];
@@ -79,13 +80,13 @@ namespace MicroSent.Models.Network
                         if (length == 0)
                             continue;
 
-                        ConsolePrinter.printConnectionEstablished(HOST, Port, false);
+                        ConsolePrinter.printConnectionEstablished(Host, Port, false);
 
                         byte[] incommingData = new byte[length];
                         Array.Copy(serverAnswere, 0, incommingData, 0, length);
                         string clientMessage = Encoding.ASCII.GetString(incommingData);
 
-                        ConsolePrinter.printConnectionClosed(HOST, Port);
+                        ConsolePrinter.printConnectionClosed(Host, Port);
                         return clientMessage;
                     }
                 }
@@ -97,16 +98,16 @@ namespace MicroSent.Models.Network
             byte[] byteMessage = Encoding.UTF8.GetBytes(message);
             try
             {
-                ConsolePrinter.printSendingMessage(HOST, Port);
+                ConsolePrinter.printSendingMessage(Host, Port);
                 if (stream.CanWrite)
                 {
                     stream.Write(byteMessage, 0, byteMessage.Length);
                 }
-                ConsolePrinter.printMessageSuccessfullySent(HOST, Port);
+                ConsolePrinter.printMessageSuccessfullySent(Host, Port);
             }
             catch(Exception e)
             {
-                ConsolePrinter.printMessageSendingFailed(HOST, Port, e);
+                ConsolePrinter.printMessageSendingFailed(Host, Port, e);
             }
         }
     }
