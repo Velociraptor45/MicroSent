@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MicroSent.Models.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -169,9 +170,7 @@ namespace MicroSent.Models.Analyser
                         }
                         else
                         {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine($"Couldn't find token in sentence {sentenceIndex} with index {tokenSentenceIndexToNegate}");
-                            Console.ResetColor();
+                            ConsolePrinter.printSentenceNotFoundMessage(sentenceIndex, tokenSentenceIndexToNegate);
                         }
                     }
                 }

@@ -35,5 +35,10 @@ namespace MicroSent.Models
         {
             correspondingToken = token;
         }
+
+        public void setParent(Node parent)
+        {
+            this.parent = parent;
+        }
     }
 }

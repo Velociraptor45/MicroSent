@@ -2,10 +2,13 @@
 using MicroSent.Models;
 using MicroSent.Models.Analyser;
 using MicroSent.Models.Constants;
+using MicroSent.Models.Network;
 using MicroSent.Models.Test;
 using MicroSent.Models.TwitterConnection;
+using MicroSent.Models.Util;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,9 +28,16 @@ namespace MicroSent.Controllers
         private SentimentCalculator sentimentCalculator;
         private Preprocessor preprocessor;
 
+        private NetworkClientSocket networkSendClientSocket;
+        private NetworkClientSocket networkReceiveClientSocket;
+
         private Tester tester;
 
         private bool testing = true;
+        private bool useGoogleParser = true;
+
+        private int NetworkSendClientPort = 6048;
+        private int NetworkReceiveClientPort = 6050;
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
@@ -39,6 +49,9 @@ namespace MicroSent.Controllers
             wordRater = new WordRater();
             sentimentCalculator = new SentimentCalculator();
             preprocessor = new Preprocessor();
+
+            networkSendClientSocket = new NetworkClientSocket(NetworkSendClientPort);
+            networkReceiveClientSocket = new NetworkClientSocket(NetworkReceiveClientPort);
 
             tester = new Tester();
         }
@@ -60,8 +73,10 @@ namespace MicroSent.Controllers
                 allTweets.Add(tw);
             }
 
-            foreach (Tweet tweet in allTweets)//.Where(t => t.fullText.Contains("and don't want you to die")))
+            foreach (Tweet tweet in allTweets)
             {
+                ConsolePrinter.printAnalysisStart(allTweets, tweet);
+
                 tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
                 
                 //////////////////////////////////////////////////////////////
@@ -95,8 +110,27 @@ namespace MicroSent.Controllers
                 tweetAnalyser.analyseFirstEndHashtagPosition(allTokens, tweet);
                 //tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
                 posTagger.cutIntoSentences(tweet, allTokens);
-                posTagger.parseTweet(tweet);
-                tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
+
+                if (useGoogleParser)
+                {
+                    for (int i = 0; i < tweet.sentences.Count; i++)
+                    {
+                        networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
+                        Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
+
+                        await serverAnswere;
+                        JObject treeJSON = JObject.Parse(serverAnswere.Result);
+
+                        JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
+                        posTagger.buildTreeFromGoogleParser(tweet, tokens, i);
+                    }
+                }
+                else
+                {
+                    posTagger.parseTweet(tweet);
+                }
+
+                //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
                 tweetAnalyser.applyEndHashtagNegation(tweet);
 
                 foreach (List<Token> sentence in tweet.sentences)
@@ -147,23 +181,11 @@ namespace MicroSent.Controllers
         {
             foreach (Tweet tweet in allTweets)
             {
-                Console.WriteLine("_______________________________________________________________");
-                Console.WriteLine($"https://twitter.com/{tweet.userScreenName}/status/{tweet.statusID}");
-                Console.WriteLine(tweet.fullText);
-                Console.WriteLine($"Positive Rating: {tweet.positiveRating}");
-                //var tokensPositiv = tweet.allTokens.Where(t => t.wordRating * t.negationRating > 0);
-                foreach (Token token in tweet.sentences.SelectMany(s => s).Where(t => t.totalRating > 0))
-                {
-                    Console.Write(token.text + $"({token.totalRating}), ");
-                }
-                Console.WriteLine("");
-                Console.WriteLine($"Negative Rating: {tweet.negativeRating}");
-                //var tokensNegative = tweet.allTokens.Where(t => t.wordRating * t.negationRating < 0);
-                foreach (Token token in tweet.sentences.SelectMany(s => s).Where(t => t.totalRating < 0))
-                {
-                    Console.Write(token.text + $"({token.totalRating}), ");
-                }
-                Console.WriteLine("");
+                ConsolePrinter.printTweetAnalysisHead(tweet);
+                ConsolePrinter.printPositiveRating(tweet);
+                ConsolePrinter.printEmptyLine();
+                ConsolePrinter.printNegativeRating(tweet);
+                ConsolePrinter.printEmptyLine();
             }
         }
     }
