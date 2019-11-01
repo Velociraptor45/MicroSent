@@ -33,11 +33,17 @@ namespace MicroSent.Controllers
 
         private Tester tester;
 
+        private const int NetworkSendClientPort = 6048;
+        private const int NetworkReceiveClientPort = 6050;
+        private const string NetworkClientHost = "localhost";
+
+        /////////////////////////////////////////////////////////////////////////////////////
+        /// CONFIGURATION
+        
         private bool testing = true;
         private bool useGoogleParser = true;
 
-        private int NetworkSendClientPort = 6048;
-        private int NetworkReceiveClientPort = 6050;
+        /////////////////////////////////////////////////////////////////////////////////////
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
@@ -50,8 +56,8 @@ namespace MicroSent.Controllers
             sentimentCalculator = new SentimentCalculator();
             preprocessor = new Preprocessor();
 
-            networkSendClientSocket = new NetworkClientSocket(NetworkSendClientPort);
-            networkReceiveClientSocket = new NetworkClientSocket(NetworkReceiveClientPort);
+            networkSendClientSocket = new NetworkClientSocket(NetworkSendClientPort, NetworkClientHost);
+            networkReceiveClientSocket = new NetworkClientSocket(NetworkReceiveClientPort, NetworkClientHost);
 
             tester = new Tester();
         }
