@@ -1,4 +1,5 @@
 ﻿using MicroSent.Models.Constants;
+﻿using MicroSent.Models.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -255,11 +256,11 @@ namespace MicroSent.Models.Analyser
         {
             string hashtag = token.text;
 
-            Console.WriteLine("----------------- start analysis --------------------------");
-            Console.WriteLine("Forward parsing:");
+            ConsolePrinter.startHashtagParsing();
+            ConsolePrinter.startForwardHashtagParsing();
             Tuple<bool, List<string>> forwardTuple = parseHashtagForward(hashtag);
 
-            Console.WriteLine("Backward parsing:");
+            ConsolePrinter.startBackwardHashtagParsing();
             Tuple<bool, List<string>> backwardTuple = parseHashtagBackwards(hashtag);
 
             setBetterSubTokenList(token, forwardTuple, backwardTuple);
@@ -314,14 +315,14 @@ namespace MicroSent.Models.Analyser
             {
                 if (currentWord.Length == 0)
                 {
-                    Console.WriteLine($"Rest: {restToAnalyse}");
+                    ConsolePrinter.printRestOfHashtagAnalysis(restToAnalyse);
                     lastBackwardProcessedWordMakesSense = false;
                     break;
                 }
 
                 if (hunspell.Spell(currentWord))
                 {
-                    Console.WriteLine($"{currentWord} is part of {hashtag}");
+                    ConsolePrinter.printFoundWordInHashtagAnalysis(currentWord, hashtag);
                     backwardParsingList.Insert(0, currentWord);
                     restToAnalyse = restToAnalyse.Substring(0, restToAnalyse.Length - currentWord.Length);
                     currentWord = restToAnalyse;
@@ -345,14 +346,14 @@ namespace MicroSent.Models.Analyser
             {
                 if (currentWord.Length == 0)
                 {
-                    Console.WriteLine($"Rest: {restToAnalyse}");
+                    ConsolePrinter.printRestOfHashtagAnalysis(restToAnalyse);
                     lastForwardProcessedWordMakesSense = false;
                     break;
                 }
 
                 if (hunspell.Spell(currentWord))
                 {
-                    Console.WriteLine($"{currentWord} is part of {hashtag}");
+                    ConsolePrinter.printFoundWordInHashtagAnalysis(currentWord, hashtag);
                     forwardParsingList.Add(currentWord);
                     restToAnalyse = restToAnalyse.Substring(currentWord.Length);
                     currentWord = restToAnalyse;

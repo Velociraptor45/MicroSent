@@ -1,4 +1,7 @@
-﻿using MicroSent.Models.Enums;
+﻿using MicroSent.Models.Constants;
+using MicroSent.Models.Enums;
+using MicroSent.Models.Util;
+using Newtonsoft.Json.Linq;
 using OpenNLP.Tools.Parser;
 using OpenNLP.Tools.PosTagger;
 using System;
@@ -50,6 +53,78 @@ namespace MicroSent.Models.Analyser
                     continue;
                 }
                 tokenInSentenceIndex++;
+            }
+        }
+
+        public void buildTreeFromGoogleParser(Tweet tweet, JArray tokens, int sentenceIndex)
+        {
+            List<Node> allNodes = new List<Node>();
+            for(int i = 0; i < tokens.Count; i++)
+            {
+                removeWronglyParsedTokens(i, tweet, tokens, sentenceIndex);
+                
+                Node node = new Node(tweet.sentences[sentenceIndex][i], null);
+                allNodes.Add(node);
+            }
+
+            for(int i = 0; i < tokens.Count; i++)
+            {
+                JToken token = tokens[i];
+                int parentIndex = token.Value<int>(GoogleParserConstants.TOKEN_HEAD);
+                if(parentIndex != -1)
+                    allNodes[i].setParent(allNodes[parentIndex]);
+            }
+
+            tweet.parseTrees.Add(allNodes.Where(n => n.parent == null).First());
+        }
+
+        private void removeWronglyParsedTokens(int currentTokenIndex, Tweet tweet, JArray tokens, int sentenceIndex)
+        {
+            JToken token = tokens[currentTokenIndex];
+            if (currentTokenIndex < tokens.Count - 1)
+            {
+                string thisJTokenWord = token.Value<string>(GoogleParserConstants.TOKEN_WORD);
+                string thisSentenceTokenWord = tweet.sentences[sentenceIndex][currentTokenIndex].text;
+                if (thisJTokenWord != thisSentenceTokenWord && ($"'{thisJTokenWord}" != thisSentenceTokenWord || !(thisJTokenWord == "nt" && thisSentenceTokenWord == "n't")))
+                {
+                    int deleteUnitilThisIndex = currentTokenIndex + 1;
+                    string currentJTokenText = thisJTokenWord;
+                    while (deleteUnitilThisIndex < tokens.Count)
+                    {
+                        string nextJTokenWord = tokens[deleteUnitilThisIndex].Value<string>(GoogleParserConstants.TOKEN_WORD);
+                        translateGoogleAbbreviation(ref nextJTokenWord);
+
+                        if (currentJTokenText + nextJTokenWord == thisSentenceTokenWord || $"{currentJTokenText}'{nextJTokenWord}" == thisSentenceTokenWord)
+                        {
+                            removeTokens(currentTokenIndex + 1, deleteUnitilThisIndex, tokens);
+                            ConsolePrinter.printCorrectedGoogleParsing(tweet.getFullSentence(sentenceIndex));
+                            break;
+                        }
+                        currentJTokenText += nextJTokenWord;
+                        deleteUnitilThisIndex++;
+                    }
+                }
+            }
+        }
+
+        private void translateGoogleAbbreviation(ref string word)
+        {
+            switch (word)
+            {
+                case GoogleParserConstants.RIGHT_ROUND_BRACKED:
+                    word = ")";
+                    break;
+                case GoogleParserConstants.LEFT_ROUND_BRACKED:
+                    word = "(";
+                    break;
+            }
+        }
+
+        private void removeTokens(int firstIndexToDelete, int lastIndexToDelete, JArray tokens)
+        {
+            for(int i = lastIndexToDelete; i >= firstIndexToDelete; i--)
+            {
+                tokens.RemoveAt(i);
             }
         }
 
