@@ -71,8 +71,11 @@ namespace MicroSent.Models.Analyser
             {
                 JToken token = tokens[i];
                 int parentIndex = token.Value<int>(GoogleParserConstants.TOKEN_HEAD);
-                if(parentIndex != -1)
+                if (parentIndex != -1)
+                {
                     allNodes[i].setParent(allNodes[parentIndex]);
+                    allNodes[parentIndex].addChild(allNodes[i]);
+                }
             }
 
             tweet.parseTrees.Add(allNodes.Where(n => n.parent == null).First());
