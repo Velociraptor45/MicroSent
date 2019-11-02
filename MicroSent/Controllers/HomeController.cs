@@ -9,6 +9,7 @@ using MicroSent.Models.Util;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using OpenNLP.Tools.Parser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +28,7 @@ namespace MicroSent.Controllers
         private PosTagger posTagger;
         private SentimentCalculator sentimentCalculator;
         private Preprocessor preprocessor;
-        //private ParseTreeAnalyser parseTreeAnalyser;
+        private ParseTreeAnalyser parseTreeAnalyser;
 
         private NetworkClientSocket networkSendClientSocket;
         private NetworkClientSocket networkReceiveClientSocket;
@@ -47,8 +48,8 @@ namespace MicroSent.Controllers
         /// CONFIGURATION
 
         private bool testing = true;
-        private bool useGoogleParser = true;
-        private bool useSerializedData = true;
+        private bool useGoogleParser = false;
+        private bool useSerializedData = false;
         private bool serializeData = false;
 
         /////////////////////////////////////////////////////////////////////////////////////
@@ -63,7 +64,7 @@ namespace MicroSent.Controllers
             wordRater = new WordRater();
             sentimentCalculator = new SentimentCalculator();
             preprocessor = new Preprocessor();
-            //parseTreeAnalyser = new ParseTreeAnalyser();
+            parseTreeAnalyser = new ParseTreeAnalyser();
 
             networkSendClientSocket = new NetworkClientSocket(NetworkSendClientPort, NetworkClientHost);
             networkReceiveClientSocket = new NetworkClientSocket(NetworkReceiveClientPort, NetworkClientHost);
@@ -98,7 +99,7 @@ namespace MicroSent.Controllers
             foreach (Tweet tweet in allTweets)
             {
                 ConsolePrinter.printAnalysisStart(allTweets, tweet);
-                if (!useSerializedData)
+                if (!useSerializedData || !useGoogleParser)
                 {
                     tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
 
@@ -144,12 +145,17 @@ namespace MicroSent.Controllers
                             JObject treeJSON = JObject.Parse(serverAnswere.Result);
 
                             JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
-                            posTagger.buildTreeFromGoogleParser(tweet, tokens, i);
+                            parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
                         }
                     }
                     else
                     {
-                        posTagger.parseTweet(tweet);
+                        foreach (var sentence in tweet.sentences)
+                        {
+                            Parse tree = posTagger.parseTweet(sentence);
+                            Node rootNode = parseTreeAnalyser.translateToNodeTree(tree, tweet);
+                            tweet.parseTrees.Add(rootNode);
+                        }
                     }
                 }
 
