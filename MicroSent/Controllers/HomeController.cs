@@ -27,9 +27,13 @@ namespace MicroSent.Controllers
         private PosTagger posTagger;
         private SentimentCalculator sentimentCalculator;
         private Preprocessor preprocessor;
+        //private ParseTreeAnalyser parseTreeAnalyser;
 
         private NetworkClientSocket networkSendClientSocket;
         private NetworkClientSocket networkReceiveClientSocket;
+
+        private Serializer serializer;
+        private Deserializer deserializer;
 
         private Tester tester;
 
@@ -37,11 +41,15 @@ namespace MicroSent.Controllers
         private const int NetworkReceiveClientPort = 6050;
         private const string NetworkClientHost = "localhost";
 
+        private const string SerializedTweetsPath = "data/testtweets.bin";
+
         /////////////////////////////////////////////////////////////////////////////////////
         /// CONFIGURATION
-        
+
         private bool testing = true;
         private bool useGoogleParser = true;
+        private bool useSerializedData = true;
+        private bool serializeData = false;
 
         /////////////////////////////////////////////////////////////////////////////////////
 
@@ -55,9 +63,13 @@ namespace MicroSent.Controllers
             wordRater = new WordRater();
             sentimentCalculator = new SentimentCalculator();
             preprocessor = new Preprocessor();
+            //parseTreeAnalyser = new ParseTreeAnalyser();
 
             networkSendClientSocket = new NetworkClientSocket(NetworkSendClientPort, NetworkClientHost);
             networkReceiveClientSocket = new NetworkClientSocket(NetworkReceiveClientPort, NetworkClientHost);
+
+            serializer = new Serializer();
+            deserializer = new Deserializer();
 
             tester = new Tester();
         }
@@ -65,10 +77,13 @@ namespace MicroSent.Controllers
         public async Task<IActionResult> Index()
         {
             List<Tweet> allTweets = new List<Tweet>();
-
-            if(testing)
+            if (useSerializedData)
             {
-                allTweets = tester.getTestTweets();
+                allTweets = deserializer.deserializeTweets(SerializedTweetsPath);
+            }
+            else if (testing)
+            {
+                allTweets = tester.getTestTweets().ToList();
             }
             else
             {
@@ -83,57 +98,59 @@ namespace MicroSent.Controllers
             foreach (Tweet tweet in allTweets)
             {
                 ConsolePrinter.printAnalysisStart(allTweets, tweet);
-
-                tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
-
-                //////////////////////////////////////////////////////////////
-                /// TEST AREA
-                //if (tweet.fullText.Contains("That didn't work out very well.")) //(tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
-                if (tweet.fullText.Contains("and don't want you to die"))
+                if (!useSerializedData)
                 {
-                    int a = 0;
-                }
-                //////////////////////////////////////////////////////////////
+                    tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
 
-                List<Token> allTokens = tokenizer.splitIntoTokens(tweet);
-                tweet.tokenCount = allTokens.Count;
-
-                foreach (Token token in allTokens)
-                {
-                    //single Token analysis
-
-                    tokenAnalyser.analyseTokenType(token);
-                    if (token.isHashtag)
-                        tokenAnalyser.splitHashtag(token);
-                    tokenAnalyser.checkForUppercase(token);
-                    tokenAnalyser.convertToLowercase(token);
-                    if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
+                    //////////////////////////////////////////////////////////////
+                    /// TEST AREA
+                    //if (tweet.fullText.Contains("That didn't work out very well.")) //(tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
+                    if (tweet.fullText.Contains("and don't want you to die"))
                     {
-                        tokenAnalyser.removeRepeatedLetters(token);
+                        int a = 0;
                     }
-                }
+                    //////////////////////////////////////////////////////////////
 
-                //single tweet analysis
-                tweetAnalyser.analyseFirstEndHashtagPosition(allTokens, tweet);
-                posTagger.cutIntoSentences(tweet, allTokens);
+                    List<Token> allTokens = tokenizer.splitIntoTokens(tweet);
+                    tweet.tokenCount = allTokens.Count;
 
-                if (useGoogleParser)
-                {
-                    for (int i = 0; i < tweet.sentences.Count; i++)
+                    foreach (Token token in allTokens)
                     {
-                        networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
-                        Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
+                        //single Token analysis
 
-                        await serverAnswere;
-                        JObject treeJSON = JObject.Parse(serverAnswere.Result);
-
-                        JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
-                        posTagger.buildTreeFromGoogleParser(tweet, tokens, i);
+                        tokenAnalyser.analyseTokenType(token);
+                        if (token.isHashtag)
+                            tokenAnalyser.splitHashtag(token);
+                        tokenAnalyser.checkForUppercase(token);
+                        tokenAnalyser.convertToLowercase(token);
+                        if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
+                        {
+                            tokenAnalyser.removeRepeatedLetters(token);
+                        }
                     }
-                }
-                else
-                {
-                    posTagger.parseTweet(tweet);
+
+                    //single tweet analysis
+                    tweetAnalyser.analyseFirstEndHashtagPosition(allTokens, tweet);
+                    posTagger.cutIntoSentences(tweet, allTokens);
+
+                    if (useGoogleParser)
+                    {
+                        for (int i = 0; i < tweet.sentences.Count; i++)
+                        {
+                            networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
+                            Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
+
+                            await serverAnswere;
+                            JObject treeJSON = JObject.Parse(serverAnswere.Result);
+
+                            JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
+                            posTagger.buildTreeFromGoogleParser(tweet, tokens, i);
+                        }
+                    }
+                    else
+                    {
+                        posTagger.parseTweet(tweet);
+                    }
                 }
 
                 //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
@@ -141,20 +158,14 @@ namespace MicroSent.Controllers
 
                 tweetAnalyser.applyEndHashtagNegation(tweet);
 
-                foreach (List<Token> sentence in tweet.sentences)
-                {
-                    foreach (Token token in sentence)
-                    {
-                        //single Token analysis
-                        if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
-                        {
-                            token.wordRating = wordRater.getWordRating(token);
-                        }
-                    }
-                }
+                applyRating(tweet);
 
                 sentimentCalculator.calculateFinalSentiment(tweet);
             }
+
+            if(serializeData)
+                serializer.serializeTweets(allTweets, SerializedTweetsPath);
+
 
             if (testing)
                 tester.checkTweetRating(allTweets);
@@ -183,6 +194,21 @@ namespace MicroSent.Controllers
             }
 
             return allTweets;
+        }
+
+        private void applyRating(Tweet tweet)
+        {
+            foreach (List<Token> sentence in tweet.sentences)
+            {
+                foreach (Token token in sentence)
+                {
+                    //single Token analysis
+                    if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
+                    {
+                        token.wordRating = wordRater.getWordRating(token);
+                    }
+                }
+            }
         }
 
         private void printOnConsole(List<Tweet> allTweets)

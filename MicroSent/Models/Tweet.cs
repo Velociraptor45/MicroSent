@@ -1,9 +1,10 @@
-﻿using OpenNLP.Tools.Parser;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace MicroSent.Models
 {
+    [Serializable]
     public class Tweet
     {
         public string fullText;

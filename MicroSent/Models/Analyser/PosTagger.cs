@@ -161,7 +161,6 @@ namespace MicroSent.Models.Analyser
             var children = partialTree.GetChildren();
             if(children.Length == 1 && children.First().GetChildren().Length == 0)
             {
-                var firstChild = children.First();
                 Node node = new Node(tweet.getTokenByIndex(lastTokenId + 1), parentNode);
                 if(!Enum.TryParse(partialTree.Type, out PosLabels posLabel))
                 {
