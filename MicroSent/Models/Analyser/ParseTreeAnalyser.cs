@@ -14,8 +14,6 @@ namespace MicroSent.Models.Analyser
     {
         private Regex negationToken = new Regex(@"\bno(t|n-?)?\b|\bnever\b|\bn'?t\b");
 
-        private const float NegationRating = -1f; //TODO: constants
-
         public void applyGoogleParseTreeNegation(Tweet tweet)
         {
             for(int sentenceIndex = 0; sentenceIndex < tweet.sentences.Count; sentenceIndex++)
@@ -25,7 +23,7 @@ namespace MicroSent.Models.Analyser
 
                 foreach(Token token in tokensToNegate)
                 {
-                    token.negationRating *= NegationRating;
+                    token.negationRating *= RatingConstants.NEGATION;
                 }
             }
         }

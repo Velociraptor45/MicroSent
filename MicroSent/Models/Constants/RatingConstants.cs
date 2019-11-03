@@ -11,5 +11,7 @@
 
         public const float REPEATED_LETTER_MULTIPLIER = 1.4f;
         public const float UPPERCASE_MULTIPLIER = 1.4f;
+
+        public const float NEGATION = -1f;
     }
 }

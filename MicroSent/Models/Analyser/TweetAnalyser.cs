@@ -10,8 +10,6 @@ namespace MicroSent.Models.Analyser
     public class TweetAnalyser
     {
         private const string IronyString = "irony";
-
-        private const float NegationRating = -1f; //TODO: constants
         
         private Regex negationToken = new Regex(@"\bno(t|n-?)?\b|\bnever\b|\bn'?t\b");
         private Regex negationHashtagPart = new Regex(@"\bno(t|n)?\b|\bnever\b|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)nt\b");
@@ -171,7 +169,7 @@ namespace MicroSent.Models.Analyser
                         {
                             continue;
                         }
-                        tweet.getTokenByIndex(i).negationRating = NegationRating;
+                        tweet.getTokenByIndex(i).negationRating = RatingConstants.NEGATION;
                     }
                 }
             }
@@ -191,7 +189,7 @@ namespace MicroSent.Models.Analyser
                         Match match = negationHashtagPart.Match(subToken.text);
                         if (match.Success)
                         {
-                            token.negationRating = NegationRating;
+                            token.negationRating = RatingConstants.NEGATION;
                             break;
                         }
                     }
@@ -219,7 +217,7 @@ namespace MicroSent.Models.Analyser
                         Token token = sentenceTokens.Where(t => t.indexInSentence == tokenSentenceIndexToNegate).ToList().FirstOrDefault();
                         if (token.indexInTweet > -1)
                         {
-                            token.negationRating *= NegationRating;
+                            token.negationRating *= RatingConstants.NEGATION;
                         }
                         else
                         {
