@@ -48,8 +48,8 @@ namespace MicroSent.Controllers
         /// CONFIGURATION
 
         private bool testing = true;
-        private bool useGoogleParser = false;
-        private bool useSerializedData = false;
+        private bool useGoogleParser = true;
+        private bool useSerializedData = true;
         private bool serializeData = false;
 
         /////////////////////////////////////////////////////////////////////////////////////
@@ -159,6 +159,7 @@ namespace MicroSent.Controllers
                     }
                 }
 
+                //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
                 //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
                 tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
 

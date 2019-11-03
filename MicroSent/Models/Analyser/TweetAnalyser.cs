@@ -11,7 +11,7 @@ namespace MicroSent.Models.Analyser
     {
         private const string IronyString = "irony";
 
-        private const float NegationRating = -1f;
+        private const float NegationRating = -1f; //TODO: constants
         
         private Regex negationToken = new Regex(@"\bno(t|n-?)?\b|\bnever\b|\bn'?t\b");
         private Regex negationHashtagPart = new Regex(@"\bno(t|n)?\b|\bnever\b|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)nt\b");
