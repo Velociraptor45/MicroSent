@@ -1,3 +1,4 @@
+﻿using MicroSent.Models.Constants;
 ﻿using MicroSent.Models.Util;
 using System;
 using System.Collections.Generic;
@@ -8,20 +9,19 @@ namespace MicroSent.Models.Analyser
 {
     public class TokenAnalyser
     {
-        private const string Hashtag = "#";
-        private const string Mention = "@";
+        private Regex linkDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
+        private Regex puntuationDetection = new Regex(@"([\?!]+|\.+|,|:)");
+        private Regex sentenceStructureDetection = new Regex(@"(\(|\)|-)");
+        private Regex smileyDetection = new Regex(@"((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|:\s[\)\(])");
+        private Regex emoticonDetection = new Regex(@"\\U[a-f0-9]{4,8}");
+        private Regex laughingDetection = new Regex(@"a?(ha){2,}|i?(hi){2,}");
 
         private const string HunspellDataPath = @".\data\nhunspell\";
 
-        private Dictionary<string, string> abbreviations = new Dictionary<string, string>();
         private NHunspell.Hunspell hunspell;
 
         public TokenAnalyser()
         {
-            abbreviations.Add("r", "are");
-            abbreviations.Add("u", "you");
-            abbreviations.Add("y", "why"); // need papers for this
-
             hunspell = new NHunspell.Hunspell($"{HunspellDataPath}en_us.aff", $"{HunspellDataPath}en_us.dic");
         }
 
@@ -64,7 +64,7 @@ namespace MicroSent.Models.Analyser
         #region tokentype
         private bool checkForHashtag(Token token)
         {
-            if (token.text.StartsWith(Hashtag))
+            if (token.text.StartsWith(TokenPartConstants.TWITTER_HASHTAG))
             {
                 token.text = token.text.Remove(0, 1);
                 //analyseHashtag
@@ -75,7 +75,7 @@ namespace MicroSent.Models.Analyser
 
         private bool checkForMention(Token token)
         {
-            if (token.text.StartsWith(Mention))
+            if (token.text.StartsWith(TokenPartConstants.TWITTER_MENTION))
             {
                 token.text = token.text.Remove(0, 1);
                 return token.isMention = true;
@@ -85,8 +85,7 @@ namespace MicroSent.Models.Analyser
 
         private bool checkForLink(Token token)
         {
-            Regex linkRegex = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
-            MatchCollection linkMatches = linkRegex.Matches(token.text);
+            MatchCollection linkMatches = linkDetection.Matches(token.text);
 
             if (linkMatches.Count > 0)
             {
@@ -97,8 +96,7 @@ namespace MicroSent.Models.Analyser
 
         private bool checkForPunctuation(Token token)
         {
-            Regex puntuationRegex = new Regex(@"([\?!]+|\.+|,|:)");
-            MatchCollection punktuationMatches = puntuationRegex.Matches(token.text);
+            MatchCollection punktuationMatches = puntuationDetection.Matches(token.text);
 
             if (punktuationMatches.Count > 0)
             {
@@ -109,8 +107,7 @@ namespace MicroSent.Models.Analyser
 
         private bool checkForSentenceStructure(Token token)
         {
-            Regex sentenceStructureRegex = new Regex(@"(\(|\)|-)");
-            MatchCollection sentenceStructureMatches = sentenceStructureRegex.Matches(token.text);
+            MatchCollection sentenceStructureMatches = sentenceStructureDetection.Matches(token.text);
 
             if (sentenceStructureMatches.Count > 0)
             {
@@ -121,8 +118,7 @@ namespace MicroSent.Models.Analyser
 
         private bool checkForSmiley(Token token)
         {
-            Regex smileyRegex = new Regex(@"((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|:\s[\)\(])");
-            MatchCollection smileyMatches = smileyRegex.Matches(token.text);
+            MatchCollection smileyMatches = smileyDetection.Matches(token.text);
 
             if (smileyMatches.Count > 0)
             {
@@ -133,8 +129,7 @@ namespace MicroSent.Models.Analyser
 
         private bool checkForEmoticon(Token token)
         {
-            Regex emoticonRegex = new Regex(@"\\U[a-f0-9]{4,8}");
-            MatchCollection emoticonMatches = emoticonRegex.Matches(token.text);
+            MatchCollection emoticonMatches = emoticonDetection.Matches(token.text);
 
             if (emoticonMatches.Count > 0)
             {
@@ -145,12 +140,9 @@ namespace MicroSent.Models.Analyser
 
         private bool checkForLaughingExpression(Token token)
         {
-            Regex hahaRegex = new Regex(@"a?(ha){2,}");
-            Regex hihiRegex = new Regex(@"i?(hi){2,}");
-            MatchCollection hahaMatches = hahaRegex.Matches(token.text);
-            MatchCollection hihiMatches = hihiRegex.Matches(token.text);
+            MatchCollection laughingMatches = laughingDetection.Matches(token.text);
 
-            if (hahaMatches.Count > 0 || hihiMatches.Count > 0)
+            if (laughingMatches.Count > 0)
             {
                 return token.isLaughingExpression = true;
             }
@@ -160,7 +152,7 @@ namespace MicroSent.Models.Analyser
 
         public void checkForUppercase(Token token)
         {
-            if (token.text == "I")
+            if (token.text == (TokenPartConstants.LETTER_I).ToString())
                 return;
 
             foreach (char letter in token.text)

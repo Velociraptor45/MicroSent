@@ -1,7 +1,9 @@
 ﻿using MicroSent.Models.Constants;
+using System;
 
 namespace MicroSent.Models
 {
+    [Serializable]
     public class SubToken
     {
         public string text;

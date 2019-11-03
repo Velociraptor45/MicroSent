@@ -1,27 +1,26 @@
-﻿using System.Collections.Generic;
+﻿using MicroSent.Models.Constants;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace MicroSent.Models.Analyser
 {
     public class Tokenizer
     {
+        // link | smiley | emoticons | punctuation | wörter | sentence structure ()'-"
+        Regex tokenDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+|((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|: [\)\(])|\\U[a-f0-9]{4,8}|([\?!]+|\.+|,|:)|(@|#[a-z]|\\)?(\w([''-]\w)?)+|(\(|\)|-|""|'')");
+        Regex negationDetection = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
 
         public Tokenizer()
         {
 
         }
 
-
         public List<Token> splitIntoTokens(Tweet tweet)
         {
             List<Token> allTokens = new List<Token>();
             int tokenIndex = 0;
 
-            // link | smiley | emoticons | punctuation | wörter | sentence structure ()'-"
-            Regex tokenDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+|((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|: [\)\(])|\\U[a-f0-9]{4,8}|([\?!]+|\.+|,|:)|(@|#[a-z]|\\)?(\w([''-]\w)?)+|(\(|\)|-|""|'')");
-            Regex negationDetection = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
-
-            tweet.fullText = tweet.fullText.Replace('\n', ' ');
+            tweet.fullText = tweet.fullText.Replace(TokenPartConstants.NEW_LINE, TokenPartConstants.SPACE);
 
             MatchCollection tokenMatches = tokenDetection.Matches(tweet.fullText);
 
@@ -33,7 +32,7 @@ namespace MicroSent.Models.Analyser
                 {
                     string firstPart;
                     string secondPart;
-                    if (text.EndsWith("nt"))
+                    if (text.EndsWith(TokenPartConstants.NEGATION_TOKEN_ENDING_WITHOUT_APOSTROPHE))
                     {
                         firstPart = text.Substring(0, text.Length - 2);
                         secondPart = text.Substring(text.Length - 2);
@@ -52,14 +51,14 @@ namespace MicroSent.Models.Analyser
                     allTokens.Add(secondToken);
                     continue;
                 }
-                else if(tweet.fullText.Contains("'"))
+                else if(tweet.fullText.Contains(TokenPartConstants.APOSTROPHE))
                 {
-                    string[] parts = text.Split("'");
+                    string[] parts = text.Split(TokenPartConstants.APOSTROPHE);
                     for(int i = 0; i < parts.Length; i++)
                     {
                         Token token;
                         if (i > 0)
-                            token = new Token('\'' + parts[i], tokenIndex);
+                            token = new Token(TokenPartConstants.APOSTROPHE + parts[i], tokenIndex);
                         else
                             token = new Token(parts[i], tokenIndex);
                         allTokens.Add(token);

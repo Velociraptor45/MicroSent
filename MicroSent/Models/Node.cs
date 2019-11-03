@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace MicroSent.Models
 {
+    [Serializable]
     public class Node
     {
         public Node parent { get; private set; }

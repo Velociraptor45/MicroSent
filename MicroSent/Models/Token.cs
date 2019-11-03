@@ -1,9 +1,11 @@
 ﻿using MicroSent.Models.Constants;
 using MicroSent.Models.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace MicroSent.Models
 {
+    [Serializable]
     public class Token
     {
         public string text;

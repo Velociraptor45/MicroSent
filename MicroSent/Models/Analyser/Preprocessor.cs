@@ -1,9 +1,8 @@
-﻿using System;
+﻿using MicroSent.Models.Constants;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace MicroSent.Models.Analyser
 {
@@ -11,6 +10,8 @@ namespace MicroSent.Models.Analyser
     {
         private const string FilePath = @"data/slang/";
         private const string SlangFileName = "slang.txt";
+
+        private const string Separator = "---";
 
         private Dictionary<string, string> slangs = new Dictionary<string, string>();
 
@@ -26,9 +27,9 @@ namespace MicroSent.Models.Analyser
                 string line;
                 while ((line = streamReader.ReadLine()) != null)
                 {
-                    if (line != "")
+                    if (line != TokenPartConstants.EMPTY_STRING)
                     {
-                        string[] parts = line.Split("---");
+                        string[] parts = line.Split(Separator);
                         slangs.Add(parts[0], parts[1]);
                     }
                 }
@@ -50,7 +51,7 @@ namespace MicroSent.Models.Analyser
                 MatchCollection matches = regex.Matches(tweetText);
                 if (matches.Count > 0)
                 {
-                    Console.WriteLine($"{tweetText}:: Replaced {key}");
+                    Console.WriteLine($"{tweetText} :: Replaced {key} with {slangs[key]}");
                     tweetText = tweetText.Replace(key, slangs[key]);
                 }
             }
