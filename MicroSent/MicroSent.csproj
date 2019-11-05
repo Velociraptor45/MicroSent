@@ -13,6 +13,7 @@
     <PackageReference Include="NHunspell" Version="1.2.5554.16953" />
     <PackageReference Include="OpenNLP" Version="1.3.5" />
     <PackageReference Include="Stanford.NLP.Parser" Version="3.9.2" />
+    <PackageReference Include="StemmersNet" Version="1.1.1" />
     <PackageReference Include="System.Runtime.Caching" Version="4.5.0" />
   </ItemGroup>
 

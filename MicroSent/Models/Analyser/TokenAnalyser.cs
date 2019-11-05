@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Iveonik.Stemmers;
 
 namespace MicroSent.Models.Analyser
 {
@@ -15,6 +16,8 @@ namespace MicroSent.Models.Analyser
         private Regex smileyDetection = new Regex(@"((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|:\s[\)\(])");
         private Regex emoticonDetection = new Regex(@"\\U[a-f0-9]{4,8}");
         private Regex laughingDetection = new Regex(@"a?(ha){2,}|i?(hi){2,}");
+
+        IStemmer stemmer = new EnglishStemmer();
 
         private const string HunspellDataPath = @".\data\nhunspell\";
 
@@ -149,6 +152,11 @@ namespace MicroSent.Models.Analyser
             return false;
         }
         #endregion
+
+        public void stem(Token token)
+        {
+            token.stemmedText = stemmer.Stem(token.text);
+        }
 
         public void checkForUppercase(Token token)
         {
