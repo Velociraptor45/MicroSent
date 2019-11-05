@@ -24,6 +24,8 @@ namespace MicroSent.Models.Analyser
 
         private Deserializer deserializer = new Deserializer(SentiLexiconRootName, FilePath + LexiconFileName);
 
+        private const float ValueNotFound = float.MinValue;
+
         //private const string PositiveWordsFileName = "positive-words.txt";
         //private const string NegativeWordsFileName = "negative-words.txt";
         //private const string IgnoreLine = ";";
@@ -60,12 +62,12 @@ namespace MicroSent.Models.Analyser
         //    }
         //}
 
-        public float getWordRating(Token token, bool useOnlyAverageScore = true)
+        public float getWordRating(Token token, bool useOnlyAverageScore = false)
         {
             string sentiWordLabel = convertToSentiWordPosLabel(token.posLabel);
 
             float normalRating = getFittingRating(token.text, sentiWordLabel, useOnlyAverageScore);
-            if(normalRating == RatingConstants.WORD_NEUTRAL)
+            if (normalRating == RatingConstants.WORD_NEUTRAL)
             {
                 return getFittingRating(token.stemmedText, sentiWordLabel, useOnlyAverageScore);
             }
@@ -84,7 +86,8 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        private float getPreciseWordRating(string wordToRate, string sentiWordLabel)
+        private float getPreciseWordRating(string wordToRate, string sentiWordLabel,
+            float defaultValue = RatingConstants.WORD_NEUTRAL)
         {
             string dictionaryKey = $"{wordToRate}!{sentiWordLabel}";
             if (polarityDictionary.ContainsKey(dictionaryKey))
@@ -92,7 +95,7 @@ namespace MicroSent.Models.Analyser
                 float rating = polarityDictionary[dictionaryKey];
                 return rating;
             }
-            return RatingConstants.WORD_NEUTRAL;
+            return defaultValue;
         }
 
         private float getAverateWordRating(string wordToRate)
@@ -101,29 +104,29 @@ namespace MicroSent.Models.Analyser
             float rating = 0;
             float singleRating;
 
-            singleRating = getPreciseWordRating(wordToRate, SentWordLabelAdjective);
-            if(singleRating != RatingConstants.WORD_NEUTRAL)
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelAdjective, ValueNotFound);
+            if(singleRating != ValueNotFound)
             {
                 rating += singleRating;
                 validKeyAmount++;
             }
 
-            singleRating = getPreciseWordRating(wordToRate, SentWordLabelNoun);
-            if (singleRating != RatingConstants.WORD_NEUTRAL)
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelNoun, ValueNotFound);
+            if (singleRating != ValueNotFound)
             {
                 rating += singleRating;
                 validKeyAmount++;
             }
 
-            singleRating = getPreciseWordRating(wordToRate, SentWordLabelAdverb);
-            if (singleRating != RatingConstants.WORD_NEUTRAL)
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelAdverb, ValueNotFound);
+            if (singleRating != ValueNotFound)
             {
                 rating += singleRating;
                 validKeyAmount++;
             }
 
-            singleRating = getPreciseWordRating(wordToRate, SentWordLabelVerb);
-            if (singleRating != RatingConstants.WORD_NEUTRAL)
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelVerb, ValueNotFound);
+            if (singleRating != ValueNotFound)
             {
                 rating += singleRating;
                 validKeyAmount++;
