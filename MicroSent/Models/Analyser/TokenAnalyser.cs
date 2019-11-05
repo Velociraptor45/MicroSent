@@ -10,6 +10,8 @@ namespace MicroSent.Models.Analyser
 {
     public class TokenAnalyser
     {
+        private const string MentionReplacement = "Tom";
+
         private Regex linkDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
         private Regex puntuationDetection = new Regex(@"([\?!]+|\.+|,|:)");
         private Regex sentenceStructureDetection = new Regex(@"(\(|\)|-)");
@@ -80,7 +82,8 @@ namespace MicroSent.Models.Analyser
         {
             if (token.text.StartsWith(TokenPartConstants.TWITTER_MENTION))
             {
-                token.text = token.text.Remove(0, 1);
+                //token.text = token.text.Remove(0, 1);
+                token.text = MentionReplacement;
                 return token.isMention = true;
             }
             return false;
