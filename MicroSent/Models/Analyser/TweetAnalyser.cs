@@ -129,6 +129,48 @@ namespace MicroSent.Models.Analyser
         /// NEGATION APPLICATION
         //////////////////////////////////////////////////////////////////////////
 
+        public void applySpecialStructureNegation(Tweet tweet)
+        {
+            foreach(var sentence in tweet.sentences)
+            {
+                for(int i = 0; i < sentence.Count; i++)
+                {
+                    negateGerundForms(i, sentence);
+                    negateBaseFroms(i, sentence);
+                }
+            }
+        }
+
+        private void negateGerundForms(int tokenIndex, List<Token> sentence)
+        {
+            Token token = sentence[tokenIndex];
+            if ((token.text == "stop" || token.text == "quit" || token.stemmedText == "stop" || token.stemmedText == "quit")
+                        && token.indexInSentence < sentence.Count - 1)
+            {
+                Token nextToken = sentence[tokenIndex + 1];
+                if (nextToken.posLabel == Enums.PosLabels.VBG)
+                {
+                    negate(nextToken);
+                }
+            }
+        }
+
+        private void negateBaseFroms(int tokenIndex, List<Token> sentence)
+        {
+            Token token = sentence[tokenIndex];
+            if ((token.text == "cease" || token.stemmedText == "ceas")
+                && token.indexInSentence < sentence.Count - 2)
+            {
+                Token nextToken = sentence[tokenIndex + 1];
+                Token secondNextToken = sentence[tokenIndex + 2];
+
+                if (nextToken.text == "to" && secondNextToken.posLabel == Enums.PosLabels.VB)
+                {
+                    negate(secondNextToken);
+                }
+            }
+        }
+
         public void applyKWordNegation(Tweet tweet, int negatedWordDistance,
             bool negateLeftSide = true, bool negateRightSide = true, bool ignoreSentenceBoundaries = false)
         {
@@ -169,7 +211,7 @@ namespace MicroSent.Models.Analyser
                         {
                             continue;
                         }
-                        tweet.getTokenByIndex(i).negationRating = RatingConstants.NEGATION;
+                        negate(tweet.getTokenByIndex(i));
                     }
                 }
             }
@@ -189,7 +231,7 @@ namespace MicroSent.Models.Analyser
                         Match match = negationHashtagPart.Match(subToken.text);
                         if (match.Success)
                         {
-                            token.negationRating = RatingConstants.NEGATION;
+                            negate(token);
                             break;
                         }
                     }
@@ -217,7 +259,7 @@ namespace MicroSent.Models.Analyser
                         Token token = sentenceTokens.Where(t => t.indexInSentence == tokenSentenceIndexToNegate).ToList().FirstOrDefault();
                         if (token.indexInTweet > -1)
                         {
-                            token.negationRating *= RatingConstants.NEGATION;
+                            negate(token);
                         }
                         else
                         {
@@ -226,6 +268,11 @@ namespace MicroSent.Models.Analyser
                     }
                 }
             }
+        }
+
+        private void negate(Token token)
+        {
+            token.negationRating *= RatingConstants.NEGATION;
         }
         #endregion
 
