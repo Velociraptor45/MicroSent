@@ -13,5 +13,7 @@
         public const float UPPERCASE_MULTIPLIER = 1.4f;
 
         public const float NEGATION = -1f;
+
+        public const float LAST_SENTENCE_INTENSIFIER = 1.5f;
     }
 }

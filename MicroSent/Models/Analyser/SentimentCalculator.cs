@@ -15,14 +15,20 @@ namespace MicroSent.Models.Analyser
 
         }
 
-        public void calculateFinalSentiment(Tweet tweet, bool useSingleThreshold = true, bool useTotalThreshold = true)
+        public void calculateFinalSentiment(Tweet tweet,
+            bool useSingleThreshold = true, bool useTotalThreshold = true, bool intensifyLastSentence = false)
         {
             foreach (List<Token> sentence in tweet.sentences)
             {
                 foreach(Token token in sentence)
                 {
-                    calculateTokenRating(tweet, token, useSingleThreshold);
+                    calculateTokenRating(tweet, token, useSingleThreshold, intensifyLastSentence);
                 }
+            }
+
+            foreach (Token token in tweet.rest)
+            {
+                calculateTokenRating(tweet, token, useSingleThreshold, intensifyLastSentence);
             }
 
             if (useTotalThreshold)
@@ -34,7 +40,8 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        private void calculateTokenRating(Tweet tweet, Token token, bool useSingleThreshold)
+        private void calculateTokenRating(Tweet tweet, Token token,
+            bool useSingleThreshold, bool intensifyLastSentence)
         {
             float tokenRating;
             if (token.subTokens.Count > 0)
@@ -68,6 +75,13 @@ namespace MicroSent.Models.Analyser
             if (tweet.firstEndHashtagIndex != -1 && token.indexInTweet >= tweet.firstEndHashtagIndex)
             {
                 tokenRating *= RatingConstants.END_HASHTAG_MULIPLIER;
+            }
+
+
+            //is token in last sentence?
+            if (intensifyLastSentence && tweet.sentences.Last().Contains(token))
+            {
+                tokenRating *= RatingConstants.LAST_SENTENCE_INTENSIFIER;
             }
 
             token.totalRating = tokenRating;

@@ -49,8 +49,10 @@ namespace MicroSent.Controllers
 
         private bool testing = true;
         private bool useGoogleParser = true;
-        private bool useSerializedData = false;
+        private bool useSerializedData = true;
         private bool serializeData = false;
+
+        private bool intensifyLastSentence = false;
 
         /////////////////////////////////////////////////////////////////////////////////////
 
@@ -137,17 +139,7 @@ namespace MicroSent.Controllers
 
                     if (useGoogleParser)
                     {
-                        for (int i = 0; i < tweet.sentences.Count; i++)
-                        {
-                            networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
-                            Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
-
-                            await serverAnswere;
-                            JObject treeJSON = JObject.Parse(serverAnswere.Result);
-
-                            JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
-                            parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
-                        }
+                        parseAndBuildTreeWithGoogle(tweet);
                     }
                     else
                     {
@@ -171,7 +163,7 @@ namespace MicroSent.Controllers
 
                     applyRating(tweet);
 
-                    sentimentCalculator.calculateFinalSentiment(tweet);
+                    sentimentCalculator.calculateFinalSentiment(tweet, intensifyLastSentence: intensifyLastSentence);
                 }
             }
 
@@ -206,6 +198,21 @@ namespace MicroSent.Controllers
             return allTweets;
         }
 
+        private async void parseAndBuildTreeWithGoogle(Tweet tweet)
+        {
+            for (int i = 0; i < tweet.sentences.Count; i++)
+            {
+                networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
+                Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
+
+                await serverAnswere;
+                JObject treeJSON = JObject.Parse(serverAnswere.Result);
+
+                JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
+                parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
+            }
+        }
+
         private void applyRating(Tweet tweet)
         {
             foreach (List<Token> sentence in tweet.sentences)
@@ -215,7 +222,7 @@ namespace MicroSent.Controllers
                     //single Token analysis
                     if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
-                        token.wordRating = wordRater.getWordRating(token);
+                        token.wordRating = wordRater.getWordRating(token, useOnlyAverageScore: true);
                     }
                 }
             }
