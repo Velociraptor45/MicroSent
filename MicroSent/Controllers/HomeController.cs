@@ -139,17 +139,7 @@ namespace MicroSent.Controllers
 
                     if (useGoogleParser)
                     {
-                        for (int i = 0; i < tweet.sentences.Count; i++)
-                        {
-                            networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
-                            Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
-
-                            await serverAnswere;
-                            JObject treeJSON = JObject.Parse(serverAnswere.Result);
-
-                            JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
-                            parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
-                        }
+                        parseAndBuildTreeWithGoogle(tweet);
                     }
                     else
                     {
@@ -206,6 +196,21 @@ namespace MicroSent.Controllers
             }
 
             return allTweets;
+        }
+
+        private async void parseAndBuildTreeWithGoogle(Tweet tweet)
+        {
+            for (int i = 0; i < tweet.sentences.Count; i++)
+            {
+                networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
+                Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
+
+                await serverAnswere;
+                JObject treeJSON = JObject.Parse(serverAnswere.Result);
+
+                JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
+                parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
+            }
         }
 
         private void applyRating(Tweet tweet)
