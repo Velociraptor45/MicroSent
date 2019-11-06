@@ -26,6 +26,11 @@ namespace MicroSent.Models.Analyser
                 }
             }
 
+            foreach (Token token in tweet.rest)
+            {
+                calculateTokenRating(tweet, token, useSingleThreshold, intensifyLastSentence);
+            }
+
             if (useTotalThreshold)
             {
                 if (tweet.positiveRating < TotalThreshold)

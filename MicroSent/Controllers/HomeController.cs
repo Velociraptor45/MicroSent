@@ -52,7 +52,7 @@ namespace MicroSent.Controllers
         private bool useSerializedData = true;
         private bool serializeData = false;
 
-        private bool intensifyLastSentence = true;
+        private bool intensifyLastSentence = false;
 
         /////////////////////////////////////////////////////////////////////////////////////
 
