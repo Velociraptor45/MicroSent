@@ -155,6 +155,8 @@ namespace MicroSent.Controllers
 
                 if (!serializeData)
                 {
+                    tweetAnalyser.filterUselessInterogativeSentences(tweet);
+
                     //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
                     //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
                     tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);

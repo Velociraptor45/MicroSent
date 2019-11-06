@@ -13,7 +13,10 @@ namespace MicroSent.Models.Analyser
         
         private Regex negationToken = new Regex(@"\bno(t|n-?)?\b|\bnever\b|\bn'?t\b");
         private Regex negationHashtagPart = new Regex(@"\bno(t|n)?\b|\bnever\b|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)nt\b");
-        
+
+        private List<string> whWords = new List<string> { "what", "where", "when", "why", "who" };
+        private List<string> auxiliaryVerbs = new List<string> { "am", "is", "are", "was", "were", "do", "did", "does" };
+
         public TweetAnalyser()
         {
 
@@ -68,6 +71,47 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
+
+        #region special structure filtering
+        public void filterUselessInterogativeSentences(Tweet tweet)
+        {
+            foreach(var sentence in tweet.sentences)
+            {
+                if(sentence.Count > 3)
+                {
+                    Token firstToken = sentence.First();
+                    Token secondToken = sentence[1];
+                    Token lastToken = sentence.Last();
+                    
+                    if(isWhWord(firstToken)
+                        && isAuxiliaryVerb(secondToken)
+                        && lastToken.text.Contains(TokenPartConstants.QUESTIONMARK))
+                    {
+                        ignoreSentenceForRating(sentence);
+                    }
+                }
+            }
+        }
+
+        private bool isWhWord(Token token)
+        {
+            return whWords.Contains(token.text);
+        }
+
+        private bool isAuxiliaryVerb(Token token)
+        {
+            return auxiliaryVerbs.Contains(token.text);
+        }
+
+        private void ignoreSentenceForRating(List<Token> sentence)
+        {
+            foreach (Token token in sentence)
+            {
+                token.ignoreInRating = true;
+            }
+        }
+        #endregion
+
         #region negation word detection
         //////////////////////////////////////////////////////////////////////////
         /// NEGATION WORD DETECTION
@@ -83,44 +127,8 @@ namespace MicroSent.Models.Analyser
                 {
                     tokenIndexes.Add(token.indexInSentence);
                 }
-                else
-                {
-                    checkForMultiTokenNegation(tokenIndexes, token, sentenceTokens, tweet);
-                }
             }
             return tokenIndexes;
-        }
-
-        private void checkForMultiTokenNegation(List<int> tokenIndexes, Token token, List<Token> sentenceTokens, Tweet tweet)
-        {
-            if (token != sentenceTokens.Last())
-            {
-                Token nextToken = tweet.getTokenByIndex(token.indexInTweet + 1);
-                if (isTwoTokenNegation(token, nextToken))
-                {
-                    // quit vb-ing && stop vb-ing
-                    tokenIndexes.Add(token.indexInSentence);
-                }
-                else if (nextToken != sentenceTokens.Last())
-                {
-                    Token secondNextToken = tweet.getTokenByIndex(token.indexInTweet + 1);
-                    if (isThreeTokenNegation(token, nextToken, secondNextToken))
-                    {
-                        //cease to vb
-                        tokenIndexes.Add(token.indexInSentence);
-                    }
-                }
-            }
-        }
-
-        private bool isTwoTokenNegation(Token token, Token nextToken)
-        {
-            return (token.text == "stop" || token.text == "quit") && nextToken.text.EndsWith("ing") && nextToken.posLabel == Enums.PosLabels.VBG;
-        }
-
-        private bool isThreeTokenNegation(Token token, Token nextToken, Token secondNextToken)
-        {
-            return token.text == "cease" && nextToken.text == "to" && secondNextToken.posLabel == Enums.PosLabels.VB;
         }
         #endregion
 
