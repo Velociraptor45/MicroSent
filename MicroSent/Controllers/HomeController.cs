@@ -49,7 +49,7 @@ namespace MicroSent.Controllers
 
         private bool testing = true;
         private bool useGoogleParser = true;
-        private bool useSerializedData = true;
+        private bool useSerializedData = false;
         private bool serializeData = false;
 
         /////////////////////////////////////////////////////////////////////////////////////
@@ -127,6 +127,7 @@ namespace MicroSent.Controllers
                         if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                         {
                             tokenAnalyser.removeRepeatedLetters(token);
+                            tokenAnalyser.stem(token);
                         }
                     }
 
@@ -160,16 +161,18 @@ namespace MicroSent.Controllers
                 }
 
 
-                //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
-                //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
-                tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
+                if (!serializeData)
+                {
+                    //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
+                    //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
+                    tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
 
-                tweetAnalyser.applyEndHashtagNegation(tweet);
+                    tweetAnalyser.applyEndHashtagNegation(tweet);
 
-                stemAllTokens(tweet);
-                applyRating(tweet);
+                    applyRating(tweet);
 
-                sentimentCalculator.calculateFinalSentiment(tweet);
+                    sentimentCalculator.calculateFinalSentiment(tweet);
+                }
             }
 
             if(serializeData)
@@ -182,22 +185,6 @@ namespace MicroSent.Controllers
                 printOnConsole(allTweets);
 
             return View();
-        }
-
-
-
-        private void stemAllTokens(Tweet tweet)
-        {
-            foreach (List<Token> sentence in tweet.sentences)
-            {
-                foreach (Token token in sentence)
-                {
-                    if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
-                    {
-                        tokenAnalyser.stem(token);
-                    }
-                }
-            }
         }
 
         private async Task<List<Tweet>> getTweetsAsync()

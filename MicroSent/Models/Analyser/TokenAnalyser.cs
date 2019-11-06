@@ -10,7 +10,7 @@ namespace MicroSent.Models.Analyser
 {
     public class TokenAnalyser
     {
-        private const string MentionReplacement = "Tom";
+        private const string MentionReplacement = "Michael";
 
         private Regex linkDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
         private Regex puntuationDetection = new Regex(@"([\?!]+|\.+|,|:)");

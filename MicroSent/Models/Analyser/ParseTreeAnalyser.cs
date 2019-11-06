@@ -1,4 +1,5 @@
-﻿using MicroSent.Models.Constants;
+﻿using MicroSent.Controllers;
+using MicroSent.Models.Constants;
 using MicroSent.Models.Enums;
 using MicroSent.Models.Util;
 using Newtonsoft.Json.Linq;
@@ -58,7 +59,11 @@ namespace MicroSent.Models.Analyser
             {
                 removeWronglyParsedTokens(i, tweet, tokens, sentenceIndex);
 
-                Node node = new Node(tweet.sentences[sentenceIndex][i], null);
+                string tag = tokens[i].Value<string>(GoogleParserConstants.TOKEN_TAG);
+                Token referencedToken = tweet.sentences[sentenceIndex][i];
+                setPosLabel(referencedToken, tag);
+
+                Node node = new Node(referencedToken, null);
                 allNodes.Add(node);
             }
 
@@ -124,6 +129,22 @@ namespace MicroSent.Models.Analyser
             {
                 tokens.RemoveAt(i);
             }
+        }
+
+        private void setPosLabel(Token token, string tag)
+        {
+            PosLabels posLabel = translateToPosLabel(tag);
+            token.posLabel = posLabel;
+        }
+
+        private PosLabels translateToPosLabel(string tag)
+        {
+            tag = tag.Replace("$", "D");
+            if (!Enum.TryParse(tag, out PosLabels posLabel))
+            {
+                return PosLabels.Default;
+            }
+            return posLabel;
         }
         #endregion
 
