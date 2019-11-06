@@ -49,7 +49,7 @@ namespace MicroSent.Controllers
 
         private bool testing = true;
         private bool useGoogleParser = true;
-        private bool useSerializedData = true;
+        private bool useSerializedData = false;
         private bool serializeData = false;
 
         /////////////////////////////////////////////////////////////////////////////////////
@@ -127,6 +127,7 @@ namespace MicroSent.Controllers
                         if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                         {
                             tokenAnalyser.removeRepeatedLetters(token);
+                            tokenAnalyser.stem(token);
                         }
                     }
 
@@ -159,15 +160,19 @@ namespace MicroSent.Controllers
                     }
                 }
 
-                //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
-                //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
-                tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
 
-                tweetAnalyser.applyEndHashtagNegation(tweet);
+                if (!serializeData)
+                {
+                    //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
+                    //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
+                    tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
 
-                applyRating(tweet);
+                    tweetAnalyser.applyEndHashtagNegation(tweet);
 
-                sentimentCalculator.calculateFinalSentiment(tweet);
+                    applyRating(tweet);
+
+                    sentimentCalculator.calculateFinalSentiment(tweet);
+                }
             }
 
             if(serializeData)
@@ -181,8 +186,6 @@ namespace MicroSent.Controllers
 
             return View();
         }
-
-
 
         private async Task<List<Tweet>> getTweetsAsync()
         {

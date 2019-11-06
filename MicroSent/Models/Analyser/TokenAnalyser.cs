@@ -4,17 +4,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Iveonik.Stemmers;
 
 namespace MicroSent.Models.Analyser
 {
     public class TokenAnalyser
     {
+        private const string MentionReplacement = "Michael";
+
         private Regex linkDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
         private Regex puntuationDetection = new Regex(@"([\?!]+|\.+|,|:)");
         private Regex sentenceStructureDetection = new Regex(@"(\(|\)|-)");
         private Regex smileyDetection = new Regex(@"((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|:\s[\)\(])");
         private Regex emoticonDetection = new Regex(@"\\U[a-f0-9]{4,8}");
         private Regex laughingDetection = new Regex(@"a?(ha){2,}|i?(hi){2,}");
+
+        IStemmer stemmer = new EnglishStemmer();
 
         private const string HunspellDataPath = @".\data\nhunspell\";
 
@@ -77,7 +82,8 @@ namespace MicroSent.Models.Analyser
         {
             if (token.text.StartsWith(TokenPartConstants.TWITTER_MENTION))
             {
-                token.text = token.text.Remove(0, 1);
+                //token.text = token.text.Remove(0, 1);
+                token.text = MentionReplacement;
                 return token.isMention = true;
             }
             return false;
@@ -149,6 +155,11 @@ namespace MicroSent.Models.Analyser
             return false;
         }
         #endregion
+
+        public void stem(Token token)
+        {
+            token.stemmedText = stemmer.Stem(token.text);
+        }
 
         public void checkForUppercase(Token token)
         {

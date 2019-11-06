@@ -24,6 +24,8 @@ namespace MicroSent.Models.Analyser
 
         private Deserializer deserializer = new Deserializer(SentiLexiconRootName, FilePath + LexiconFileName);
 
+        private const float ValueNotFound = float.MinValue;
+
         //private const string PositiveWordsFileName = "positive-words.txt";
         //private const string NegativeWordsFileName = "negative-words.txt";
         //private const string IgnoreLine = ";";
@@ -60,58 +62,80 @@ namespace MicroSent.Models.Analyser
         //    }
         //}
 
-        public float getWordRating(Token token, bool useOnlyAverageScore = true)
+        public float getWordRating(Token token, bool useOnlyAverageScore = false)
         {
             string sentiWordLabel = convertToSentiWordPosLabel(token.posLabel);
-            if(sentiWordLabel == null || useOnlyAverageScore)
+
+            float normalRating = getFittingRating(token.text, sentiWordLabel, useOnlyAverageScore);
+            if (normalRating == RatingConstants.WORD_NEUTRAL)
             {
-                //return 0;
-                int validKeyAmount = 0;
-                float rating = 0;
+                return getFittingRating(token.stemmedText, sentiWordLabel, useOnlyAverageScore);
+            }
+            return normalRating;
+        }
 
-                string adjectiveKey = $"{token.text}!{SentWordLabelAdjective}";
-                if (polarityDictionary.ContainsKey(adjectiveKey))
-                {
-                    rating += polarityDictionary[adjectiveKey];
-                    validKeyAmount++;
-                }
-
-                string nounKey = $"{token.text}!{SentWordLabelNoun}";
-                if (polarityDictionary.ContainsKey(nounKey))
-                {
-                    rating += polarityDictionary[nounKey];
-                    validKeyAmount++;
-                }
-
-                string adverbKey = $"{token.text}!{SentWordLabelAdverb}";
-                if (polarityDictionary.ContainsKey(adverbKey))
-                {
-                    rating += polarityDictionary[adverbKey];
-                    validKeyAmount++;
-                }
-
-                string verbKey = $"{token.text}!{SentWordLabelVerb}";
-                if (polarityDictionary.ContainsKey(verbKey))
-                {
-                    rating += polarityDictionary[verbKey];
-                    validKeyAmount++;
-                }
-
-                if(validKeyAmount > 0)
-                    rating /= validKeyAmount;
-
-                return rating;
+        private float getFittingRating(string wordToRate, string sentiWordLabel, bool useOnlyAverageScore)
+        {
+            if (sentiWordLabel == null || useOnlyAverageScore)
+            {
+                return getAverateWordRating(wordToRate);
             }
             else
             {
-                string dictionaryKey = $"{token.text}!{sentiWordLabel}";
-                if (polarityDictionary.ContainsKey(dictionaryKey))
-                {
-                    float rating = polarityDictionary[dictionaryKey];
-                    return rating;
-                }
-                return RatingConstants.WORD_NEUTRAL;
+                return getPreciseWordRating(wordToRate, sentiWordLabel);
             }
+        }
+
+        private float getPreciseWordRating(string wordToRate, string sentiWordLabel,
+            float defaultValue = RatingConstants.WORD_NEUTRAL)
+        {
+            string dictionaryKey = $"{wordToRate}!{sentiWordLabel}";
+            if (polarityDictionary.ContainsKey(dictionaryKey))
+            {
+                float rating = polarityDictionary[dictionaryKey];
+                return rating;
+            }
+            return defaultValue;
+        }
+
+        private float getAverateWordRating(string wordToRate)
+        {
+            int validKeyAmount = 0;
+            float rating = 0;
+            float singleRating;
+
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelAdjective, ValueNotFound);
+            if(singleRating != ValueNotFound)
+            {
+                rating += singleRating;
+                validKeyAmount++;
+            }
+
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelNoun, ValueNotFound);
+            if (singleRating != ValueNotFound)
+            {
+                rating += singleRating;
+                validKeyAmount++;
+            }
+
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelAdverb, ValueNotFound);
+            if (singleRating != ValueNotFound)
+            {
+                rating += singleRating;
+                validKeyAmount++;
+            }
+
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelVerb, ValueNotFound);
+            if (singleRating != ValueNotFound)
+            {
+                rating += singleRating;
+                validKeyAmount++;
+            }
+
+            if (validKeyAmount > 0)
+                rating /= validKeyAmount;
+
+            return rating;
         }
 
         private string convertToSentiWordPosLabel(PosLabels label)
