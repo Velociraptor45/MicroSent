@@ -49,8 +49,10 @@ namespace MicroSent.Controllers
 
         private bool testing = true;
         private bool useGoogleParser = true;
-        private bool useSerializedData = false;
+        private bool useSerializedData = true;
         private bool serializeData = false;
+
+        private bool intensifyLastSentence = true;
 
         /////////////////////////////////////////////////////////////////////////////////////
 
@@ -171,7 +173,7 @@ namespace MicroSent.Controllers
 
                     applyRating(tweet);
 
-                    sentimentCalculator.calculateFinalSentiment(tweet);
+                    sentimentCalculator.calculateFinalSentiment(tweet, intensifyLastSentence: intensifyLastSentence);
                 }
             }
 
@@ -215,7 +217,7 @@ namespace MicroSent.Controllers
                     //single Token analysis
                     if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
-                        token.wordRating = wordRater.getWordRating(token);
+                        token.wordRating = wordRater.getWordRating(token, useOnlyAverageScore: true);
                     }
                 }
             }
