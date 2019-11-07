@@ -1,45 +1,59 @@
-﻿using System;
+﻿using OpenNLP.Tools.Parser;
 using System.Collections.Generic;
 using System.Linq;
-using MicroSent.Models.Enums;
-using OpenNLP.Tools.PosTagger;
 
 namespace MicroSent.Models.Analyser
 {
     public class PosTagger
     {
-        private EnglishMaximumEntropyPosTagger nlpPosTagger;
+        private EnglishTreebankParser nlpParser;
         private string nbinFilePath = @"data\NBIN_files\";
 
         public PosTagger()
         {
-            nlpPosTagger = new EnglishMaximumEntropyPosTagger(nbinFilePath + "EnglishPOS.nbin", nbinFilePath + "tagdict");
+            nlpParser = new EnglishTreebankParser(nbinFilePath, true, false);
         }
 
-        public void tagTweet(ref Tweet tweet)
+        public void cutIntoSentences(Tweet tweet, List<Token> tokens)
         {
-            List<Token> sentenceTokens = new List<Token>();
-            for (int i = 0; i < tweet.allTokens.Count; i++)
+            int sentenceIndex = 0;
+            int tokenInSentenceIndex = 0;
+
+            foreach(Token token in tokens)
             {
-                Token currentToken = tweet.allTokens[i];
-                sentenceTokens.Add(currentToken);
-                if (currentToken.isPunctuation && currentToken.text != ",")
+                if (token.isLink || (tokenInSentenceIndex == 0 && token.isPunctuation))
                 {
-                    var tags = nlpPosTagger.Tag(sentenceTokens.Select(t => t.text).ToArray());
-                    for(int j = 0; j < tags.Length; j++)
-                    {
-                        //translate the tag into PosLabels enum
-                        int tokenPosition = sentenceTokens[j].position;
-                        if(Enum.TryParse(tags[j], out PosLabels label))
-                        {
-                            Token token = tweet.allTokens[tokenPosition];
-                            token.posLabel = label;
-                            tweet.allTokens[tokenPosition] = token;
-                        }
-                    }
-                    sentenceTokens.Clear();
+                    tweet.rest.Add(token);
+                    continue;
                 }
+
+                if(tweet.firstEndHashtagIndex != -1 && token.indexInTweet >= tweet.firstEndHashtagIndex)
+                {
+                    tweet.rest.Add(token);
+                    continue;
+                }
+
+                if (tokenInSentenceIndex == 0)
+                    tweet.sentences.Add(new List<Token>());
+
+                token.indexInSentence = tokenInSentenceIndex;
+                tweet.sentences[sentenceIndex].Add(token);
+
+
+                if (token.isPunctuation && token.text != ",")
+                {
+                    tokenInSentenceIndex = 0;
+                    sentenceIndex++;
+                    continue;
+                }
+                tokenInSentenceIndex++;
             }
+        }
+
+        public Parse parseTweet(List<Token> sentence)
+        {
+            string[] sentenceTokenText = sentence.Select(t => t.text).ToArray();
+            return nlpParser.DoParse(sentenceTokenText).GetChildren()[0];
         }
     }
 }

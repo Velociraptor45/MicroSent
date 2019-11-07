@@ -1,55 +1,169 @@
 ﻿using MicroSent.Models.Constants;
+using MicroSent.Models.Enums;
+using MicroSent.Models.Util;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Xml.Serialization;
 
 namespace MicroSent.Models.Analyser
 {
     public class WordRater
     {
         private const string FilePath = @"data\wordPolarity\";
-        private const string PositiveWordsFileName = "positive-words.txt";
-        private const string NegativeWordsFileName = "negative-words.txt";
-        private const string IgnoreLine = ";";
+        private const string LexiconFileName = "polarityLexicon.xml";
+        private const string SentiLexiconRootName = "SentiWords";
 
-        private static List<string> positiveWords = new List<string>();
-        private static List<string> negativeWords = new List<string>();
+        private const string SentWordLabelAdjective = "a";
+        private const string SentWordLabelNoun = "n";
+        private const string SentWordLabelAdverb = "r";
+        private const string SentWordLabelVerb = "v";
+
+        private static Dictionary<string, float> polarityDictionary;
+
+        private Deserializer deserializer = new Deserializer(SentiLexiconRootName, FilePath + LexiconFileName);
+
+        private const float ValueNotFound = float.MinValue;
+
+        //private const string PositiveWordsFileName = "positive-words.txt";
+        //private const string NegativeWordsFileName = "negative-words.txt";
+        //private const string IgnoreLine = ";";
+        //private static List<string> positiveWords = new List<string>();
+        //private static List<string> negativeWords = new List<string>();
 
         public WordRater()
         {
-            if(positiveWords.Count == 0)
+            
+            //if (positiveWords.Count == 0)
+            //{
+            //    loadWords(PositiveWordsFileName, positiveWords);
+            //}
+            //if(negativeWords.Count == 0)
+            //{
+            //    loadWords(NegativeWordsFileName, negativeWords);
+            //}
+            if(polarityDictionary == null)
             {
-                loadWords(PositiveWordsFileName, positiveWords);
-            }
-            if(negativeWords.Count == 0)
-            {
-                loadWords(NegativeWordsFileName, negativeWords);
-            }
-        }
-
-        private void loadWords(string fileName, List<string> list)
-        {
-            using(StreamReader streamReader = new StreamReader(FilePath + fileName))
-            {
-                string line;
-                while((line = streamReader.ReadLine()) != null)
-                {
-                    if(!line.StartsWith(IgnoreLine) && line != "")
-                        list.Add(line);
-                }
+                deserializer.loadDictionary(out polarityDictionary);
             }
         }
 
-        public float getWordRating(Token token)
+        //private void loadWords(string fileName, List<string> list)
+        //{
+        //    using(StreamReader streamReader = new StreamReader(FilePath + fileName))
+        //    {
+        //        string line;
+        //        while((line = streamReader.ReadLine()) != null)
+        //        {
+        //            if(!line.StartsWith(IgnoreLine) && line != "")
+        //                list.Add(line);
+        //        }
+        //    }
+        //}
+
+        public float getWordRating(Token token, bool useOnlyAverageScore = false)
         {
-            if (positiveWords.Contains(token.text))
+            string sentiWordLabel = convertToSentiWordPosLabel(token.posLabel);
+
+            float normalRating = getFittingRating(token.text, sentiWordLabel, useOnlyAverageScore);
+            if (normalRating == RatingConstants.WORD_NEUTRAL)
             {
-                return RatingConstants.POSITIVE;
+                return getFittingRating(token.stemmedText, sentiWordLabel, useOnlyAverageScore);
             }
-            else if (negativeWords.Contains(token.text))
+            return normalRating;
+        }
+
+        private float getFittingRating(string wordToRate, string sentiWordLabel, bool useOnlyAverageScore)
+        {
+            if (sentiWordLabel == null || useOnlyAverageScore)
             {
-                return RatingConstants.NEGATIVE;
+                return getAverateWordRating(wordToRate);
             }
-            return RatingConstants.WORD_NEUTRAL;
+            else
+            {
+                return getPreciseWordRating(wordToRate, sentiWordLabel);
+            }
+        }
+
+        private float getPreciseWordRating(string wordToRate, string sentiWordLabel,
+            float defaultValue = RatingConstants.WORD_NEUTRAL)
+        {
+            string dictionaryKey = $"{wordToRate}!{sentiWordLabel}";
+            if (polarityDictionary.ContainsKey(dictionaryKey))
+            {
+                float rating = polarityDictionary[dictionaryKey];
+                return rating;
+            }
+            return defaultValue;
+        }
+
+        private float getAverateWordRating(string wordToRate)
+        {
+            int validKeyAmount = 0;
+            float rating = 0;
+            float singleRating;
+
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelAdjective, ValueNotFound);
+            if(singleRating != ValueNotFound)
+            {
+                rating += singleRating;
+                validKeyAmount++;
+            }
+
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelNoun, ValueNotFound);
+            if (singleRating != ValueNotFound)
+            {
+                rating += singleRating;
+                validKeyAmount++;
+            }
+
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelAdverb, ValueNotFound);
+            if (singleRating != ValueNotFound)
+            {
+                rating += singleRating;
+                validKeyAmount++;
+            }
+
+            singleRating = getPreciseWordRating(wordToRate, SentWordLabelVerb, ValueNotFound);
+            if (singleRating != ValueNotFound)
+            {
+                rating += singleRating;
+                validKeyAmount++;
+            }
+
+            if (validKeyAmount > 0)
+                rating /= validKeyAmount;
+
+            return rating;
+        }
+
+        private string convertToSentiWordPosLabel(PosLabels label)
+        {
+            switch (label)
+            {
+                case PosLabels.JJ:
+                case PosLabels.JJR:
+                case PosLabels.JJS:
+                    return SentWordLabelAdjective;
+                case PosLabels.NN:
+                case PosLabels.NNP:
+                case PosLabels.NNPS:
+                case PosLabels.NNS:
+                    return SentWordLabelNoun;
+                case PosLabels.RB:
+                case PosLabels.RBR:
+                case PosLabels.RBS:
+                    return SentWordLabelAdverb;
+                case PosLabels.VB:
+                case PosLabels.VBD:
+                case PosLabels.VBG:
+                case PosLabels.VBN:
+                case PosLabels.VBP:
+                case PosLabels.VBZ:
+                    return SentWordLabelVerb;
+            }
+            return null;
         }
     }
 }

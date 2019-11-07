@@ -79,6 +79,49 @@ namespace MicroSent.Models.TwitterConnection
             return allResults;
         }
 
+        public async Task<List<Status>> getLinks(string username)
+        {
+            int maxTweets = 10000;
+            ulong since = 1;
+            ulong maxID = 0;
+            ulong prevMaxID = ulong.MaxValue;
+            List<Status> allResults = new List<Status>();
+            List<Status> timeline = new List<Status>();
+
+            try
+            {
+                timeline = await (from tweet in twitterContext.Status
+                                  where tweet.Type == StatusType.User && tweet.ScreenName == username && tweet.TweetMode == TweetMode.Extended && tweet.Count == maxTweets && tweet.SinceID == since && tweet.Entities.UrlEntities.Count > 0 && tweet.IsQuotedStatus == false
+                                  select tweet).ToListAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
+            }
+
+            do
+            {
+                allResults.AddRange(timeline);
+                maxID = timeline.Min(status => status.StatusID) - 1;
+
+                if (maxID < prevMaxID)
+                {
+                    prevMaxID = maxID;
+                }
+                else
+                {
+                    break;
+                }
+
+                timeline = await (from tweet in twitterContext.Status
+                                  where tweet.Type == StatusType.User && tweet.ScreenName == username && tweet.TweetMode == TweetMode.Extended && tweet.Count == maxTweets && tweet.SinceID == since && tweet.MaxID == maxID && tweet.Entities.UrlEntities.Count > 0 && tweet.IsQuotedStatus == false
+                                  select tweet).ToListAsync();
+            } while (timeline.Any());
+
+            allResults = removeNormalRetweets(allResults);
+            return allResults;
+        }
+
         public async Task<Status> getSingleQuotedTweet(string username)
         {
             int maxTweets = 1000;

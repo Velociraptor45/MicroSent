@@ -6,6 +6,8 @@
 
 [Bb]in/
 
+__pycache__/
+
 # Visual Studio cache directory
 
 .vs/
@@ -14,8 +16,6 @@
 
 ExportedObj/
 .consulo/
-
-*.csproj
 
 *.sln
 
