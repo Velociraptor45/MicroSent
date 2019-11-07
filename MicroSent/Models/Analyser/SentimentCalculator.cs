@@ -43,6 +43,9 @@ namespace MicroSent.Models.Analyser
         private void calculateTokenRating(Tweet tweet, Token token,
             bool useSingleThreshold, bool intensifyLastSentence)
         {
+            if (token.ignoreInRating)
+                return;
+
             float tokenRating;
             if (token.subTokens.Count > 0)
             {

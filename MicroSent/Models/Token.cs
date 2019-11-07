@@ -29,6 +29,8 @@ namespace MicroSent.Models
         public bool isEmoticon = false;
         public bool isLaughingExpression = false;
 
+        public bool ignoreInRating = false;
+
         //ratings
         public float totalRating;
 
