@@ -38,6 +38,15 @@ namespace MicroSent.Models.Util
             }
         }
 
+        public static void printSentenceIgnored(Tweet tweet, int sentenceIndex)
+        {
+            if (allowPrinting)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($"Ignoring sentence \"{tweet.getFullSentence(sentenceIndex)}\"");
+                Console.ResetColor();
+            }
+        }
 
         #region Hashtag parsing
         public static void startHashtagParsing()

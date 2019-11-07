@@ -87,6 +87,7 @@ namespace MicroSent.Models.Analyser
                         && isAuxiliaryVerb(secondToken)
                         && lastToken.text.Contains(TokenPartConstants.QUESTIONMARK))
                     {
+                        ConsolePrinter.printSentenceIgnored(tweet, tweet.sentences.IndexOf(sentence));
                         ignoreSentenceForRating(sentence);
                     }
                 }
