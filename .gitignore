@@ -6,7 +6,7 @@
 
 [Bb]in/
 
-DataCrawling/__pycache__/
+**/__pycache__/
 
 DataCrawling/data/
 
