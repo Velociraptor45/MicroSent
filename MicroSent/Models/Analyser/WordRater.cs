@@ -1,6 +1,6 @@
 ﻿using MicroSent.Models.Constants;
 using MicroSent.Models.Enums;
-using MicroSent.Models.Util;
+using MicroSent.Models.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,7 +22,7 @@ namespace MicroSent.Models.Analyser
 
         private static Dictionary<string, float> polarityDictionary;
 
-        private Deserializer deserializer = new Deserializer(SentiLexiconRootName, FilePath + LexiconFileName);
+        private Deserializer deserializer = new Deserializer(SentiLexiconRootName, FilePath + LexiconFileName, typeof(Item[]));
 
         private const float ValueNotFound = float.MinValue;
 
@@ -45,7 +45,7 @@ namespace MicroSent.Models.Analyser
             //}
             if(polarityDictionary == null)
             {
-                deserializer.loadDictionary(out polarityDictionary);
+                deserializer.deserializeDictionary(out polarityDictionary);
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using MicroSent.Models.Util;
+using MicroSent.Models.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,14 +17,14 @@ namespace MicroSent.Models.Test
         private const string Neutral = "neutral";
         private const string Equal = "equal";
 
-        Deserializer deserializer = new Deserializer(RootName, FilePath + DataFileName);
+        Deserializer deserializer = new Deserializer(RootName, FilePath + DataFileName, typeof(Item[]));
         private static Dictionary<string, float> testTweetsDictionary;
 
         public Tester()
         {
             if(testTweetsDictionary == null)
             {
-                deserializer.loadDictionary(out testTweetsDictionary);
+                deserializer.deserializeDictionary(out testTweetsDictionary);
             }
         }
 

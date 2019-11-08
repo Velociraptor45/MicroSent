@@ -1,5 +1,7 @@
 ﻿using MicroSent.Models.Constants;
+using MicroSent.Models.Serialization;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace MicroSent.Models.Analyser
@@ -9,10 +11,22 @@ namespace MicroSent.Models.Analyser
         // link | smiley | emoticons | punctuation | wörter | sentence structure ()'-"
         Regex tokenDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+|((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|: [\)\(])|\\U[a-f0-9]{4,8}|([\?!]+|\.+|,|:)|(@|#[a-z]|\\)?(\w([''-]\w)?)+|(\(|\)|-|""|'')");
         Regex negationDetection = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
+        Regex emojiDetection;
 
-        public Tokenizer()
+
+        public Tokenizer(List<Emoji> emojisToDetect)
         {
+            initEmojiRegex(emojisToDetect);
+        }
 
+        private void initEmojiRegex(List<Emoji> emojis)
+        {
+            string regexString = $"{emojis.First().unicodeCharacter}";
+            foreach(Emoji emoji in emojis.Skip(1))
+            {
+                regexString += $"|{emoji.unicodeCharacter}";
+            }
+            emojiDetection = new Regex(regexString);
         }
 
         public List<Token> splitIntoTokens(Tweet tweet)

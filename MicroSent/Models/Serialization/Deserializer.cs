@@ -1,29 +1,31 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
 
-namespace MicroSent.Models.Util
+namespace MicroSent.Models.Serialization
 {
     public class Deserializer
     {
         XmlSerializer xmlSerializer;
         private string filePath;
+        IFormatter formatter;
 
-        public Deserializer(string rootElement, string filePath)
+        public Deserializer(string rootElement, string filePath, Type type)
         {
-            xmlSerializer = new XmlSerializer(typeof(Item[]), new XmlRootAttribute() { ElementName = rootElement });
+            xmlSerializer = new XmlSerializer(type, new XmlRootAttribute() { ElementName = rootElement });
             this.filePath = filePath;
         }
 
         public Deserializer()
         {
-
+            formatter = new BinaryFormatter();
         }
 
-        public void loadDictionary(out Dictionary<string, float> dictionary)
+        public void deserializeDictionary(out Dictionary<string, float> dictionary)
         {
             using (StreamReader streamReader = new StreamReader(filePath))
             {
@@ -37,8 +39,15 @@ namespace MicroSent.Models.Util
         {
             using (Stream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                IFormatter formatter = new BinaryFormatter();
                 return (List<Tweet>)formatter.Deserialize(stream);
+            }
+        }
+
+        public void deserializeEmojiList(out List<Emoji> emojiList)
+        {
+            using (StreamReader streamReader = new StreamReader(filePath))
+            {
+                emojiList = (List<Emoji>)xmlSerializer.Deserialize(streamReader);
             }
         }
     }

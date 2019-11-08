@@ -6,6 +6,7 @@ using MicroSent.Models.Network;
 using MicroSent.Models.Test;
 using MicroSent.Models.TwitterConnection;
 using MicroSent.Models.Util;
+using MicroSent.Models.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -54,13 +55,20 @@ namespace MicroSent.Controllers
 
         private bool intensifyLastSentence = false;
 
+            //emojis:
+        private int minimalOccurences = 100;
+        private float minimalPositiveScore = .5f;
+        private float minimalNegativeScore = -.5f;
+
         /////////////////////////////////////////////////////////////////////////////////////
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
+            List<Emoji> emojis = loadAllRelevantEmojis();
+
             posTagger = new PosTagger();
             twitterCrawler = new TwitterCrawler(config);
-            tokenizer = new Tokenizer();
+            tokenizer = new Tokenizer(emojis);
             tokenAnalyser = new TokenAnalyser();
             tweetAnalyser = new TweetAnalyser();
             wordRater = new WordRater();
@@ -229,6 +237,14 @@ namespace MicroSent.Controllers
                     }
                 }
             }
+        }
+
+        private List<Emoji> loadAllRelevantEmojis()
+        {
+            Deserializer deserializer = new Deserializer("emojis", "data/emojis.xml", typeof(List<Emoji>));
+            deserializer.deserializeEmojiList(out List<Emoji> emojis);
+            return emojis.Where(e => e.occurences > minimalOccurences
+                && (e.negativeScore < minimalNegativeScore || e.positiveScore > minimalPositiveScore)).ToList();
         }
 
         private void printOnConsole(List<Tweet> allTweets)

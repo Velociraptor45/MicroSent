@@ -1,16 +1,12 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace MicroSent.Models.Util
+namespace MicroSent.Models.Serialization
 {
     public class Serializer
     {
-
-
         public void serializeTweets(List<Tweet> tweets, string filePath)
         {
 
