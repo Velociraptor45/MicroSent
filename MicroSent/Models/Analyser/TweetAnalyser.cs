@@ -11,8 +11,8 @@ namespace MicroSent.Models.Analyser
     {
         private const string IronyString = "irony";
         
-        private Regex negationToken = new Regex(@"\bno(t|n-?)?\b|\bnever\b|\bn'?t\b");
-        private Regex negationHashtagPart = new Regex(@"\bno(t|n)?\b|\bnever\b|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)nt\b");
+        private Regex negationToken = new Regex(RegexConstants.NEGATION_TOKEN_DETECTION);
+        private Regex negationHashtagPart = new Regex(RegexConstants.NEGATION_HASHTAG_DETECTION);
 
         private List<string> whWords = new List<string> { "what", "where", "when", "why", "who" };
         private List<string> auxiliaryVerbs = new List<string> { "am", "is", "are", "was", "were", "do", "did", "does" };

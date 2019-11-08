@@ -8,25 +8,23 @@ namespace MicroSent.Models.Analyser
 {
     public class Tokenizer
     {
-        // link | smiley | emoticons | punctuation | wörter | sentence structure ()'-"
-        Regex tokenDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+|((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|: [\)\(])|\\U[a-f0-9]{4,8}|([\?!]+|\.+|,|:)|(@|#[a-z]|\\)?(\w([''-]\w)?)+|(\(|\)|-|""|'')");
-        Regex negationDetection = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
-        Regex emojiDetection;
+        Regex tokenDetection;
+        Regex negationDetection;
 
-
-        public Tokenizer(List<Emoji> emojisToDetect)
+        public Tokenizer()
         {
-            initEmojiRegex(emojisToDetect);
+            initRegex();
         }
 
-        private void initEmojiRegex(List<Emoji> emojis)
+        private void initRegex()
         {
-            string regexString = $"{emojis.First().unicodeCharacter}";
-            foreach(Emoji emoji in emojis.Skip(1))
-            {
-                regexString += $"|{emoji.unicodeCharacter}";
-            }
-            emojiDetection = new Regex(regexString);
+            tokenDetection = new Regex($"({RegexConstants.LINK_DETECTION})" +
+                $"|({RegexConstants.SMILEY_DETECTION})" +
+                $"|({RegexConstants.PUNCTUATION_DETECTION})" +
+                $"|({RegexConstants.WORDS_DETECTION})" +
+                $"|({RegexConstants.SENTENCE_STRUCTURE_DETECTION})" +
+                $"|({RegexConstants.ALL_EMOTICON_DETECTION})");
+            negationDetection = new Regex($"{RegexConstants.NEGATION_WORD_DETECTION}");
         }
 
         public List<Token> splitIntoTokens(Tweet tweet)

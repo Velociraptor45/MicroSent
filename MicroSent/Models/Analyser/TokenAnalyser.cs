@@ -2,7 +2,6 @@
 ﻿using MicroSent.Models.Util;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Iveonik.Stemmers;
 
@@ -12,10 +11,10 @@ namespace MicroSent.Models.Analyser
     {
         private const string MentionReplacement = "Michael";
 
-        private Regex linkDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
-        private Regex puntuationDetection = new Regex(@"([\?!]+|\.+|,|:)");
-        private Regex sentenceStructureDetection = new Regex(@"(\(|\)|-)");
-        private Regex smileyDetection = new Regex(@"((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|:\s[\)\(])");
+        private Regex linkDetection = new Regex(RegexConstants.LINK_DETECTION);
+        private Regex puntuationDetection = new Regex(RegexConstants.PUNCTUATION_DETECTION);
+        private Regex sentenceStructureDetection = new Regex(RegexConstants.SENTENCE_STRUCTURE_DETECTION);
+        private Regex smileyDetection = new Regex(RegexConstants.SMILEY_DETECTION);
         private Regex emoticonDetection = new Regex(@"\\U[a-f0-9]{4,8}");
         private Regex laughingDetection = new Regex(@"a?(ha){2,}|i?(hi){2,}");
 

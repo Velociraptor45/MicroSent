@@ -50,7 +50,7 @@ namespace MicroSent.Controllers
 
         private bool testing = true;
         private bool useGoogleParser = true;
-        private bool useSerializedData = true;
+        private bool useSerializedData = false;
         private bool serializeData = false;
 
         private bool intensifyLastSentence = false;
@@ -64,11 +64,11 @@ namespace MicroSent.Controllers
 
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
-            List<Emoji> emojis = loadAllRelevantEmojis();
+            generateEmojiRegexStrings();
 
             posTagger = new PosTagger();
             twitterCrawler = new TwitterCrawler(config);
-            tokenizer = new Tokenizer(emojis);
+            tokenizer = new Tokenizer();
             tokenAnalyser = new TokenAnalyser();
             tweetAnalyser = new TweetAnalyser();
             wordRater = new WordRater();
@@ -94,7 +94,7 @@ namespace MicroSent.Controllers
             }
             else if (testing)
             {
-                allTweets = tester.getTestTweets().ToList();
+                allTweets = tester.getTestTweets().Skip(490).ToList();
             }
             else
             {
@@ -147,7 +147,18 @@ namespace MicroSent.Controllers
 
                     if (useGoogleParser)
                     {
-                        parseAndBuildTreeWithGoogle(tweet);
+                        //parseAndBuildTreeWithGoogle(tweet);
+                        for (int i = 0; i < tweet.sentences.Count; i++)
+                        {
+                            networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
+                            Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
+
+                            await serverAnswere;
+                            JObject treeJSON = JObject.Parse(serverAnswere.Result);
+
+                            JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
+                            parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
+                        }
                     }
                     else
                     {
@@ -209,21 +220,6 @@ namespace MicroSent.Controllers
             return allTweets;
         }
 
-        private async void parseAndBuildTreeWithGoogle(Tweet tweet)
-        {
-            for (int i = 0; i < tweet.sentences.Count; i++)
-            {
-                networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
-                Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
-
-                await serverAnswere;
-                JObject treeJSON = JObject.Parse(serverAnswere.Result);
-
-                JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
-                parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
-            }
-        }
-
         private void applyRating(Tweet tweet)
         {
             foreach (List<Token> sentence in tweet.sentences)
@@ -239,6 +235,22 @@ namespace MicroSent.Controllers
             }
         }
 
+        #region emoji regex string generation
+        private void generateEmojiRegexStrings()
+        {
+            var allEmojis = loadAllRelevantEmojis();
+            var allRelevantEmojis = allEmojis.Where(e => e.occurences >= minimalOccurences).ToList();
+            var allPositiveEmojis = allRelevantEmojis.Where(e => e.positiveScore >= minimalPositiveScore).ToList();
+            var allNegativeEmojis = allRelevantEmojis.Where(e => e.negativeScore <= minimalNegativeScore).ToList();
+            string allEmojiRegex = getEmojiRegexString(allRelevantEmojis);
+            string positiveEmojiRegex = getEmojiRegexString(allPositiveEmojis);
+            string negativeEmojiRegex = getEmojiRegexString(allNegativeEmojis);
+
+            RegexConstants.ALL_EMOTICON_DETECTION = allEmojiRegex;
+            RegexConstants.POSITIVE_EMOTICON_DETECTION = positiveEmojiRegex;
+            RegexConstants.NEGATIVE_EMOTICON_DETECTION = negativeEmojiRegex;
+        }
+
         private List<Emoji> loadAllRelevantEmojis()
         {
             Deserializer deserializer = new Deserializer("emojis", "data/emojis.xml", typeof(List<Emoji>));
@@ -246,6 +258,17 @@ namespace MicroSent.Controllers
             return emojis.Where(e => e.occurences > minimalOccurences
                 && (e.negativeScore < minimalNegativeScore || e.positiveScore > minimalPositiveScore)).ToList();
         }
+
+        private string getEmojiRegexString(List<Emoji> emojis)
+        {
+            string regexString = $"{emojis.First().unicodeCharacter}";
+            foreach (Emoji emoji in emojis.Skip(1))
+            {
+                regexString += $"|{emoji.unicodeCharacter}";
+            }
+            return regexString;
+        }
+        #endregion
 
         private void printOnConsole(List<Tweet> allTweets)
         {
