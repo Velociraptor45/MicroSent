@@ -18,7 +18,7 @@ namespace Serialization
         {
             SmileyEmojiConverter converter = new SmileyEmojiConverter();
             var list = converter.loadEmojiList("./data/emojis.csv");
-            converter.serializeEmojiList(list, "./data/emojis.bin");
+            converter.serializeEmojiList(list, "./data/emojis.xml");
         }
 
         static void serializeDict()

@@ -4,6 +4,7 @@ using Serialization.Models;
 using System.Collections.Generic;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
+using System.Xml.Serialization;
 
 namespace Serialization
 {
@@ -35,10 +36,19 @@ namespace Serialization
 
         public void serializeEmojiList(List<Emoji> emojis, string destinationPath)
         {
-            using (Stream stream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            //binary serialization works - deserialization in different project doesn't...
+            //-> xml serialization is needed
+
+            //using (Stream stream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            //{
+            //    IFormatter formatter = new BinaryFormatter();
+            //    formatter.Serialize(stream, emojis);
+            //}
+
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Emoji>), new XmlRootAttribute() { ElementName = "emojis" });
+            using (StreamWriter writer = new StreamWriter(destinationPath))
             {
-                IFormatter formatter = new BinaryFormatter();
-                formatter.Serialize(stream, emojis);
+                xmlSerializer.Serialize(writer, emojis);
             }
         }
     }
