@@ -26,7 +26,7 @@ namespace MicroSent.Models
         public bool isPunctuation = false;
         public bool isStructureToken = false; // ')' '(' '-'
         public bool isSmiley = false;
-        public bool isEmoticon = false;
+        public bool isEmoji = false;
         public bool isLaughingExpression = false;
 
         public bool ignoreInRating = false;

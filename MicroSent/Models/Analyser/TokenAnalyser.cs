@@ -15,7 +15,7 @@ namespace MicroSent.Models.Analyser
         private Regex puntuationDetection = new Regex(RegexConstants.PUNCTUATION_DETECTION);
         private Regex sentenceStructureDetection = new Regex(RegexConstants.SENTENCE_STRUCTURE_DETECTION);
         private Regex smileyDetection = new Regex(RegexConstants.SMILEY_DETECTION);
-        private Regex emoticonDetection = new Regex(@"\\U[a-f0-9]{4,8}");
+        private Regex emoticonDetection = new Regex(RegexConstants.ALL_EMOTICON_DETECTION);
         private Regex laughingDetection = new Regex(@"a?(ha){2,}|i?(hi){2,}");
 
         IStemmer stemmer = new EnglishStemmer();
@@ -55,7 +55,7 @@ namespace MicroSent.Models.Analyser
             {
                 return;
             }
-            else if (checkForEmoticon(token))
+            else if (checkForEmoji(token))
             {
                 return;
             }
@@ -132,13 +132,13 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
-        private bool checkForEmoticon(Token token)
+        private bool checkForEmoji(Token token)
         {
             MatchCollection emoticonMatches = emoticonDetection.Matches(token.text);
 
             if (emoticonMatches.Count > 0)
             {
-                return token.isEmoticon = true;
+                return token.isEmoji = true;
             }
             return false;
         }

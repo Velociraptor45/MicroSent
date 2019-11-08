@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
 namespace MicroSent.Models.Analyser
@@ -19,6 +20,9 @@ namespace MicroSent.Models.Analyser
         private const string SentWordLabelNoun = "n";
         private const string SentWordLabelAdverb = "r";
         private const string SentWordLabelVerb = "v";
+
+        private Regex positiveEmoticonDetection = new Regex(RegexConstants.POSITIVE_EMOTICON_DETECTION);
+        private Regex negativeEmoticonDetection = new Regex(RegexConstants.NEGATIVE_EMOTICON_DETECTION);
 
         private static Dictionary<string, float> polarityDictionary;
 
@@ -61,6 +65,19 @@ namespace MicroSent.Models.Analyser
         //        }
         //    }
         //}
+
+        public float getEmojiRating(Token token)
+        {
+            if (positiveEmoticonDetection.Match(token.text).Success)
+            {
+                return RatingConstants.POSITIVE_EMOTICON;
+            }
+            else if (negativeEmoticonDetection.Match(token.text).Success)
+            {
+                return RatingConstants.NEGATIVE_EMOTICON;
+            }
+            return 0f; //TODO: change this
+        }
 
         public float getWordRating(Token token, bool useOnlyAverageScore = false)
         {
