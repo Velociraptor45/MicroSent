@@ -11,6 +11,18 @@ namespace Serialization
     {
         static void Main(string[] args)
         {
+            serializeEmojis();
+        }
+
+        static void serializeEmojis()
+        {
+            SmileyEmojiConverter converter = new SmileyEmojiConverter();
+            var list = converter.loadEmojiList("./data/emojis.csv");
+            converter.serializeEmojiList(list, "./data/emojis.bin");
+        }
+
+        static void serializeDict()
+        {
             DictBuilder dictBuilder = new DictBuilder();
             string inputPath = @"data\testdata.csv";
             string outputPath = @"data\testdata.xml";
