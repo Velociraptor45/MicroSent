@@ -1,7 +1,10 @@
 ﻿using MicroSent.Models.Constants;
 using MicroSent.Models.Serialization;
+using MicroSent.Models.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace MicroSent.Models.Analyser
@@ -39,6 +42,12 @@ namespace MicroSent.Models.Analyser
             foreach(Match match in tokenMatches)
             {
                 string text = match.Value;
+
+                //the regex code finds a unicode character called "emoji variation selector" by doing a normal \w+
+                //this must be sorted out because the google parser can't handle it
+                if (UnicodeHelper.isEmojiVariationSelector(text))
+                    continue;
+
                 MatchCollection negationMatches = negationDetection.Matches(text);
                 if (negationMatches.Count > 0)
                 {

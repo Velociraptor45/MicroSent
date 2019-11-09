@@ -102,7 +102,7 @@ namespace MicroSent.Controllers
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
                 //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
-                //Tweet tw = new Tweet("He cease to understand what was going on. But he quit smoking the next day.", "aa", 0);
+                //Tweet tw = new Tweet("GO @ok_remi_ok GO! ❤️ https://t.co/3uV7QB8A5r", "aa", 0);
                 //allTweets.Add(tw);
             }
 
@@ -116,7 +116,7 @@ namespace MicroSent.Controllers
                     //////////////////////////////////////////////////////////////
                     /// TEST AREA
                     //if (tweet.fullText.Contains("That didn't work out very well.")) //(tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
-                    if (tweet.fullText.Contains("and don't want you to die"))
+                    if (tweet.fullText.Contains("GO"))
                     {
                         int a = 0;
                     }
@@ -225,15 +225,22 @@ namespace MicroSent.Controllers
             {
                 foreach (Token token in sentence)
                 {
-                    //single Token analysis
-                    if (token.isEmoji)
-                    {
-                        token.emojiRating = wordRater.getEmojiRating(token);
-                    }
-                    else if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
+                    if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
                         token.wordRating = wordRater.getWordRating(token, useOnlyAverageScore: true);
                     }
+                }
+            }
+
+            foreach(Token token in tweet.rest)
+            {
+                if (token.isEmoji)
+                {
+                    token.emojiRating = wordRater.getEmojiRating(token);
+                }
+                else if (token.isSmiley)
+                {
+                    //TODO
                 }
             }
         }
@@ -242,7 +249,9 @@ namespace MicroSent.Controllers
         private void generateEmojiRegexStrings()
         {
             var allEmojis = loadAllRelevantEmojis();
-            var allRelevantEmojis = allEmojis.Where(e => e.occurences >= minimalOccurences).ToList();
+            var allRelevantEmojis = allEmojis.Where(e => e.occurences >= minimalOccurences
+                && (e.positiveScore >= minimalPositiveScore
+                || e.negativeScore >= minimalNegativeScore)).ToList();
             var allPositiveEmojis = allRelevantEmojis.Where(e => e.positiveScore >= minimalPositiveScore).ToList();
             var allNegativeEmojis = allRelevantEmojis.Where(e => e.negativeScore >= minimalNegativeScore).ToList();
             string allEmojiRegex = getEmojiRegexString(allRelevantEmojis);

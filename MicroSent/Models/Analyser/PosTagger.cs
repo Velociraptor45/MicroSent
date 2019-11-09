@@ -21,7 +21,7 @@ namespace MicroSent.Models.Analyser
 
             foreach(Token token in tokens)
             {
-                if (token.isLink || (tokenInSentenceIndex == 0 && token.isPunctuation))
+                if (token.isLink || token.isEmoji || token.isSmiley || (tokenInSentenceIndex == 0 && token.isPunctuation))
                 {
                     tweet.rest.Add(token);
                     continue;
