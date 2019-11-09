@@ -10,6 +10,8 @@ namespace MicroSent.Models.Analyser
     public class TweetAnalyser
     {
         private const string IronyString = "irony";
+        private const string SarcasmStringSlash = "/s";
+        private const string SarcasmStringBackslash = "\\s";
         
         private Regex negationToken = new Regex(RegexConstants.NEGATION_TOKEN_DETECTION);
         private Regex negationHashtagPart = new Regex(RegexConstants.NEGATION_HASHTAG_DETECTION);
@@ -49,18 +51,16 @@ namespace MicroSent.Models.Analyser
 
         public void checkforIrony(Tweet tweet)
         {
-            if (isIronyEndHashtag(tweet))
-            {
-                // TODO: set irony rating
-            }
+            tweet.isIronic = hasIronyEndHashtag(tweet) || hasSarcasmToken(tweet);
         }
 
-        private bool isIronyEndHashtag(Tweet tweet)
+        private bool hasIronyEndHashtag(Tweet tweet)
         {
             if (tweet.firstEndHashtagIndex == -1)
                 return false;
 
-            foreach(Token token in tweet.rest)
+            var endHastags = tweet.rest.Where(t => t.indexInTweet >= tweet.firstEndHashtagIndex && t.isHashtag);
+            foreach (Token token in endHastags)
             {
                 if(token.text == IronyString)
                 {
@@ -68,6 +68,20 @@ namespace MicroSent.Models.Analyser
                 }
             }
 
+            return false;
+        }
+
+        private bool hasSarcasmToken(Tweet tweet)
+        {
+            if (tweet.sentences.Count == 0)
+                return false;
+
+            foreach(Token token in tweet.sentences.Last())
+            {
+                if (token.text == SarcasmStringSlash
+                    || token.text == SarcasmStringBackslash)
+                    return true;
+            }
             return false;
         }
 

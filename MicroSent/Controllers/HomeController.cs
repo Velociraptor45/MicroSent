@@ -48,9 +48,9 @@ namespace MicroSent.Controllers
         /////////////////////////////////////////////////////////////////////////////////////
         /// CONFIGURATION
 
-        private bool testing = true;
+        private bool testing = false;
         private bool useGoogleParser = true;
-        private bool useSerializedData = true;
+        private bool useSerializedData = false;
         private bool serializeData = false;
 
         private bool intensifyLastSentence = false;
@@ -102,7 +102,7 @@ namespace MicroSent.Controllers
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
                 //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
-                Tweet tw = new Tweet("GO @ok_remi_ok GO! ❤️ https://t.co/3uV7QB8A5r", "aa", 0);
+                Tweet tw = new Tweet("You are so GREAT! #irony But that's cool.", "aa", 0);
                 allTweets.Add(tw);
             }
 
@@ -175,12 +175,16 @@ namespace MicroSent.Controllers
                 {
                     tweetAnalyser.filterUselessInterogativeSentences(tweet);
 
+                    //////////////////////////////////////////////////////////////
+                    /// NEGATION
                     //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
                     //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
                     tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
                     tweetAnalyser.applySpecialStructureNegation(tweet);
-
                     tweetAnalyser.applyEndHashtagNegation(tweet);
+                    //////////////////////////////////////////////////////////////
+
+                    tweetAnalyser.checkforIrony(tweet);
 
                     applyRating(tweet);
 

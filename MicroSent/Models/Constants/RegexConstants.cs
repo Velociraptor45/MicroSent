@@ -5,7 +5,7 @@
         public const string LINK_DETECTION = @"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+";
         public const string SMILEY_DETECTION = @"(:-?|=)(\)|\(|\||\/|(D\b))|\bD:|: [\)\(]";
         public const string PUNCTUATION_DETECTION = @"[\?!]+|\.+|,|:";
-        public const string WORDS_DETECTION = @"(@|#[a-z]|\\)?(\w([''-]\w)?)+";
+        public const string WORDS_DETECTION = @"(@|#[a-z]|\\|/)?(\w([''-]\w)?)+";
         public const string SENTENCE_STRUCTURE_DETECTION = @"(\(|\)|-|""|'')";
         public static string ALL_EMOTICON_DETECTION = "";
         public static string POSITIVE_EMOTICON_DETECTION = "";

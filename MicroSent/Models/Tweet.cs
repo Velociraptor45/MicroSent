@@ -13,7 +13,9 @@ namespace MicroSent.Models
 
         public int tokenCount;
         public int firstEndHashtagIndex;
-          
+
+        public bool isIronic = false;
+
         public List<List<Token>> sentences;
         public List<Token> rest;
           

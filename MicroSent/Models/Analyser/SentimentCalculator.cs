@@ -31,13 +31,10 @@ namespace MicroSent.Models.Analyser
                 calculateTokenRating(tweet, token, useSingleThreshold, intensifyLastSentence);
             }
 
-            if (useTotalThreshold)
-            {
-                if (tweet.positiveRating < TotalThreshold)
-                    tweet.positiveRating = 0;
-                if (tweet.negativeRating > -TotalThreshold)
-                    tweet.negativeRating = 0;
-            }
+            if (tweet.isIronic)
+                invertRatings(tweet);
+
+            applyTotalThreshold(tweet, useTotalThreshold);
         }
 
         private void calculateTokenRating(Tweet tweet, Token token,
@@ -65,15 +62,6 @@ namespace MicroSent.Models.Analyser
                 tokenRating = token.negationRating * token.wordRating;
             }
 
-            //if (!tweet.isDefinitelySarcastic)
-            //{
-            //    subTokenRating *= token.ironyRating;
-            //}
-            //else
-            //{
-            //    subTokenRating *= -1;
-            //}
-
             if (token.hasRepeatedLetters)
             {
                 tokenRating *= RatingConstants.REPEATED_LETTER_MULTIPLIER;
@@ -95,6 +83,29 @@ namespace MicroSent.Models.Analyser
                 tokenRating *= RatingConstants.LAST_SENTENCE_INTENSIFIER;
             }
 
+            setTokenRating(token, tweet, tokenRating, useSingleThreshold);
+        }
+
+        private void invertRatings(Tweet tweet)
+        {
+            float negativeRating = tweet.negativeRating;
+            tweet.negativeRating = -tweet.positiveRating;
+            tweet.positiveRating = -negativeRating;
+        }
+
+        private void applyTotalThreshold(Tweet tweet, bool useTotalThreshold)
+        {
+            if (useTotalThreshold)
+            {
+                if (tweet.positiveRating < TotalThreshold)
+                    tweet.positiveRating = 0;
+                if (tweet.negativeRating > -TotalThreshold)
+                    tweet.negativeRating = 0;
+            }
+        }
+
+        private void setTokenRating(Token token, Tweet tweet, float tokenRating, bool useSingleThreshold)
+        {
             token.totalRating = tokenRating;
             if (tokenRating > 0)
             {
