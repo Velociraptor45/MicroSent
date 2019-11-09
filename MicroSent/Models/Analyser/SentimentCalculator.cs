@@ -52,6 +52,14 @@ namespace MicroSent.Models.Analyser
                 float wordRatingSum = token.subTokens.Sum(st => st.wordRating);
                 tokenRating = token.negationRating * token.wordRating;
             }
+            else if (token.isEmoji)
+            {
+                tokenRating = token.emojiRating;
+            }
+            else if (token.isSmiley)
+            {
+                tokenRating = token.smileyRating;
+            }
             else
             {
                 tokenRating = token.negationRating * token.wordRating;

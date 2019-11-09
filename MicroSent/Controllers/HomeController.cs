@@ -48,9 +48,9 @@ namespace MicroSent.Controllers
         /////////////////////////////////////////////////////////////////////////////////////
         /// CONFIGURATION
 
-        private bool testing = false;
+        private bool testing = true;
         private bool useGoogleParser = true;
-        private bool useSerializedData = false;
+        private bool useSerializedData = true;
         private bool serializeData = false;
 
         private bool intensifyLastSentence = false;
@@ -98,12 +98,12 @@ namespace MicroSent.Controllers
             }
             else
             {
-                allTweets = await getTweetsAsync();
+                //allTweets = await getTweetsAsync();
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
                 //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
-                //Tweet tw = new Tweet("GO @ok_remi_ok GO! ❤️ https://t.co/3uV7QB8A5r", "aa", 0);
-                //allTweets.Add(tw);
+                Tweet tw = new Tweet("GO @ok_remi_ok GO! ❤️ https://t.co/3uV7QB8A5r", "aa", 0);
+                allTweets.Add(tw);
             }
 
             foreach (Tweet tweet in allTweets)
