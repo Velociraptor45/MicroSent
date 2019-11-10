@@ -177,6 +177,10 @@
     <polarity>Positive</polarity>
   </Smiley>
   <Smiley>
+    <smiley>&lt;3</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
     <smiley>:‑(</smiley>
     <polarity>Negative</polarity>
   </Smiley>
@@ -342,10 +346,6 @@
   </Smiley>
   <Smiley>
     <smiley>&lt;\3</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>&lt;3</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>

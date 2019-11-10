@@ -51,7 +51,7 @@ namespace MicroSent.Controllers
 
         private bool testing = true;
         private bool useGoogleParser = true;
-        private bool useSerializedData = false;
+        private bool useSerializedData = true;
         private bool serializeData = false;
 
         private bool intensifyLastSentence = false;
@@ -196,7 +196,7 @@ namespace MicroSent.Controllers
                 }
             }
 
-            if(serializeData)
+            if(serializeData && !useSerializedData)
                 serializer.serializeTweets(allTweets, SerializedTweetsPath);
 
 
