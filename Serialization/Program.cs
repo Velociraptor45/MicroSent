@@ -11,7 +11,14 @@ namespace Serialization
     {
         static void Main(string[] args)
         {
-            serializeEmojis();
+            serializeSmileys();
+        }
+
+        static void serializeSmileys()
+        {
+            SmileyEmojiConverter converter = new SmileyEmojiConverter();
+            var smileyList = converter.loadSmileyLists("./data/positiveSmileys.txt", "./data/negativeSmileys.txt");
+            converter.serializeSmileys(smileyList, "./data/smileys.xml");
         }
 
         static void serializeEmojis()

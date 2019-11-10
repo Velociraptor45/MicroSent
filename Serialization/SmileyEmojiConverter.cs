@@ -44,17 +44,42 @@ namespace Serialization
             //binary serialization works - deserialization in different project doesn't...
             //-> xml serialization is needed
 
-            //using (Stream stream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
-            //{
-            //    IFormatter formatter = new BinaryFormatter();
-            //    formatter.Serialize(stream, emojis);
-            //}
-
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Emoji>), new XmlRootAttribute() { ElementName = "emojis" });
             using (StreamWriter writer = new StreamWriter(destinationPath))
             {
                 xmlSerializer.Serialize(writer, emojis);
             }
+        }
+
+        public void serializeSmileys(List<Smiley> smileys, string destinationPath)
+        {
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Smiley>), new XmlRootAttribute() { ElementName = "smileys" });
+            using (StreamWriter writer = new StreamWriter(destinationPath))
+            {
+                xmlSerializer.Serialize(writer, smileys);
+            }
+        }
+
+        public List<Smiley> loadSmileyLists(string positivePath, string negativePath)
+        {
+            List<Smiley> smileyList = new List<Smiley>();
+            smileyList.AddRange(loadSmileyList(positivePath, Polarity.Positive));
+            smileyList.AddRange(loadSmileyList(negativePath, Polarity.Negative));
+            return smileyList;
+        }
+
+        private List<Smiley> loadSmileyList(string path, Polarity polarity)
+        {
+            List<Smiley> list = new List<Smiley>();
+            using (StreamReader file = new StreamReader(path))
+            {
+                string line;
+                while ((line = file.ReadLine()) != null)
+                {
+                    list.Add(new Smiley(line, polarity));
+                }
+            }
+            return list;
         }
     }
 }
