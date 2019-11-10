@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MicroSent.Models.Enums;
 
 namespace MicroSent.Controllers
 {
@@ -48,12 +49,14 @@ namespace MicroSent.Controllers
         /////////////////////////////////////////////////////////////////////////////////////
         /// CONFIGURATION
 
-        private bool testing = false;
+        private bool testing = true;
         private bool useGoogleParser = true;
         private bool useSerializedData = false;
         private bool serializeData = false;
 
         private bool intensifyLastSentence = false;
+
+        private int skipTweetsAmount = 0;
 
             //emojis:
         private int minimalOccurences = 100;
@@ -65,6 +68,7 @@ namespace MicroSent.Controllers
         public HomeController(IOptions<TwitterCrawlerConfig> config)
         {
             generateEmojiRegexStrings();
+            generateSmileyRegexStrings();
 
             posTagger = new PosTagger();
             twitterCrawler = new TwitterCrawler(config);
@@ -94,7 +98,7 @@ namespace MicroSent.Controllers
             }
             else if (testing)
             {
-                allTweets = tester.getTestTweets().Skip(490).ToList();
+                allTweets = tester.getTestTweets().Skip(skipTweetsAmount).ToList();
             }
             else
             {
@@ -102,7 +106,7 @@ namespace MicroSent.Controllers
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
                 //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
-                Tweet tw = new Tweet("You are so GREAT! #irony But that's cool.", "aa", 0);
+                Tweet tw = new Tweet("You are so GREAT! :)", "aa", 0);
                 allTweets.Add(tw);
             }
 
@@ -244,12 +248,12 @@ namespace MicroSent.Controllers
                 }
                 else if (token.isSmiley)
                 {
-                    //TODO
+                    token.smileyRating = wordRater.getSmileyRating(token);
                 }
             }
         }
 
-        #region emoji regex string generation
+        #region emoji/smiley regex string generation
         private void generateEmojiRegexStrings()
         {
             var allEmojis = loadAllRelevantEmojis();
@@ -262,9 +266,23 @@ namespace MicroSent.Controllers
             string positiveEmojiRegex = getEmojiRegexString(allPositiveEmojis);
             string negativeEmojiRegex = getEmojiRegexString(allNegativeEmojis);
 
-            RegexConstants.ALL_EMOTICON_DETECTION = allEmojiRegex;
-            RegexConstants.POSITIVE_EMOTICON_DETECTION = positiveEmojiRegex;
-            RegexConstants.NEGATIVE_EMOTICON_DETECTION = negativeEmojiRegex;
+            RegexConstants.ALL_EMOJI_DETECTION = allEmojiRegex;
+            RegexConstants.POSITIVE_EMOJI_DETECTION = positiveEmojiRegex;
+            RegexConstants.NEGATIVE_EMOJI_DETECTION = negativeEmojiRegex;
+        }
+
+        private void generateSmileyRegexStrings()
+        {
+            List<Smiley> allSmileys = loadAllSmileys();
+            List<Smiley> positiveSmileys = allSmileys.Where(s => s.polarity == Polarity.Positive).ToList();
+            List<Smiley> negativeSmileys = allSmileys.Where(s => s.polarity == Polarity.Negative).ToList();
+            string allSmileyRegex = getSmileyRegexString(allSmileys);
+            string positiveSmileyRegex = getSmileyRegexString(positiveSmileys);
+            string negativeSmileyRegex = getSmileyRegexString(negativeSmileys);
+
+            RegexConstants.ALL_SMILEY_DETECTION = allSmileyRegex;
+            RegexConstants.POSITIVE_SMILEY_DETECTION = positiveSmileyRegex;
+            RegexConstants.NEGATIVE_SMILEY_DETECTION = negativeSmileyRegex;
         }
 
         private List<Emoji> loadAllRelevantEmojis()
@@ -272,6 +290,23 @@ namespace MicroSent.Controllers
             Deserializer deserializer = new Deserializer("emojis", "data/emojis.xml", typeof(List<Emoji>));
             deserializer.deserializeEmojiList(out List<Emoji> emojis);
             return emojis;
+        }
+
+        private List<Smiley> loadAllSmileys()
+        {
+            Deserializer deserializer = new Deserializer("smileys", "data/smileys.xml", typeof(List<Smiley>));
+            deserializer.deserializeSmileyList(out List<Smiley> smileys);
+            return smileys;
+        }
+
+        private string getSmileyRegexString(List<Smiley> smileys)
+        {
+            string regexString = $"{escapeRegexCharacters(smileys.First().smiley)}";
+            foreach(Smiley smiley in smileys.Skip(1))
+            {
+                regexString += $"|{escapeRegexCharacters(smiley.smiley)}";
+            }
+            return regexString;
         }
 
         private string getEmojiRegexString(List<Emoji> emojis)
@@ -282,6 +317,14 @@ namespace MicroSent.Controllers
                 regexString += $"|{emoji.unicodeCharacter}";
             }
             return regexString;
+        }
+
+        private string escapeRegexCharacters(string pattern)
+        {
+            return pattern.Replace(@"\", @"\\").Replace("(", @"\(").Replace(")", @"\)")
+                .Replace("{", @"\{").Replace("}", @"\}").Replace("[", @"\[").Replace("]", @"\]")
+                .Replace("*", @"\*").Replace("/", @"\/").Replace("^", @"\^").Replace(".", @"\.")
+                .Replace("|", @"\|");
         }
         #endregion
 

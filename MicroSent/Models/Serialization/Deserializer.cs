@@ -50,5 +50,13 @@ namespace MicroSent.Models.Serialization
                 emojiList = (List<Emoji>)xmlSerializer.Deserialize(streamReader);
             }
         }
+
+        public void deserializeSmileyList(out List<Smiley> smileyList)
+        {
+            using (StreamReader streamReader = new StreamReader(filePath))
+            {
+                smileyList = (List<Smiley>)xmlSerializer.Deserialize(streamReader);
+            }
+        }
     }
 }

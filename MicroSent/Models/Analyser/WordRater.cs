@@ -21,8 +21,10 @@ namespace MicroSent.Models.Analyser
         private const string SentWordLabelAdverb = "r";
         private const string SentWordLabelVerb = "v";
 
-        private Regex positiveEmoticonDetection = new Regex(RegexConstants.POSITIVE_EMOTICON_DETECTION);
-        private Regex negativeEmoticonDetection = new Regex(RegexConstants.NEGATIVE_EMOTICON_DETECTION);
+        private Regex positiveEmojiDetection = new Regex(RegexConstants.POSITIVE_EMOJI_DETECTION);
+        private Regex negativeEmojiDetection = new Regex(RegexConstants.NEGATIVE_EMOJI_DETECTION);
+        private Regex positiveSmileyDetection = new Regex(RegexConstants.POSITIVE_SMILEY_DETECTION);
+        private Regex negativeSmileyDetection = new Regex(RegexConstants.NEGATIVE_SMILEY_DETECTION);
 
         private static Dictionary<string, float> polarityDictionary;
 
@@ -68,13 +70,26 @@ namespace MicroSent.Models.Analyser
 
         public float getEmojiRating(Token token)
         {
-            if (positiveEmoticonDetection.Match(token.text).Success)
+            if (positiveEmojiDetection.Match(token.text).Success)
             {
-                return RatingConstants.POSITIVE_EMOTICON;
+                return RatingConstants.POSITIVE_EMOJI;
             }
-            else if (negativeEmoticonDetection.Match(token.text).Success)
+            else if (negativeEmojiDetection.Match(token.text).Success)
             {
-                return RatingConstants.NEGATIVE_EMOTICON;
+                return RatingConstants.NEGATIVE_EMOJI;
+            }
+            return 0f; //TODO: change this
+        }
+
+        public float getSmileyRating(Token token)
+        {
+            if (positiveSmileyDetection.Match(token.text).Success)
+            {
+                return RatingConstants.POSITIVE_SMILEY;
+            }
+            else if (negativeSmileyDetection.Match(token.text).Success)
+            {
+                return RatingConstants.NEGATIVE_SMILEY;
             }
             return 0f; //TODO: change this
         }

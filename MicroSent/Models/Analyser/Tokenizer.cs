@@ -22,11 +22,11 @@ namespace MicroSent.Models.Analyser
         private void initRegex()
         {
             tokenDetection = new Regex($"({RegexConstants.LINK_DETECTION})" +
-                $"|({RegexConstants.SMILEY_DETECTION})" +
+                $"|({RegexConstants.ALL_SMILEY_DETECTION})" +
                 $"|({RegexConstants.PUNCTUATION_DETECTION})" +
                 $"|({RegexConstants.WORDS_DETECTION})" +
                 $"|({RegexConstants.SENTENCE_STRUCTURE_DETECTION})" +
-                $"|({RegexConstants.ALL_EMOTICON_DETECTION})");
+                $"|({RegexConstants.ALL_EMOJI_DETECTION})");
             negationDetection = new Regex($"{RegexConstants.NEGATION_WORD_DETECTION}");
         }
 
