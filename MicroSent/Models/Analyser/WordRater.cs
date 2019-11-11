@@ -12,8 +12,6 @@ namespace MicroSent.Models.Analyser
 {
     public class WordRater
     {
-        private const string FilePath = @"data\wordPolarity\";
-        private const string LexiconFileName = "polarityLexicon.xml";
         private const string SentiLexiconRootName = "SentiWords";
 
         private const string SentWordLabelAdjective = "a";
@@ -28,7 +26,7 @@ namespace MicroSent.Models.Analyser
 
         private static Dictionary<string, float> polarityDictionary;
 
-        private Deserializer deserializer = new Deserializer(SentiLexiconRootName, FilePath + LexiconFileName, typeof(Item[]));
+        private Deserializer deserializer = new Deserializer(SentiLexiconRootName, DataPath.POLARITY_LEXICON, typeof(Item[]));
 
         private const float ValueNotFound = float.MinValue;
 

@@ -1,4 +1,5 @@
-﻿using OpenNLP.Tools.Parser;
+﻿using MicroSent.Models.Constants;
+using OpenNLP.Tools.Parser;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,11 +8,10 @@ namespace MicroSent.Models.Analyser
     public class PosTagger
     {
         private EnglishTreebankParser nlpParser;
-        private string nbinFilePath = @"data\NBIN_files\";
 
         public PosTagger()
         {
-            nlpParser = new EnglishTreebankParser(nbinFilePath, true, false);
+            nlpParser = new EnglishTreebankParser(DataPath.NBIN_FOLDER, true, false);
         }
 
         public void cutIntoSentences(Tweet tweet, List<Token> tokens)

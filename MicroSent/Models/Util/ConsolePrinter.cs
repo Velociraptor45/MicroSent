@@ -10,6 +10,28 @@ namespace MicroSent.Models.Util
     {
         public static bool allowPrinting = true;
 
+        #region tweet crawling
+        public static void printBeginCrawlingTweets(string accountName)
+        {
+            if (allowPrinting)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($"######## Start crawling tweets from account {accountName} ########");
+                Console.ResetColor();
+            }
+        }
+
+        public static void printFinishedCrawlingTweets()
+        {
+            if (allowPrinting)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($"######## Finished crawling from Twitter ########");
+                Console.ResetColor();
+            }
+        }
+        #endregion
+
         public static void printEmptyLine()
         {
             if (allowPrinting)

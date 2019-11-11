@@ -20,13 +20,11 @@ namespace MicroSent.Models.Analyser
 
         IStemmer stemmer = new EnglishStemmer();
 
-        private const string HunspellDataPath = @".\data\nhunspell\";
-
         private NHunspell.Hunspell hunspell;
 
         public TokenAnalyser()
         {
-            hunspell = new NHunspell.Hunspell($"{HunspellDataPath}en_us.aff", $"{HunspellDataPath}en_us.dic");
+            hunspell = new NHunspell.Hunspell(DataPath.NHUNSPELL_ENG_AFF, DataPath.NHUNSPELL_ENG_DICT);
         }
 
         public void analyseTokenType(Token token)

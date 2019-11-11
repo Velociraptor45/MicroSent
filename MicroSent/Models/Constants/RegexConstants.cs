@@ -3,7 +3,6 @@
     public class RegexConstants
     {
         public const string LINK_DETECTION = @"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+";
-        //public static string SMILEY_DETECTION = @"(:-?|=)(\)|\(|\||\/|(D\b))|\bD:|: [\)\(]";
         public static string ALL_SMILEY_DETECTION = "";
         public static string POSITIVE_SMILEY_DETECTION = "";
         public static string NEGATIVE_SMILEY_DETECTION = "";

@@ -44,7 +44,7 @@ namespace MicroSent.Controllers
         private const int NetworkReceiveClientPort = 6050;
         private const string NetworkClientHost = "localhost";
 
-        private const string SerializedTweetsPath = "data/testtweets.bin";
+        private const string SerializedTweetsPath = DataPath.SERIALIZED_TWEETS;
 
         /////////////////////////////////////////////////////////////////////////////////////
         /// CONFIGURATION
@@ -102,7 +102,7 @@ namespace MicroSent.Controllers
             }
             else
             {
-                //allTweets = await getTweetsAsync();
+                //allTweets = await getTweetsAsync("AlanZucconi");
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
                 //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
@@ -208,12 +208,15 @@ namespace MicroSent.Controllers
             return View();
         }
 
-        private async Task<List<Tweet>> getTweetsAsync()
+        private async Task<List<Tweet>> getTweetsAsync(string accountName)
         {
             List<Tweet> allTweets = new List<Tweet>();
             List<Status> quotedRetweetStatuses = new List<Status>();
             List<Status> linkStatuses = new List<Status>();
-            quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
+
+            ConsolePrinter.printBeginCrawlingTweets(accountName);
+            quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets(accountName);
+            ConsolePrinter.printFinishedCrawlingTweets();
             //linkStatuses = await twitterCrawler.getLinks("AlanZucconi");
             //List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
             //quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
