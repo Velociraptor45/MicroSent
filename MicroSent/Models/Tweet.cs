@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MicroSent.Models.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -25,7 +26,7 @@ namespace MicroSent.Models
         public float negativeRating;
 
         // only needed for evaluation of algorithm
-        public float testRating;
+        public Polarity annotatedPolarity;
 
         public Tweet(string fullText, string userScreenName, ulong statusID)
         {
@@ -40,8 +41,6 @@ namespace MicroSent.Models
             firstEndHashtagIndex = -1;
             positiveRating = 0f;
             negativeRating = 0f;
-
-            testRating = 0f;
         }
 
         public Token getTokenByIndex(int indexInTweet)
