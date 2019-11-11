@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MicroSent.Models.Enums;
+using MicroSent.Models.Configuration;
 
 namespace MicroSent.Controllers
 {
@@ -40,38 +41,19 @@ namespace MicroSent.Controllers
 
         private Tester tester;
 
-        private const int NetworkSendClientPort = 6048;
-        private const int NetworkReceiveClientPort = 6050;
-        private const string NetworkClientHost = "localhost";
-
         private const string SerializedTweetsPath = DataPath.SERIALIZED_TWEETS;
 
-        /////////////////////////////////////////////////////////////////////////////////////
-        /// CONFIGURATION
+        private IAlgorithmConfiguration configuration;
 
-        private bool testing = true;
-        private bool useGoogleParser = true;
-        private bool useSerializedData = true;
-        private bool serializeData = false;
-
-        private bool intensifyLastSentence = false;
-
-        private int skipTweetsAmount = 0;
-
-            //emojis:
-        private int minimalOccurences = 100;
-        private float minimalPositiveScore = .5f;
-        private float minimalNegativeScore = .4f;
-
-        /////////////////////////////////////////////////////////////////////////////////////
-
-        public HomeController(IOptions<TwitterCrawlerConfig> config)
+        public HomeController(IOptions<TwitterCrawlerConfig> crawlerConfig, IAlgorithmConfiguration algorithmConfiguration)
         {
+            this.configuration = algorithmConfiguration;
+
             generateEmojiRegexStrings();
             generateSmileyRegexStrings();
 
             posTagger = new PosTagger();
-            twitterCrawler = new TwitterCrawler(config);
+            twitterCrawler = new TwitterCrawler(crawlerConfig);
             tokenizer = new Tokenizer();
             tokenAnalyser = new TokenAnalyser();
             tweetAnalyser = new TweetAnalyser();
@@ -80,8 +62,10 @@ namespace MicroSent.Controllers
             preprocessor = new Preprocessor();
             parseTreeAnalyser = new ParseTreeAnalyser();
 
-            networkSendClientSocket = new NetworkClientSocket(NetworkSendClientPort, NetworkClientHost);
-            networkReceiveClientSocket = new NetworkClientSocket(NetworkReceiveClientPort, NetworkClientHost);
+            networkSendClientSocket = new NetworkClientSocket(
+                configuration.clientSendingPort, configuration.clientHost);
+            networkReceiveClientSocket = new NetworkClientSocket(
+                configuration.clientReceivingPort, configuration.clientHost);
 
             serializer = new Serializer();
             deserializer = new Deserializer();
@@ -92,13 +76,13 @@ namespace MicroSent.Controllers
         public async Task<IActionResult> Index()
         {
             List<Tweet> allTweets = new List<Tweet>();
-            if (useSerializedData)
+            if (configuration.useSerializedData)
             {
                 allTweets = deserializer.deserializeTweets(SerializedTweetsPath);
             }
-            else if (testing)
+            else if (configuration.testing)
             {
-                allTweets = tester.getTestTweets().Skip(skipTweetsAmount).ToList();
+                allTweets = tester.getTestTweets().Skip(configuration.skipTweetsAmount).ToList();
             }
             else
             {
@@ -113,7 +97,7 @@ namespace MicroSent.Controllers
             foreach (Tweet tweet in allTweets)
             {
                 ConsolePrinter.printAnalysisStart(allTweets, tweet);
-                if (!useSerializedData || !useGoogleParser)
+                if (!configuration.useSerializedData || !configuration.useGoogleParser)
                 {
                     tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
 
@@ -149,7 +133,7 @@ namespace MicroSent.Controllers
                     tweetAnalyser.analyseFirstEndHashtagPosition(allTokens, tweet);
                     posTagger.cutIntoSentences(tweet, allTokens);
 
-                    if (useGoogleParser)
+                    if (configuration.useGoogleParser)
                     {
                         for (int i = 0; i < tweet.sentences.Count; i++)
                         {
@@ -175,7 +159,7 @@ namespace MicroSent.Controllers
                 }
 
 
-                if (!serializeData)
+                if (!configuration.serializeData)
                 {
                     tweetAnalyser.filterUselessInterogativeSentences(tweet);
 
@@ -192,15 +176,16 @@ namespace MicroSent.Controllers
 
                     applyRating(tweet);
 
-                    sentimentCalculator.calculateFinalSentiment(tweet, intensifyLastSentence: intensifyLastSentence);
+                    sentimentCalculator.calculateFinalSentiment(tweet,
+                        intensifyLastSentence: configuration.intensifyLastSentence);
                 }
             }
 
-            if(serializeData && !useSerializedData)
+            if(configuration.serializeData && !configuration.useSerializedData)
                 serializer.serializeTweets(allTweets, SerializedTweetsPath);
 
 
-            if (testing)
+            if (configuration.testing)
                 tester.checkTweetRating(allTweets);
             else
                 printOnConsole(allTweets);
@@ -260,11 +245,13 @@ namespace MicroSent.Controllers
         private void generateEmojiRegexStrings()
         {
             var allEmojis = loadAllRelevantEmojis();
-            var allRelevantEmojis = allEmojis.Where(e => e.occurences >= minimalOccurences
-                && (e.positiveScore >= minimalPositiveScore
-                || e.negativeScore >= minimalNegativeScore)).ToList();
-            var allPositiveEmojis = allRelevantEmojis.Where(e => e.positiveScore >= minimalPositiveScore).ToList();
-            var allNegativeEmojis = allRelevantEmojis.Where(e => e.negativeScore >= minimalNegativeScore).ToList();
+            var allRelevantEmojis = allEmojis.Where(e => e.occurences >= configuration.minimalEmojiOccurences
+                && (e.positiveScore >= configuration.minimalPositiveEmojiScore
+                || e.negativeScore >= configuration.minimalNegativeEmojiScore)).ToList();
+            var allPositiveEmojis = allRelevantEmojis
+                .Where(e => e.positiveScore >= configuration.minimalPositiveEmojiScore).ToList();
+            var allNegativeEmojis = allRelevantEmojis
+                .Where(e => e.negativeScore >= configuration.minimalNegativeEmojiScore).ToList();
             string allEmojiRegex = getEmojiRegexString(allRelevantEmojis);
             string positiveEmojiRegex = getEmojiRegexString(allPositiveEmojis);
             string negativeEmojiRegex = getEmojiRegexString(allNegativeEmojis);

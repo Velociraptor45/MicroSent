@@ -190,8 +190,8 @@ namespace MicroSent.Models.Test
                 analyisContainer.falseNegative++;
                 if (expectedRating == Positive)
                     analyisContainer.shouldPositiveButIsNegative++;
-                else if (expectedRating == Positive)
-                    analyisContainer.shouldPositiveButIsNegative++;
+                else if (expectedRating == Neutral)
+                    analyisContainer.shouldNeutralButIsNegative++;
             }
             else if (actualRating == Neutral)
             {

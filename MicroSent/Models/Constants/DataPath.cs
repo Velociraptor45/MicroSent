@@ -10,7 +10,7 @@
         public static readonly string NHUNSPELL_ENG_AFF = $@"{NHUNSPELL_FOLDER}\en_us.aff";
         public static readonly string NHUNSPELL_ENG_DICT = $@"{NHUNSPELL_FOLDER}\en_us.dic";
 
-        public const string NBIN_FOLDER = @"data\NBIN_files";
+        public const string NBIN_FOLDER = @"data\NBIN_files\";
 
         public const string SLANG_FILE = @"data\slang\slang.txt";
     }
