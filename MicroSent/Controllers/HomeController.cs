@@ -15,8 +15,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MicroSent.Models.Enums;
 using MicroSent.Models.Configuration;
+using MicroSent.Models.RegexGeneration;
 
 namespace MicroSent.Controllers
 {
@@ -39,6 +39,8 @@ namespace MicroSent.Controllers
         private Serializer serializer;
         private Deserializer deserializer;
 
+        private RegexGenerator regexGenerator;
+
         private Tester tester;
 
         private const string SerializedTweetsPath = DataPath.SERIALIZED_TWEETS;
@@ -49,8 +51,10 @@ namespace MicroSent.Controllers
         {
             this.configuration = algorithmConfiguration;
 
-            generateEmojiRegexStrings();
-            generateSmileyRegexStrings();
+            regexGenerator = new RegexGenerator(algorithmConfiguration);
+
+            regexGenerator.generateEmojiRegexStrings();
+            regexGenerator.generateSmileyRegexStrings();
 
             posTagger = new PosTagger();
             twitterCrawler = new TwitterCrawler(crawlerConfig);
@@ -240,83 +244,6 @@ namespace MicroSent.Controllers
                 }
             }
         }
-
-        #region emoji/smiley regex string generation
-        private void generateEmojiRegexStrings()
-        {
-            var allEmojis = loadAllRelevantEmojis();
-            var allRelevantEmojis = allEmojis.Where(e => e.occurences >= configuration.minimalEmojiOccurences
-                && (e.positiveScore >= configuration.minimalPositiveEmojiScore
-                || e.negativeScore >= configuration.minimalNegativeEmojiScore)).ToList();
-            var allPositiveEmojis = allRelevantEmojis
-                .Where(e => e.positiveScore >= configuration.minimalPositiveEmojiScore).ToList();
-            var allNegativeEmojis = allRelevantEmojis
-                .Where(e => e.negativeScore >= configuration.minimalNegativeEmojiScore).ToList();
-            string allEmojiRegex = getEmojiRegexString(allRelevantEmojis);
-            string positiveEmojiRegex = getEmojiRegexString(allPositiveEmojis);
-            string negativeEmojiRegex = getEmojiRegexString(allNegativeEmojis);
-
-            RegexConstants.ALL_EMOJI_DETECTION = allEmojiRegex;
-            RegexConstants.POSITIVE_EMOJI_DETECTION = positiveEmojiRegex;
-            RegexConstants.NEGATIVE_EMOJI_DETECTION = negativeEmojiRegex;
-        }
-
-        private void generateSmileyRegexStrings()
-        {
-            List<Smiley> allSmileys = loadAllSmileys();
-            List<Smiley> positiveSmileys = allSmileys.Where(s => s.polarity == Polarity.Positive).ToList();
-            List<Smiley> negativeSmileys = allSmileys.Where(s => s.polarity == Polarity.Negative).ToList();
-            string allSmileyRegex = getSmileyRegexString(allSmileys);
-            string positiveSmileyRegex = getSmileyRegexString(positiveSmileys);
-            string negativeSmileyRegex = getSmileyRegexString(negativeSmileys);
-
-            RegexConstants.ALL_SMILEY_DETECTION = allSmileyRegex;
-            RegexConstants.POSITIVE_SMILEY_DETECTION = positiveSmileyRegex;
-            RegexConstants.NEGATIVE_SMILEY_DETECTION = negativeSmileyRegex;
-        }
-
-        private List<Emoji> loadAllRelevantEmojis()
-        {
-            Deserializer deserializer = new Deserializer("emojis", "data/emojis.xml", typeof(List<Emoji>));
-            deserializer.deserializeEmojiList(out List<Emoji> emojis);
-            return emojis;
-        }
-
-        private List<Smiley> loadAllSmileys()
-        {
-            Deserializer deserializer = new Deserializer("smileys", "data/smileys.xml", typeof(List<Smiley>));
-            deserializer.deserializeSmileyList(out List<Smiley> smileys);
-            return smileys;
-        }
-
-        private string getSmileyRegexString(List<Smiley> smileys)
-        {
-            string regexString = $"{escapeRegexCharacters(smileys.First().smiley)}";
-            foreach(Smiley smiley in smileys.Skip(1))
-            {
-                regexString += $"|{escapeRegexCharacters(smiley.smiley)}";
-            }
-            return regexString;
-        }
-
-        private string getEmojiRegexString(List<Emoji> emojis)
-        {
-            string regexString = $"{emojis.First().unicodeCharacter}";
-            foreach (Emoji emoji in emojis.Skip(1))
-            {
-                regexString += $"|{emoji.unicodeCharacter}";
-            }
-            return regexString;
-        }
-
-        private string escapeRegexCharacters(string pattern)
-        {
-            return pattern.Replace(@"\", @"\\").Replace("(", @"\(").Replace(")", @"\)")
-                .Replace("{", @"\{").Replace("}", @"\}").Replace("[", @"\[").Replace("]", @"\]")
-                .Replace("*", @"\*").Replace("/", @"\/").Replace("^", @"\^").Replace(".", @"\.")
-                .Replace("|", @"\|");
-        }
-        #endregion
 
         private void printOnConsole(List<Tweet> allTweets)
         {

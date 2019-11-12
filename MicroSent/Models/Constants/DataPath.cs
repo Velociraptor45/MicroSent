@@ -15,5 +15,8 @@
         public const string SLANG_FILE = @"data\slang\slang.txt";
 
         public const string TEST_DATA = @"data\testdata\testdata.xml";
+
+        public const string EMOJI_FILE = @"data/emojis.xml";
+        public const string SMILEY_FILE = @"data/smileys.xml";
     }
 }

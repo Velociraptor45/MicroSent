@@ -24,8 +24,8 @@
         {
             testing = true;
             useGoogleParser = true;
-            useSerializedData = false;
-            serializeData = true;
+            useSerializedData = true;
+            serializeData = false;
             skipTweetsAmount = 0;
 
             intensifyLastSentence = false;
