@@ -1,18 +1,33 @@
 ﻿using MicroSent.Models.Constants;
+using MicroSent.Models.Serialization;
+using MicroSent.Models.Util;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace MicroSent.Models.Analyser
 {
     public class Tokenizer
     {
-        // link | smiley | emoticons | punctuation | wörter | sentence structure ()'-"
-        Regex tokenDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+|((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|: [\)\(])|\\U[a-f0-9]{4,8}|([\?!]+|\.+|,|:)|(@|#[a-z]|\\)?(\w([''-]\w)?)+|(\(|\)|-|""|'')");
-        Regex negationDetection = new Regex(@"\bcannot|(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)n'?t\b");
+        Regex tokenDetection;
+        Regex negationDetection;
 
         public Tokenizer()
         {
+            initRegex();
+        }
 
+        private void initRegex()
+        {
+            tokenDetection = new Regex($"({RegexConstants.LINK_DETECTION})" +
+                $"|({RegexConstants.ALL_SMILEY_DETECTION})" +
+                $"|({RegexConstants.PUNCTUATION_DETECTION})" +
+                $"|({RegexConstants.WORDS_DETECTION})" +
+                $"|({RegexConstants.SENTENCE_STRUCTURE_DETECTION})" +
+                $"|({RegexConstants.ALL_EMOJI_DETECTION})");
+            negationDetection = new Regex($"{RegexConstants.NEGATION_WORD_DETECTION}");
         }
 
         public List<Token> splitIntoTokens(Tweet tweet)
@@ -27,6 +42,12 @@ namespace MicroSent.Models.Analyser
             foreach(Match match in tokenMatches)
             {
                 string text = match.Value;
+
+                //the regex code finds a unicode character called "emoji variation selector" by doing a normal \w+
+                //this must be sorted out because the google parser can't handle it
+                if (UnicodeHelper.isEmojiVariationSelector(text))
+                    continue;
+
                 MatchCollection negationMatches = negationDetection.Matches(text);
                 if (negationMatches.Count > 0)
                 {

@@ -1,18 +1,17 @@
 ﻿using MicroSent.Models.Constants;
 using MicroSent.Models.Enums;
-using MicroSent.Models.Util;
+using MicroSent.Models.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
 namespace MicroSent.Models.Analyser
 {
     public class WordRater
     {
-        private const string FilePath = @"data\wordPolarity\";
-        private const string LexiconFileName = "polarityLexicon.xml";
         private const string SentiLexiconRootName = "SentiWords";
 
         private const string SentWordLabelAdjective = "a";
@@ -20,9 +19,14 @@ namespace MicroSent.Models.Analyser
         private const string SentWordLabelAdverb = "r";
         private const string SentWordLabelVerb = "v";
 
+        private Regex positiveEmojiDetection = new Regex(RegexConstants.POSITIVE_EMOJI_DETECTION);
+        private Regex negativeEmojiDetection = new Regex(RegexConstants.NEGATIVE_EMOJI_DETECTION);
+        private Regex positiveSmileyDetection = new Regex(RegexConstants.POSITIVE_SMILEY_DETECTION);
+        private Regex negativeSmileyDetection = new Regex(RegexConstants.NEGATIVE_SMILEY_DETECTION);
+
         private static Dictionary<string, float> polarityDictionary;
 
-        private Deserializer deserializer = new Deserializer(SentiLexiconRootName, FilePath + LexiconFileName);
+        private Deserializer deserializer = new Deserializer(SentiLexiconRootName, DataPath.POLARITY_LEXICON, typeof(Item[]));
 
         private const float ValueNotFound = float.MinValue;
 
@@ -45,7 +49,7 @@ namespace MicroSent.Models.Analyser
             //}
             if(polarityDictionary == null)
             {
-                deserializer.loadDictionary(out polarityDictionary);
+                deserializer.deserializeDictionary(out polarityDictionary);
             }
         }
 
@@ -61,6 +65,32 @@ namespace MicroSent.Models.Analyser
         //        }
         //    }
         //}
+
+        public float getEmojiRating(Token token)
+        {
+            if (positiveEmojiDetection.Match(token.text).Success)
+            {
+                return RatingConstants.POSITIVE_EMOJI;
+            }
+            else if (negativeEmojiDetection.Match(token.text).Success)
+            {
+                return RatingConstants.NEGATIVE_EMOJI;
+            }
+            return 0f; //TODO: change this
+        }
+
+        public float getSmileyRating(Token token)
+        {
+            if (positiveSmileyDetection.Match(token.text).Success)
+            {
+                return RatingConstants.POSITIVE_SMILEY;
+            }
+            else if (negativeSmileyDetection.Match(token.text).Success)
+            {
+                return RatingConstants.NEGATIVE_SMILEY;
+            }
+            return 0f; //TODO: change this
+        }
 
         public float getWordRating(Token token, bool useOnlyAverageScore = false)
         {

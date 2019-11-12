@@ -1,29 +1,24 @@
-﻿using MicroSent.Models.Util;
+﻿using MicroSent.Models.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MicroSent.Models.Constants;
+using MicroSent.Models.Enums;
 
 namespace MicroSent.Models.Test
 {
     public class Tester
     {
         private const string RootName = "TestData";
-        private const string FilePath = @"data\testdata\";
-        private const string DataFileName = "testdata.xml";
 
-        private const string Positive = "positive";
-        private const string Negative = "negative";
-        private const string Neutral = "neutral";
-        private const string Equal = "equal";
-
-        Deserializer deserializer = new Deserializer(RootName, FilePath + DataFileName);
+        Deserializer deserializer = new Deserializer(RootName, DataPath.TEST_DATA, typeof(Item[]));
         private static Dictionary<string, float> testTweetsDictionary;
 
         public Tester()
         {
             if(testTweetsDictionary == null)
             {
-                deserializer.loadDictionary(out testTweetsDictionary);
+                deserializer.deserializeDictionary(out testTweetsDictionary);
             }
         }
 
@@ -35,7 +30,7 @@ namespace MicroSent.Models.Test
             foreach(string key in dictionaryKeys)
             {
                 Tweet tweet = new Tweet(key, "", 0);
-                tweet.testRating = testTweetsDictionary[key];
+                tweet.annotatedPolarity = getPolarityFromRating(testTweetsDictionary[key]);
                 tweets.Add(tweet);
             }
 
@@ -44,60 +39,59 @@ namespace MicroSent.Models.Test
 
         public void checkTweetRating(List<Tweet> tweets)
         {
-            AnalyisContainer analyisContainer = new AnalyisContainer();
+            TestRatingAnalyis testRatingAnalyis = new TestRatingAnalyis();
 
             foreach (Tweet tweet in tweets)
             {
                 float rating = 0f;
-                string expectedRating = getExpectedRating(tweet.testRating);
-                string actualRating = getActualRating(tweet.positiveRating, tweet.negativeRating, ref rating);
+                Polarity actualPolarity = getActualRating(tweet.positiveRating, tweet.negativeRating, ref rating);
 
-                analyseResult(expectedRating, actualRating, ref analyisContainer);
+                analyseResult(tweet.annotatedPolarity, actualPolarity, ref testRatingAnalyis);
 
-                printAnalysisInfo(tweet, expectedRating, actualRating, rating);
+                printAnalysisInfo(tweet, tweet.annotatedPolarity, actualPolarity, rating);
             }
-            int correctTotal = analyisContainer.correctPositive + analyisContainer.correctNegative + analyisContainer.correctNeutral;
-            float correctPercentage = ((float)correctTotal) / tweets.Count * 100;
+            int correctTotal = testRatingAnalyis.correctPositive + testRatingAnalyis.correctNegative + testRatingAnalyis.correctNeutral;
+            float correctPercentage = getPercentage(correctTotal, tweets.Count);
 
-            int totalPositive = tweets.Count(t => t.testRating == 4f);
-            float totalPositivePercentage = ((float)analyisContainer.correctPositive) / totalPositive * 100;
+            int totalPositive = getCountWithPolarity(tweets, Polarity.Positive);
+            float totalPositivePercentage = getPercentage(testRatingAnalyis.correctPositive, totalPositive);
 
-            int totalNegative = tweets.Count(t => t.testRating == 0f);
-            float totalNegativePercentage = ((float)analyisContainer.correctNegative) / totalNegative * 100;
+            int totalNegative = getCountWithPolarity(tweets, Polarity.Negative);
+            float totalNegativePercentage = getPercentage(testRatingAnalyis.correctNegative, totalNegative);
 
-            int totalNeutral = tweets.Count(t => t.testRating == 2f);
-            float totalNeutralPercentage = ((float)analyisContainer.correctNeutral) / totalNeutral * 100;
+            int totalNeutral = getCountWithPolarity(tweets, Polarity.Neutral);
+            float totalNeutralPercentage = getPercentage(testRatingAnalyis.correctNeutral, totalNeutral);
 
             Console.WriteLine("######################################################################");
             Console.WriteLine($"{correctTotal} of {tweets.Count} ({correctPercentage}%) correct.");
-            Console.WriteLine($"Positive: {analyisContainer.correctPositive} of {totalPositive} ({totalPositivePercentage}%)");
-            Console.WriteLine($"Negative: {analyisContainer.correctNegative} of {totalNegative} ({totalNegativePercentage}%)");
-            Console.WriteLine($"Neutral: {analyisContainer.correctNeutral} of {totalNeutral} ({totalNeutralPercentage}%)");
-            Console.WriteLine($"False positives: {analyisContainer.falsePositive}");
-            Console.WriteLine($"\t- should be negative: {analyisContainer.shouldNegativeButIsPositive}");
-            Console.WriteLine($"\t- should be neutral: {analyisContainer.shouldNeutralButIsPositive}");
-            Console.WriteLine($"False negatives: {analyisContainer.falseNegative}");
-            Console.WriteLine($"\t- should be positive: {analyisContainer.shouldPositiveButIsNegative}");
-            Console.WriteLine($"\t- should be neutral: {analyisContainer.shouldNeutralButIsNegative}");
-            Console.WriteLine($"False neutrals: {analyisContainer.falseNeutral}");
-            Console.WriteLine($"\t- should be positive: {analyisContainer.shouldPositiveButIsNeutral}");
-            Console.WriteLine($"\t- should be negative: {analyisContainer.shouldNegativeButIsNeutral}");
-            Console.WriteLine($"Indecisive: {analyisContainer.indecisive}");
-            Console.WriteLine($"\t- should be positive: {analyisContainer.shouldPositiveButIsEqual}");
-            Console.WriteLine($"\t- should be negative: {analyisContainer.shouldNegativeButIsEqual}");
-            Console.WriteLine($"\t- should be neutral: {analyisContainer.shouldNeutralButIsEqual}");
+            Console.WriteLine($"Positive: {testRatingAnalyis.correctPositive} of {totalPositive} ({totalPositivePercentage}%)");
+            Console.WriteLine($"Negative: {testRatingAnalyis.correctNegative} of {totalNegative} ({totalNegativePercentage}%)");
+            Console.WriteLine($"Neutral: {testRatingAnalyis.correctNeutral} of {totalNeutral} ({totalNeutralPercentage}%)");
+            Console.WriteLine($"False positives: {testRatingAnalyis.falsePositive}");
+            Console.WriteLine($"\t- should be negative: {testRatingAnalyis.shouldNegativeButIsPositive}");
+            Console.WriteLine($"\t- should be neutral: {testRatingAnalyis.shouldNeutralButIsPositive}");
+            Console.WriteLine($"False negatives: {testRatingAnalyis.falseNegative}");
+            Console.WriteLine($"\t- should be positive: {testRatingAnalyis.shouldPositiveButIsNegative}");
+            Console.WriteLine($"\t- should be neutral: {testRatingAnalyis.shouldNeutralButIsNegative}");
+            Console.WriteLine($"False neutrals: {testRatingAnalyis.falseNeutral}");
+            Console.WriteLine($"\t- should be positive: {testRatingAnalyis.shouldPositiveButIsNeutral}");
+            Console.WriteLine($"\t- should be negative: {testRatingAnalyis.shouldNegativeButIsNeutral}");
+            Console.WriteLine($"Indecisive: {testRatingAnalyis.indecisive}");
+            Console.WriteLine($"\t- should be positive: {testRatingAnalyis.shouldPositiveButIsEqual}");
+            Console.WriteLine($"\t- should be negative: {testRatingAnalyis.shouldNegativeButIsEqual}");
+            Console.WriteLine($"\t- should be neutral: {testRatingAnalyis.shouldNeutralButIsEqual}");
             Console.WriteLine("######################################################################");
         }
 
-        private void printAnalysisInfo(Tweet tweet, string expectedRating, string actualRating, float rating)
+        private void printAnalysisInfo(Tweet tweet, Polarity expectedPolarity, Polarity actualPolarity, float rating)
         {
             Console.WriteLine("________________________________________________________________");
             Console.WriteLine(tweet.fullText);
 
-            if(expectedRating != actualRating)
+            if(expectedPolarity != actualPolarity)
                 Console.ForegroundColor = ConsoleColor.Red;
 
-            Console.WriteLine($"Expected {expectedRating} and got {actualRating} ({rating})");
+            Console.WriteLine($"Expected {expectedPolarity} and got {actualPolarity} ({rating})");
 
             Console.ResetColor();
 
@@ -124,96 +118,106 @@ namespace MicroSent.Models.Test
             Console.WriteLine("");
         }
 
-        private string getExpectedRating(float testRating)
+        private Polarity getPolarityFromRating(float rating)
         {
-            switch (testRating)
+            switch (rating)
             {
                 case 0f:
-                    return Negative;
+                    return Polarity.Negative;
                 case 2f:
-                    return Neutral;
+                    return Polarity.Neutral;
                 case 4f:
-                    return Positive;
+                    return Polarity.Positive;
                 default:
-                    return "";
+                    throw new KeyNotFoundException($"Can't recognize rating key {rating}");
             }
         }
 
-        private string getActualRating(float positiveRating, float negativeRating, ref float rating)
+        private Polarity getActualRating(float positiveRating, float negativeRating, ref float rating)
         {
             if (negativeRating == 0f && positiveRating == 0f)
             {
-                return Neutral;
+                return Polarity.Neutral;
             }
             else
             {
                 if (Math.Abs(negativeRating) > positiveRating)
                 {
                     rating = negativeRating;
-                    return Negative;
+                    return Polarity.Negative;
                 }
                 else if (Math.Abs(negativeRating) < positiveRating)
                 {
                     rating = positiveRating;
-                    return Positive;
+                    return Polarity.Positive;
                 }
                 else
                 {
                     rating = positiveRating;
-                    return Equal;
+                    return Polarity.Negative; // TODO: What to do with indecisive tweet ratings?
                 }
             }
         }
 
-        private void analyseResult(string expectedRating, string actualRating, ref AnalyisContainer analyisContainer)
+        private void analyseResult(Polarity expectedRating, Polarity actualRating, ref TestRatingAnalyis testRatingAnalyis)
         {
             if (expectedRating == actualRating)
             {
-                if (actualRating == Positive)
-                    analyisContainer.correctPositive++;
-                else if (actualRating == Negative)
-                    analyisContainer.correctNegative++;
+                if (actualRating == Polarity.Positive)
+                    testRatingAnalyis.correctPositive++;
+                else if (actualRating == Polarity.Negative)
+                    testRatingAnalyis.correctNegative++;
                 else
-                    analyisContainer.correctNeutral++;
+                    testRatingAnalyis.correctNeutral++;
             }
-            else if (actualRating == Positive)
+            else if (actualRating == Polarity.Positive)
             {
-                analyisContainer.falsePositive++;
-                if (expectedRating == Negative)
-                    analyisContainer.shouldNegativeButIsPositive++;
-                else if (expectedRating == Neutral)
-                    analyisContainer.shouldNeutralButIsPositive++;
+                testRatingAnalyis.falsePositive++;
+                if (expectedRating == Polarity.Negative)
+                    testRatingAnalyis.shouldNegativeButIsPositive++;
+                else if (expectedRating == Polarity.Neutral)
+                    testRatingAnalyis.shouldNeutralButIsPositive++;
             }
-            else if (actualRating == Negative)
+            else if (actualRating == Polarity.Negative)
             {
-                analyisContainer.falseNegative++;
-                if (expectedRating == Positive)
-                    analyisContainer.shouldPositiveButIsNegative++;
-                else if (expectedRating == Positive)
-                    analyisContainer.shouldPositiveButIsNegative++;
+                testRatingAnalyis.falseNegative++;
+                if (expectedRating == Polarity.Positive)
+                    testRatingAnalyis.shouldPositiveButIsNegative++;
+                else if (expectedRating == Polarity.Neutral)
+                    testRatingAnalyis.shouldNeutralButIsNegative++;
             }
-            else if (actualRating == Neutral)
+            else if (actualRating == Polarity.Neutral)
             {
-                analyisContainer.falseNeutral++;
-                if (expectedRating == Positive)
-                    analyisContainer.shouldPositiveButIsNeutral++;
-                else if (expectedRating == Negative)
-                    analyisContainer.shouldNegativeButIsNeutral++;
+                testRatingAnalyis.falseNeutral++;
+                if (expectedRating == Polarity.Positive)
+                    testRatingAnalyis.shouldPositiveButIsNeutral++;
+                else if (expectedRating == Polarity.Negative)
+                    testRatingAnalyis.shouldNegativeButIsNeutral++;
             }
-            else if (actualRating == Equal)
-            {
-                analyisContainer.indecisive++;
-                if (expectedRating == Positive)
-                    analyisContainer.shouldPositiveButIsEqual++;
-                else if (expectedRating == Negative)
-                    analyisContainer.shouldNegativeButIsEqual++;
-                else
-                    analyisContainer.shouldNeutralButIsEqual++;
-            }
+            //else if (actualRating == Equal)
+            //{
+            //    testRatingAnalyis.indecisive++;
+            //    if (expectedRating == Positive)
+            //        testRatingAnalyis.shouldPositiveButIsEqual++;
+            //    else if (expectedRating == Negative)
+            //        testRatingAnalyis.shouldNegativeButIsEqual++;
+            //    else
+            //        testRatingAnalyis.shouldNeutralButIsEqual++;
+            //}
+        }
+
+        private float getPercentage(int part, int total)
+        {
+            return ((float)part) / total * 100;
+        }
+
+        private int getCountWithPolarity(List<Tweet> tweets, Polarity polarity)
+        {
+            return tweets.Count(t => t.annotatedPolarity == polarity);
         }
     }
 
-    public struct AnalyisContainer
+    public struct TestRatingAnalyis
     {
         public int correctPositive;
         public int correctNegative;
@@ -236,7 +240,7 @@ namespace MicroSent.Models.Test
         public int shouldNegativeButIsEqual;
         public int shouldPositiveButIsEqual;
 
-        public AnalyisContainer(int a)
+        public TestRatingAnalyis(int a)
         {
             correctPositive = 0;
             correctNegative = 0;

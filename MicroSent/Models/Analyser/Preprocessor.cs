@@ -8,21 +8,18 @@ namespace MicroSent.Models.Analyser
 {
     public class Preprocessor
     {
-        private const string FilePath = @"data/slang/";
-        private const string SlangFileName = "slang.txt";
-
         private const string Separator = "---";
 
         private Dictionary<string, string> slangs = new Dictionary<string, string>();
 
         public Preprocessor()
         {
-            loadSlang(SlangFileName);
+            loadSlang();
         }
 
-        private void loadSlang(string fileName)
+        private void loadSlang()
         {
-            using (StreamReader streamReader = new StreamReader(FilePath + fileName))
+            using (StreamReader streamReader = new StreamReader(DataPath.SLANG_FILE))
             {
                 string line;
                 while ((line = streamReader.ReadLine()) != null)

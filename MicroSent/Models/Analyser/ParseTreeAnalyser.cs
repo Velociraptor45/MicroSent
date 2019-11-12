@@ -13,7 +13,7 @@ namespace MicroSent.Models.Analyser
 {
     public class ParseTreeAnalyser
     {
-        private Regex negationToken = new Regex(@"\bno(t|n-?)?\b|\bnever\b|\bn'?t\b");
+        private Regex negationToken = new Regex(RegexConstants.NEGATION_TOKEN_DETECTION);
 
         public void applyGoogleParseTreeNegation(Tweet tweet)
         {

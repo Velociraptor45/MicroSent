@@ -6,7 +6,9 @@
 
 [Bb]in/
 
-__pycache__/
+**/__pycache__/
+
+DataCrawling/data/
 
 # Visual Studio cache directory
 

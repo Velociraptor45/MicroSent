@@ -2,7 +2,6 @@
 ﻿using MicroSent.Models.Util;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Iveonik.Stemmers;
 
@@ -12,22 +11,20 @@ namespace MicroSent.Models.Analyser
     {
         private const string MentionReplacement = "Michael";
 
-        private Regex linkDetection = new Regex(@"(https?:\/\/(www\.)?|www\.)([\d\w]+[\.\/])+[\d\w\?\=]+");
-        private Regex puntuationDetection = new Regex(@"([\?!]+|\.+|,|:)");
-        private Regex sentenceStructureDetection = new Regex(@"(\(|\)|-)");
-        private Regex smileyDetection = new Regex(@"((:-?|=)(\)|\(|\||\/|(D\b))|\bD:|:\s[\)\(])");
-        private Regex emoticonDetection = new Regex(@"\\U[a-f0-9]{4,8}");
+        private Regex linkDetection = new Regex(RegexConstants.LINK_DETECTION);
+        private Regex puntuationDetection = new Regex(RegexConstants.PUNCTUATION_DETECTION);
+        private Regex sentenceStructureDetection = new Regex(RegexConstants.SENTENCE_STRUCTURE_DETECTION);
+        private Regex smileyDetection = new Regex(RegexConstants.ALL_SMILEY_DETECTION);
+        private Regex emoticonDetection = new Regex(RegexConstants.ALL_EMOJI_DETECTION);
         private Regex laughingDetection = new Regex(@"a?(ha){2,}|i?(hi){2,}");
 
         IStemmer stemmer = new EnglishStemmer();
-
-        private const string HunspellDataPath = @".\data\nhunspell\";
 
         private NHunspell.Hunspell hunspell;
 
         public TokenAnalyser()
         {
-            hunspell = new NHunspell.Hunspell($"{HunspellDataPath}en_us.aff", $"{HunspellDataPath}en_us.dic");
+            hunspell = new NHunspell.Hunspell(DataPath.NHUNSPELL_ENG_AFF, DataPath.NHUNSPELL_ENG_DICT);
         }
 
         public void analyseTokenType(Token token)
@@ -44,7 +41,7 @@ namespace MicroSent.Models.Analyser
             {
                 return;
             }
-            else if (checkForPunctuation(token))
+            else if (checkForSmiley(token))
             {
                 return;
             }
@@ -52,11 +49,11 @@ namespace MicroSent.Models.Analyser
             {
                 return;
             }
-            else if (checkForSmiley(token))
+            else if (checkForPunctuation(token))
             {
                 return;
             }
-            else if (checkForEmoticon(token))
+            else if (checkForEmoji(token))
             {
                 return;
             }
@@ -133,13 +130,13 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
-        private bool checkForEmoticon(Token token)
+        private bool checkForEmoji(Token token)
         {
             MatchCollection emoticonMatches = emoticonDetection.Matches(token.text);
 
             if (emoticonMatches.Count > 0)
             {
-                return token.isEmoticon = true;
+                return token.isEmoji = true;
             }
             return false;
         }

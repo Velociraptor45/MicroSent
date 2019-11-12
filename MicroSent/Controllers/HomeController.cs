@@ -6,6 +6,7 @@ using MicroSent.Models.Network;
 using MicroSent.Models.Test;
 using MicroSent.Models.TwitterConnection;
 using MicroSent.Models.Util;
+using MicroSent.Models.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -14,6 +15,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MicroSent.Models.Configuration;
+using MicroSent.Models.RegexGeneration;
 
 namespace MicroSent.Controllers
 {
@@ -36,40 +39,37 @@ namespace MicroSent.Controllers
         private Serializer serializer;
         private Deserializer deserializer;
 
+        private RegexGenerator regexGenerator;
+
         private Tester tester;
 
-        private const int NetworkSendClientPort = 6048;
-        private const int NetworkReceiveClientPort = 6050;
-        private const string NetworkClientHost = "localhost";
+        private const string SerializedTweetsPath = DataPath.SERIALIZED_TWEETS;
 
-        private const string SerializedTweetsPath = "data/testtweets.bin";
+        private IAlgorithmConfiguration configuration;
 
-        /////////////////////////////////////////////////////////////////////////////////////
-        /// CONFIGURATION
-
-        private bool testing = true;
-        private bool useGoogleParser = true;
-        private bool useSerializedData = true;
-        private bool serializeData = false;
-
-        private bool intensifyLastSentence = false;
-
-        /////////////////////////////////////////////////////////////////////////////////////
-
-        public HomeController(IOptions<TwitterCrawlerConfig> config)
+        public HomeController(IOptions<TwitterCrawlerConfig> crawlerConfig, IAlgorithmConfiguration algorithmConfiguration)
         {
+            this.configuration = algorithmConfiguration;
+
+            regexGenerator = new RegexGenerator(algorithmConfiguration);
+
+            regexGenerator.generateEmojiRegexStrings();
+            regexGenerator.generateSmileyRegexStrings();
+
             posTagger = new PosTagger();
-            twitterCrawler = new TwitterCrawler(config);
+            twitterCrawler = new TwitterCrawler(crawlerConfig);
             tokenizer = new Tokenizer();
             tokenAnalyser = new TokenAnalyser();
             tweetAnalyser = new TweetAnalyser();
             wordRater = new WordRater();
-            sentimentCalculator = new SentimentCalculator();
+            sentimentCalculator = new SentimentCalculator(algorithmConfiguration);
             preprocessor = new Preprocessor();
             parseTreeAnalyser = new ParseTreeAnalyser();
 
-            networkSendClientSocket = new NetworkClientSocket(NetworkSendClientPort, NetworkClientHost);
-            networkReceiveClientSocket = new NetworkClientSocket(NetworkReceiveClientPort, NetworkClientHost);
+            networkSendClientSocket = new NetworkClientSocket(
+                configuration.clientSendingPort, configuration.clientHost);
+            networkReceiveClientSocket = new NetworkClientSocket(
+                configuration.clientReceivingPort, configuration.clientHost);
 
             serializer = new Serializer();
             deserializer = new Deserializer();
@@ -80,35 +80,35 @@ namespace MicroSent.Controllers
         public async Task<IActionResult> Index()
         {
             List<Tweet> allTweets = new List<Tweet>();
-            if (useSerializedData)
+            if (configuration.useSerializedData)
             {
                 allTweets = deserializer.deserializeTweets(SerializedTweetsPath);
             }
-            else if (testing)
+            else if (configuration.testing)
             {
-                allTweets = tester.getTestTweets().ToList();
+                allTweets = tester.getTestTweets().Skip(configuration.skipTweetsAmount).ToList();
             }
             else
             {
-                //allTweets = await getTweetsAsync();
+                //allTweets = await getTweetsAsync("AlanZucconi");
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
                 //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
-                Tweet tw = new Tweet("He cease to understand what was going on. But he quit smoking the next day.", "aa", 0);
+                Tweet tw = new Tweet("You are so GREAT! :)", "aa", 0);
                 allTweets.Add(tw);
             }
 
             foreach (Tweet tweet in allTweets)
             {
                 ConsolePrinter.printAnalysisStart(allTweets, tweet);
-                if (!useSerializedData || !useGoogleParser)
+                if (!configuration.useSerializedData || !configuration.useGoogleParser)
                 {
                     tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
 
                     //////////////////////////////////////////////////////////////
                     /// TEST AREA
                     //if (tweet.fullText.Contains("That didn't work out very well.")) //(tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
-                    if (tweet.fullText.Contains("and don't want you to die"))
+                    if (tweet.fullText.Contains("GO"))
                     {
                         int a = 0;
                     }
@@ -137,9 +137,19 @@ namespace MicroSent.Controllers
                     tweetAnalyser.analyseFirstEndHashtagPosition(allTokens, tweet);
                     posTagger.cutIntoSentences(tweet, allTokens);
 
-                    if (useGoogleParser)
+                    if (configuration.useGoogleParser)
                     {
-                        parseAndBuildTreeWithGoogle(tweet);
+                        for (int i = 0; i < tweet.sentences.Count; i++)
+                        {
+                            networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
+                            Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
+
+                            await serverAnswere;
+                            JObject treeJSON = JObject.Parse(serverAnswere.Result);
+
+                            JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
+                            parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
+                        }
                     }
                     else
                     {
@@ -153,28 +163,32 @@ namespace MicroSent.Controllers
                 }
 
 
-                if (!serializeData)
+                if (!configuration.serializeData)
                 {
                     tweetAnalyser.filterUselessInterogativeSentences(tweet);
 
+                    //////////////////////////////////////////////////////////////
+                    /// NEGATION
                     //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
                     //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
-                    tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
+                    tweetAnalyser.applyKWordNegation(tweet, configuration.negationWindowSize);
                     tweetAnalyser.applySpecialStructureNegation(tweet);
-
                     tweetAnalyser.applyEndHashtagNegation(tweet);
+                    //////////////////////////////////////////////////////////////
+
+                    tweetAnalyser.checkforIrony(tweet);
 
                     applyRating(tweet);
 
-                    sentimentCalculator.calculateFinalSentiment(tweet, intensifyLastSentence: intensifyLastSentence);
+                    sentimentCalculator.calculateFinalSentiment(tweet);
                 }
             }
 
-            if(serializeData)
+            if(configuration.serializeData && !configuration.useSerializedData)
                 serializer.serializeTweets(allTweets, SerializedTweetsPath);
 
 
-            if (testing)
+            if (configuration.testing)
                 tester.checkTweetRating(allTweets);
             else
                 printOnConsole(allTweets);
@@ -182,12 +196,15 @@ namespace MicroSent.Controllers
             return View();
         }
 
-        private async Task<List<Tweet>> getTweetsAsync()
+        private async Task<List<Tweet>> getTweetsAsync(string accountName)
         {
             List<Tweet> allTweets = new List<Tweet>();
             List<Status> quotedRetweetStatuses = new List<Status>();
             List<Status> linkStatuses = new List<Status>();
-            quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("AlanZucconi");
+
+            ConsolePrinter.printBeginCrawlingTweets(accountName);
+            quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets(accountName);
+            ConsolePrinter.printFinishedCrawlingTweets();
             //linkStatuses = await twitterCrawler.getLinks("AlanZucconi");
             //List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
             //quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
@@ -201,32 +218,28 @@ namespace MicroSent.Controllers
             return allTweets;
         }
 
-        private async void parseAndBuildTreeWithGoogle(Tweet tweet)
-        {
-            for (int i = 0; i < tweet.sentences.Count; i++)
-            {
-                networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
-                Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
-
-                await serverAnswere;
-                JObject treeJSON = JObject.Parse(serverAnswere.Result);
-
-                JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
-                parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
-            }
-        }
-
         private void applyRating(Tweet tweet)
         {
             foreach (List<Token> sentence in tweet.sentences)
             {
                 foreach (Token token in sentence)
                 {
-                    //single Token analysis
                     if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
-                        token.wordRating = wordRater.getWordRating(token, useOnlyAverageScore: true);
+                        token.wordRating = wordRater.getWordRating(token, configuration.useOnlyAverageRatingScore);
                     }
+                }
+            }
+
+            foreach(Token token in tweet.rest)
+            {
+                if (token.isEmoji)
+                {
+                    token.emojiRating = wordRater.getEmojiRating(token);
+                }
+                else if (token.isSmiley)
+                {
+                    token.smileyRating = wordRater.getSmileyRating(token);
                 }
             }
         }
