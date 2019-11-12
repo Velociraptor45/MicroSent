@@ -24,6 +24,7 @@ namespace MicroSent.Models.Configuration
         public string clientHost { get; }
 
 
+        public bool useAvarageRatingScore { get; }
         public bool useOnlyAverageRatingScore { get; }
         public bool useSingleTokenThreshold { get;}
         public bool useTotalThreshold { get; }
@@ -51,9 +52,10 @@ namespace MicroSent.Models.Configuration
             clientReceivingPort = 6050;
             clientHost = "localhost";
 
+            useAvarageRatingScore = false;
             useOnlyAverageRatingScore = false;
             useSingleTokenThreshold = true;
-            useTotalThreshold = true;
+            useTotalThreshold = false;
             singleTokenThreshold = .25f;
             totalThreshold = .5f;
 

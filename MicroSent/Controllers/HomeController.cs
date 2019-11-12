@@ -61,7 +61,7 @@ namespace MicroSent.Controllers
             tokenizer = new Tokenizer();
             tokenAnalyser = new TokenAnalyser();
             tweetAnalyser = new TweetAnalyser();
-            wordRater = new WordRater();
+            wordRater = new WordRater(algorithmConfiguration);
             sentimentCalculator = new SentimentCalculator(algorithmConfiguration);
             preprocessor = new Preprocessor();
             parseTreeAnalyser = new ParseTreeAnalyser();
@@ -226,7 +226,7 @@ namespace MicroSent.Controllers
                 {
                     if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
-                        token.wordRating = wordRater.getWordRating(token, configuration.useOnlyAverageRatingScore);
+                        token.wordRating = wordRater.getWordRating(token);
                     }
                 }
             }
