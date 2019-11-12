@@ -1,24 +1,37 @@
-﻿namespace MicroSent.Models.Configuration
+﻿using MicroSent.Models.Constants;
+
+namespace MicroSent.Models.Configuration
 {
     public class MicroSentConfiguration : IAlgorithmConfiguration
     {
-        public bool testing { get; set; }
-        public bool useGoogleParser { get; set; }
-        public bool useSerializedData { get; set; }
-        public bool serializeData { get; set; }
+        public bool testing { get; }
+        public bool useGoogleParser { get; }
+        public bool useSerializedData { get; }
+        public bool serializeData { get; }
 
 
-        public bool intensifyLastSentence { get; set; }
-        public int skipTweetsAmount { get; set; }
+        public bool intensifyLastSentence { get; }
+        public int skipTweetsAmount { get; }
 
 
-        public int minimalEmojiOccurences { get; set; }
-        public float minimalPositiveEmojiScore { get; set; }
-        public float minimalNegativeEmojiScore { get; set; }
+        public int minimalEmojiOccurences { get; }
+        public float minimalPositiveEmojiScore { get; }
+        public float minimalNegativeEmojiScore { get; }
 
-        public int clientSendingPort { get; set; }
-        public int clientReceivingPort { get; set; }
-        public string clientHost { get; set; }
+
+        public int clientSendingPort { get; }
+        public int clientReceivingPort { get; }
+        public string clientHost { get; }
+
+
+        public bool useOnlyAverageRatingScore { get; }
+        public bool useSingleTokenThreshold { get;}
+        public bool useTotalThreshold { get; }
+        public float singleTokenThreshold { get; }
+        public float totalThreshold { get; }
+
+
+        public int negationWindowSize { get; }
 
         public MicroSentConfiguration()
         {
@@ -37,6 +50,14 @@
             clientSendingPort = 6048;
             clientReceivingPort = 6050;
             clientHost = "localhost";
+
+            useOnlyAverageRatingScore = false;
+            useSingleTokenThreshold = true;
+            useTotalThreshold = true;
+            singleTokenThreshold = .25f;
+            totalThreshold = .5f;
+
+            negationWindowSize = NegationConstants.FOUR_WORDS;
         }
     }
 }

@@ -2,22 +2,32 @@
 {
     public interface IAlgorithmConfiguration
     {
-        bool testing { get; set; }
-        bool useGoogleParser { get; set; }
-        bool useSerializedData { get; set; }
-        bool serializeData { get; set; }
+        bool testing { get; }
+        bool useGoogleParser { get; }
+        bool useSerializedData { get; }
+        bool serializeData { get; }
 
-        bool intensifyLastSentence { get; set; }
-        int skipTweetsAmount { get; set; }
+        bool intensifyLastSentence { get; }
+        int skipTweetsAmount { get; }
         
         //emojis:
-        int minimalEmojiOccurences { get; set; }
-        float minimalPositiveEmojiScore { get; set; }
-        float minimalNegativeEmojiScore { get; set; }
+        int minimalEmojiOccurences { get; }
+        float minimalPositiveEmojiScore { get; }
+        float minimalNegativeEmojiScore { get; }
 
         //network:
-        int clientSendingPort { get; set; }
-        int clientReceivingPort { get; set; }
-        string clientHost { get; set; }
+        int clientSendingPort { get; }
+        int clientReceivingPort { get; }
+        string clientHost { get; }
+
+        //rating:
+        bool useOnlyAverageRatingScore { get; }
+        bool useSingleTokenThreshold { get; }
+        bool useTotalThreshold { get; }
+        float singleTokenThreshold { get; }
+        float totalThreshold { get; }
+
+        //negation:
+        int negationWindowSize { get; }
     }
 }

@@ -62,7 +62,7 @@ namespace MicroSent.Controllers
             tokenAnalyser = new TokenAnalyser();
             tweetAnalyser = new TweetAnalyser();
             wordRater = new WordRater();
-            sentimentCalculator = new SentimentCalculator();
+            sentimentCalculator = new SentimentCalculator(algorithmConfiguration);
             preprocessor = new Preprocessor();
             parseTreeAnalyser = new ParseTreeAnalyser();
 
@@ -171,7 +171,7 @@ namespace MicroSent.Controllers
                     /// NEGATION
                     //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
                     //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
-                    tweetAnalyser.applyKWordNegation(tweet, NegationConstants.FOUR_WORDS);
+                    tweetAnalyser.applyKWordNegation(tweet, configuration.negationWindowSize);
                     tweetAnalyser.applySpecialStructureNegation(tweet);
                     tweetAnalyser.applyEndHashtagNegation(tweet);
                     //////////////////////////////////////////////////////////////
@@ -180,8 +180,7 @@ namespace MicroSent.Controllers
 
                     applyRating(tweet);
 
-                    sentimentCalculator.calculateFinalSentiment(tweet,
-                        intensifyLastSentence: configuration.intensifyLastSentence);
+                    sentimentCalculator.calculateFinalSentiment(tweet);
                 }
             }
 
@@ -227,7 +226,7 @@ namespace MicroSent.Controllers
                 {
                     if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
-                        token.wordRating = wordRater.getWordRating(token, useOnlyAverageScore: true);
+                        token.wordRating = wordRater.getWordRating(token, configuration.useOnlyAverageRatingScore);
                     }
                 }
             }
