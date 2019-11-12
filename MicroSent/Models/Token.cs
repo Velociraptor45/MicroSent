@@ -11,6 +11,7 @@ namespace MicroSent.Models
         public string text;
         public string originalText;
         public string stemmedText;
+        public string lemmatizedText;
 
         public int indexInTweet = -1;
         public int indexInSentence = -1;

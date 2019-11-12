@@ -99,7 +99,14 @@ namespace MicroSent.Models.Analyser
             float normalRating = getFittingRating(token.text, sentiWordLabel);
             if (normalRating == RatingConstants.WORD_NEUTRAL)
             {
-                return getFittingRating(token.stemmedText, sentiWordLabel);
+                if (configuration.useStemmedText)
+                {
+                    return getFittingRating(token.stemmedText, sentiWordLabel);
+                }
+                else if (configuration.useLemmatizedText)
+                {
+                    return getFittingRating(token.lemmatizedText, sentiWordLabel);
+                }
             }
             return normalRating;
         }

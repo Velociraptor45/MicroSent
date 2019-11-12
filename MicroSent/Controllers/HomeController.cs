@@ -130,6 +130,7 @@ namespace MicroSent.Controllers
                         {
                             tokenAnalyser.removeRepeatedLetters(token);
                             tokenAnalyser.stem(token);
+                            tokenAnalyser.lemmatize(token);
                         }
                     }
 

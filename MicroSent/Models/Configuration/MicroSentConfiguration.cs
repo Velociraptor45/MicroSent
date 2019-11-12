@@ -30,6 +30,8 @@ namespace MicroSent.Models.Configuration
         public bool useTotalThreshold { get; }
         public float singleTokenThreshold { get; }
         public float totalThreshold { get; }
+        public bool useStemmedText { get; }
+        public bool useLemmatizedText { get; }
 
 
         public int negationWindowSize { get; }
@@ -58,6 +60,8 @@ namespace MicroSent.Models.Configuration
             useTotalThreshold = false;
             singleTokenThreshold = .25f;
             totalThreshold = .5f;
+            useStemmedText = true;
+            useLemmatizedText = true;
 
             negationWindowSize = NegationConstants.FOUR_WORDS;
         }

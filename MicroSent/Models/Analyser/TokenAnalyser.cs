@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Iveonik.Stemmers;
+using LemmaSharp.Classes;
+using System.IO;
 
 namespace MicroSent.Models.Analyser
 {
@@ -19,12 +21,18 @@ namespace MicroSent.Models.Analyser
         private Regex laughingDetection = new Regex(@"a?(ha){2,}|i?(hi){2,}");
 
         IStemmer stemmer = new EnglishStemmer();
+        Lemmatizer lemmatizer;
 
         private NHunspell.Hunspell hunspell;
 
         public TokenAnalyser()
         {
             hunspell = new NHunspell.Hunspell(DataPath.NHUNSPELL_ENG_AFF, DataPath.NHUNSPELL_ENG_DICT);
+
+            using(FileStream stream = File.OpenRead(DataPath.LEMMA_FILE_ENG))
+            {
+                lemmatizer = new Lemmatizer(stream);
+            }
         }
 
         public void analyseTokenType(Token token)
@@ -156,6 +164,11 @@ namespace MicroSent.Models.Analyser
         public void stem(Token token)
         {
             token.stemmedText = stemmer.Stem(token.text);
+        }
+
+        public void lemmatize(Token token)
+        {
+            token.lemmatizedText = lemmatizer.Lemmatize(token.text);
         }
 
         public void checkForUppercase(Token token)

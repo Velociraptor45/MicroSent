@@ -18,5 +18,7 @@
 
         public const string EMOJI_FILE = @"data/emojis.xml";
         public const string SMILEY_FILE = @"data/smileys.xml";
+
+        public const string LEMMA_FILE_ENG = @"data/lemmatization/full7z-mlteast-en.lem";
     }
 }
