@@ -58,7 +58,7 @@ namespace MicroSent.Models.Configuration
             useOnlyAverageRatingScore = false;
             useSingleTokenThreshold = true;
             useTotalThreshold = false;
-            singleTokenThreshold = .25f;
+            singleTokenThreshold = .2f;
             totalThreshold = .5f;
             useStemmedText = true;
             useLemmatizedText = true;
