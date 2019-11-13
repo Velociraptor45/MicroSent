@@ -11,7 +11,7 @@ namespace Serialization
     {
         static void Main(string[] args)
         {
-            serializeSmileys();
+            serializeDict();
         }
 
         static void serializeSmileys()
@@ -31,14 +31,14 @@ namespace Serialization
         static void serializeDict()
         {
             DictBuilder dictBuilder = new DictBuilder();
-            string inputPath = @"data\testdata.csv";
-            string outputPath = @"data\testdata.xml";
-            string rootName = "TestData";
+            string inputPath = @"data\SentiWordNet_3.0.0.txt"; //@"data\testdata.csv";
+            string outputPath = @"data\polarityLexicon.xml"; //@"data\testdata.xml";
+            string rootName = "SentiWords"; //"TestData";
 
             Console.WriteLine("Start serializing");
 
-            //dictBuilder.buildSentiDict(path);
-            dictBuilder.buildTestDict(inputPath);
+            dictBuilder.buildSentiDict(inputPath);
+            //dictBuilder.buildTestDict(inputPath);
 
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(Item[]), new XmlRootAttribute() { ElementName = rootName });
             using (StreamWriter writer = new StreamWriter(outputPath))
@@ -106,11 +106,12 @@ namespace Serialization
             CultureInfo cultureInfo = (CultureInfo)CultureInfo.CurrentCulture.Clone();
             cultureInfo.NumberFormat.CurrencyDecimalSeparator = ".";
 
+            Dictionary<string, int> duplicatedTerms = new Dictionary<string, int>();
+
             using (StreamReader streamReader = new StreamReader(filePath))
             {
                 string line;
                 int counter = 0;
-                int skiped = 0;
                 while ((line = streamReader.ReadLine()) != null)
                 {
                     if (line.StartsWith(IgnoreLine))
@@ -139,7 +140,10 @@ namespace Serialization
                         if (dictionary.ContainsKey(finalTerm))
                         {
                             dictionary[finalTerm] += rating;
-                            skiped++;
+                            if (duplicatedTerms.ContainsKey(finalTerm))
+                                duplicatedTerms[finalTerm]++;
+                            else
+                                duplicatedTerms.Add(finalTerm, 1);
                             Console.WriteLine($"{finalTerm} already existent");
                         }
                         else
@@ -149,6 +153,11 @@ namespace Serialization
                         }
                     }
                 }
+            }
+
+            foreach(string term in duplicatedTerms.Keys)
+            {
+                dictionary[term] /= duplicatedTerms[term] + 1;
             }
         }
 

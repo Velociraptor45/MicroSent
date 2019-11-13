@@ -24,11 +24,14 @@ namespace MicroSent.Models.Configuration
         public string clientHost { get; }
 
 
+        public bool useAvarageRatingScore { get; }
         public bool useOnlyAverageRatingScore { get; }
         public bool useSingleTokenThreshold { get;}
         public bool useTotalThreshold { get; }
         public float singleTokenThreshold { get; }
         public float totalThreshold { get; }
+        public bool useStemmedText { get; }
+        public bool useLemmatizedText { get; }
 
 
         public int negationWindowSize { get; }
@@ -51,11 +54,14 @@ namespace MicroSent.Models.Configuration
             clientReceivingPort = 6050;
             clientHost = "localhost";
 
+            useAvarageRatingScore = false;
             useOnlyAverageRatingScore = false;
             useSingleTokenThreshold = true;
-            useTotalThreshold = true;
-            singleTokenThreshold = .25f;
+            useTotalThreshold = false;
+            singleTokenThreshold = .2f;
             totalThreshold = .5f;
+            useStemmedText = true;
+            useLemmatizedText = true;
 
             negationWindowSize = NegationConstants.FOUR_WORDS;
         }

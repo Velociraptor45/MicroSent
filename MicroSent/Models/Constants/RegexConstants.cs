@@ -16,6 +16,6 @@
         private const string NegationWordsBeginning = @"(ai|are|ca|could|did|does|do|had|has|have|is|must|need|ought|shall|should|was|were|wo|would)";
         public static readonly string NEGATION_WORD_DETECTION = $@"\bcannot|{NegationWordsBeginning}n'?t\b";
         public static readonly string NEGATION_HASHTAG_DETECTION = $@"\bno(t|n)?\b|\bnever\b|{NegationWordsBeginning}nt\b";
-        public const string NEGATION_TOKEN_DETECTION = @"\bno(t|n-?)?\b|\bnever\b|\bn'?t\b";
+        public const string NEGATION_TOKEN_DETECTION = @"\bno(t|n-?)?\b|\b(never|barely|hardly)\b|\bn'?t\b";
     }
 }

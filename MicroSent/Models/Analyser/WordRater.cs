@@ -1,12 +1,9 @@
 ﻿using MicroSent.Models.Constants;
 using MicroSent.Models.Enums;
 using MicroSent.Models.Serialization;
-using System;
+using MicroSent.Models.Configuration;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Xml.Serialization;
 
 namespace MicroSent.Models.Analyser
 {
@@ -30,15 +27,18 @@ namespace MicroSent.Models.Analyser
 
         private const float ValueNotFound = float.MinValue;
 
+        IAlgorithmConfiguration configuration;
+
         //private const string PositiveWordsFileName = "positive-words.txt";
         //private const string NegativeWordsFileName = "negative-words.txt";
         //private const string IgnoreLine = ";";
         //private static List<string> positiveWords = new List<string>();
         //private static List<string> negativeWords = new List<string>();
 
-        public WordRater()
+        public WordRater(IAlgorithmConfiguration configuration)
         {
-            
+            this.configuration = configuration;
+
             //if (positiveWords.Count == 0)
             //{
             //    loadWords(PositiveWordsFileName, positiveWords);
@@ -92,21 +92,28 @@ namespace MicroSent.Models.Analyser
             return 0f; //TODO: change this
         }
 
-        public float getWordRating(Token token, bool useOnlyAverageScore = false)
+        public float getWordRating(Token token)
         {
             string sentiWordLabel = convertToSentiWordPosLabel(token.posLabel);
 
-            float normalRating = getFittingRating(token.text, sentiWordLabel, useOnlyAverageScore);
+            float normalRating = getFittingRating(token.text, sentiWordLabel);
             if (normalRating == RatingConstants.WORD_NEUTRAL)
             {
-                return getFittingRating(token.stemmedText, sentiWordLabel, useOnlyAverageScore);
+                if (configuration.useStemmedText)
+                {
+                    return getFittingRating(token.stemmedText, sentiWordLabel);
+                }
+                else if (configuration.useLemmatizedText)
+                {
+                    return getFittingRating(token.lemmatizedText, sentiWordLabel);
+                }
             }
             return normalRating;
         }
 
-        private float getFittingRating(string wordToRate, string sentiWordLabel, bool useOnlyAverageScore)
+        private float getFittingRating(string wordToRate, string sentiWordLabel)
         {
-            if (sentiWordLabel == null || useOnlyAverageScore)
+            if ((sentiWordLabel == null || configuration.useOnlyAverageRatingScore) && configuration.useAvarageRatingScore)
             {
                 return getAverateWordRating(wordToRate);
             }

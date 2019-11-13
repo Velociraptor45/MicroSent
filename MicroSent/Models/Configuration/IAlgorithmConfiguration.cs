@@ -21,11 +21,14 @@
         string clientHost { get; }
 
         //rating:
+        bool useAvarageRatingScore { get; }
         bool useOnlyAverageRatingScore { get; }
         bool useSingleTokenThreshold { get; }
         bool useTotalThreshold { get; }
         float singleTokenThreshold { get; }
         float totalThreshold { get; }
+        bool useStemmedText { get; }
+        bool useLemmatizedText { get; }
 
         //negation:
         int negationWindowSize { get; }

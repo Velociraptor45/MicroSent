@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="EcoCore" Version="7.0.0.11683" />
+    <PackageReference Include="LemmaGenerator" Version="1.1.0" />
     <PackageReference Include="linqtotwitter" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2" PrivateAssets="All" />
