@@ -50,23 +50,36 @@ namespace MicroSent.Models.Test
 
                 printAnalysisInfo(tweet, tweet.annotatedPolarity, actualPolarity, rating);
             }
+
+            calculatePrecisionValues(ref testRatingAnalyis);
+            calculateRecallValues(tweets, ref testRatingAnalyis);
+            calculateF1Score(ref testRatingAnalyis);
+
             int correctTotal = testRatingAnalyis.correctPositive + testRatingAnalyis.correctNegative + testRatingAnalyis.correctNeutral;
             float correctPercentage = getPercentage(correctTotal, tweets.Count);
 
             int totalPositive = getCountWithPolarity(tweets, Polarity.Positive);
-            float totalPositivePercentage = getPercentage(testRatingAnalyis.correctPositive, totalPositive);
-
             int totalNegative = getCountWithPolarity(tweets, Polarity.Negative);
-            float totalNegativePercentage = getPercentage(testRatingAnalyis.correctNegative, totalNegative);
-
             int totalNeutral = getCountWithPolarity(tweets, Polarity.Neutral);
-            float totalNeutralPercentage = getPercentage(testRatingAnalyis.correctNeutral, totalNeutral);
 
             Console.WriteLine("######################################################################");
             Console.WriteLine($"{correctTotal} of {tweets.Count} ({correctPercentage}%) correct.");
-            Console.WriteLine($"Positive: {testRatingAnalyis.correctPositive} of {totalPositive} ({totalPositivePercentage}%)");
-            Console.WriteLine($"Negative: {testRatingAnalyis.correctNegative} of {totalNegative} ({totalNegativePercentage}%)");
-            Console.WriteLine($"Neutral: {testRatingAnalyis.correctNeutral} of {totalNeutral} ({totalNeutralPercentage}%)");
+            Console.WriteLine($"Positive: {testRatingAnalyis.correctPositive} of {totalPositive}");
+            Console.WriteLine($"Negative: {testRatingAnalyis.correctNegative} of {totalNegative}");
+            Console.WriteLine($"Neutral: {testRatingAnalyis.correctNeutral} of {totalNeutral}");
+            Console.WriteLine("--------------------------------------");
+            Console.WriteLine($"Recall (positive): {testRatingAnalyis.recallPositive * 100}%");
+            Console.WriteLine($"Recall (negative): {testRatingAnalyis.recallNegative * 100}%");
+            Console.WriteLine($"Recall (neutral): {testRatingAnalyis.recallNeutral * 100}%");
+            Console.WriteLine("----------");
+            Console.WriteLine($"Precision (positive): {testRatingAnalyis.precisionPositive * 100}%");
+            Console.WriteLine($"Precision (negative): {testRatingAnalyis.precisionNegative * 100}%");
+            Console.WriteLine($"Precision (neutral): {testRatingAnalyis.precisionNeutral * 100}%");
+            Console.WriteLine("----------");
+            Console.WriteLine($"F1-score (positive): {testRatingAnalyis.f1ScorePositive * 100}%");
+            Console.WriteLine($"F1-score (negative): {testRatingAnalyis.f1ScoreNegative * 100}%");
+            Console.WriteLine($"F1-score (neutral): {testRatingAnalyis.f1ScoreNeutral * 100}%");
+            Console.WriteLine("--------------------------------------");
             Console.WriteLine($"False positives: {testRatingAnalyis.falsePositive}");
             Console.WriteLine($"\t- should be negative: {testRatingAnalyis.shouldNegativeButIsPositive}");
             Console.WriteLine($"\t- should be neutral: {testRatingAnalyis.shouldNeutralButIsPositive}");
@@ -215,6 +228,38 @@ namespace MicroSent.Models.Test
         {
             return tweets.Count(t => t.annotatedPolarity == polarity);
         }
+
+        private void calculatePrecisionValues(ref TestRatingAnalyis testRatingAnalyis)
+        {
+            int positiveRatedTweetsCount = testRatingAnalyis.correctPositive + testRatingAnalyis.falsePositive;
+            int negativeRatedTweetsCount = testRatingAnalyis.correctNegative + testRatingAnalyis.falseNegative;
+            int neutralRatedTweetsCount = testRatingAnalyis.correctNeutral + testRatingAnalyis.falseNeutral;
+
+            testRatingAnalyis.precisionPositive = ((float)testRatingAnalyis.correctPositive) / positiveRatedTweetsCount;
+            testRatingAnalyis.precisionNegative = ((float)testRatingAnalyis.correctNegative) / negativeRatedTweetsCount;
+            testRatingAnalyis.precisionNeutral = ((float)testRatingAnalyis.correctNeutral) / neutralRatedTweetsCount;
+        }
+
+        private void calculateRecallValues(List<Tweet> tweets, ref TestRatingAnalyis testRatingAnalyis)
+        {
+            int totalPositiveTweetsCount = getCountWithPolarity(tweets, Polarity.Positive);
+            int totalNegativeTweetsCount = getCountWithPolarity(tweets, Polarity.Negative);
+            int totalNeutralTweetsCount = getCountWithPolarity(tweets, Polarity.Neutral);
+
+            testRatingAnalyis.recallPositive = ((float)testRatingAnalyis.correctPositive) / totalPositiveTweetsCount;
+            testRatingAnalyis.recallNegative = ((float)testRatingAnalyis.correctNegative) / totalNegativeTweetsCount;
+            testRatingAnalyis.recallNeutral = ((float)testRatingAnalyis.correctNeutral) / totalNeutralTweetsCount;
+        }
+
+        private void calculateF1Score(ref TestRatingAnalyis testRatingAnalyis)
+        {
+            testRatingAnalyis.f1ScorePositive = 2 * (testRatingAnalyis.precisionPositive * testRatingAnalyis.recallPositive)
+                / (testRatingAnalyis.precisionPositive + testRatingAnalyis.recallPositive);
+            testRatingAnalyis.f1ScoreNegative = 2 * (testRatingAnalyis.precisionNegative * testRatingAnalyis.recallNegative)
+                / (testRatingAnalyis.precisionNegative + testRatingAnalyis.recallNegative);
+            testRatingAnalyis.f1ScoreNeutral = 2 * (testRatingAnalyis.precisionNeutral * testRatingAnalyis.recallNeutral)
+                / (testRatingAnalyis.precisionNeutral + testRatingAnalyis.recallNeutral);
+        }
     }
 
     public struct TestRatingAnalyis
@@ -240,6 +285,18 @@ namespace MicroSent.Models.Test
         public int shouldNegativeButIsEqual;
         public int shouldPositiveButIsEqual;
 
+        public float precisionPositive;
+        public float precisionNegative;
+        public float precisionNeutral;
+
+        public float recallPositive;
+        public float recallNegative;
+        public float recallNeutral;
+
+        public float f1ScorePositive;
+        public float f1ScoreNegative;
+        public float f1ScoreNeutral;
+
         public TestRatingAnalyis(int a)
         {
             correctPositive = 0;
@@ -262,6 +319,18 @@ namespace MicroSent.Models.Test
             shouldNeutralButIsEqual = 0;
             shouldNegativeButIsEqual = 0;
             shouldPositiveButIsEqual = 0;
+
+            precisionPositive = 0;
+            precisionNegative = 0;
+            precisionNeutral = 0;
+
+            recallPositive = 0;
+            recallNegative = 0;
+            recallNeutral = 0;
+
+            f1ScorePositive = 0;
+            f1ScoreNegative = 0;
+            f1ScoreNeutral = 0;
         }
     }
 }
