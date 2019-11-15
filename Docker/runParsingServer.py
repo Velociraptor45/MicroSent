@@ -25,9 +25,9 @@ class RunParsingServer:
                     data = con.recv(self.incommingByteSize)
                     con.sendall(self.OK)
                     if data:
-                        receivedSentence = "".join(map(chr, data))
+                        receivedSentence = data.decode('utf-8')
                         receivedSentence = receivedSentence.replace("'", "\\'").replace('"', '\\"').replace('(', '\\(').replace(')', '\\)').replace('|', '\\|')
-                        print("RECEIVED DATA: {}".format(receivedSentence))
+                        #print("RECEIVED DATA: {}".format(receivedSentence))
                         _thread.start_new_thread (self.processData, (receivedSentence, None))
                         con.close()
                 print("-------------------------------------------------------------")
