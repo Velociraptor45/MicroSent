@@ -91,6 +91,7 @@ namespace MicroSent.Controllers
             else
             {
                 allTweets = await getTweetsAsync("AlanZucconi");
+                allTweets = allTweets.Skip(55).ToList();
                 //allTweets = await getTweetsAsync("davidkrammer");
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
@@ -134,6 +135,7 @@ namespace MicroSent.Controllers
                         if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                         {
                             tokenAnalyser.removeRepeatedLetters(token);
+                            tokenAnalyser.replaceMutatedVowel(token);
                             tokenAnalyser.stem(token);
                             tokenAnalyser.lemmatize(token);
                         }

@@ -196,6 +196,11 @@ namespace MicroSent.Models.Analyser
             }
         }
 
+        public void replaceMutatedVowel(Token token)
+        {
+            token.text = token.text.Replace("ä", "ae").Replace("ö", "oe").Replace("ü", "ue");
+        }
+
         #region repeated Letters
         public void removeRepeatedLetters(Token token)
         {
