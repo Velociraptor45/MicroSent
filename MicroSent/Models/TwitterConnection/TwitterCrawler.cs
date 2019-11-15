@@ -36,7 +36,7 @@ namespace MicroSent.Models.TwitterConnection
             twitterContext = new TwitterContext(auth);
         }
 
-        public async Task<List<Status>> getQuotedRetweets(string username)
+        public async Task<List<Status>> getLinksAndQuotedRetweets(string username)
         {
             int maxTweets = 10000;
             ulong since = 1;
@@ -48,50 +48,10 @@ namespace MicroSent.Models.TwitterConnection
             try
             {
                 timeline = await (from tweet in twitterContext.Status
-                                  where tweet.Type == StatusType.User && tweet.ScreenName == username && tweet.TweetMode == TweetMode.Extended && tweet.Count == maxTweets && tweet.SinceID == since
-                                  select tweet).ToListAsync();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.StackTrace);
-            }
-
-            do
-            {
-                allResults.AddRange(timeline.Where(t => t.IsQuotedStatus));
-                maxID = timeline.Min(status => status.StatusID) - 1;
-
-                if (maxID < prevMaxID)
-                {
-                    prevMaxID = maxID;
-                }
-                else
-                {
-                    break;
-                }
-
-                timeline = await(from tweet in twitterContext.Status
-                                 where tweet.Type == StatusType.User && tweet.ScreenName == username && tweet.TweetMode == TweetMode.Extended && tweet.Count == maxTweets && tweet.SinceID == since && tweet.MaxID == maxID
-                                 select tweet).ToListAsync();
-            } while (timeline.Any());
-
-            allResults = removeNormalRetweets(allResults);
-            return allResults;
-        }
-
-        public async Task<List<Status>> getLinks(string username)
-        {
-            int maxTweets = 10000;
-            ulong since = 1;
-            ulong maxID = 0;
-            ulong prevMaxID = ulong.MaxValue;
-            List<Status> allResults = new List<Status>();
-            List<Status> timeline = new List<Status>();
-
-            try
-            {
-                timeline = await (from tweet in twitterContext.Status
-                                  where tweet.Type == StatusType.User && tweet.ScreenName == username && tweet.TweetMode == TweetMode.Extended && tweet.Count == maxTweets && tweet.SinceID == since && tweet.Entities.UrlEntities.Count > 0 && tweet.IsQuotedStatus == false
+                                  where tweet.Type == StatusType.User && tweet.ScreenName == username
+                                  && tweet.TweetMode == TweetMode.Extended
+                                  && tweet.Count == maxTweets && tweet.SinceID == since && tweet.Lang == "en"
+                                  && (tweet.Entities.UrlEntities.Count > 0 || tweet.IsQuotedStatus)
                                   select tweet).ToListAsync();
             }
             catch (Exception e)
@@ -114,32 +74,16 @@ namespace MicroSent.Models.TwitterConnection
                 }
 
                 timeline = await (from tweet in twitterContext.Status
-                                  where tweet.Type == StatusType.User && tweet.ScreenName == username && tweet.TweetMode == TweetMode.Extended && tweet.Count == maxTweets && tweet.SinceID == since && tweet.MaxID == maxID && tweet.Entities.UrlEntities.Count > 0 && tweet.IsQuotedStatus == false
+                                  where tweet.Type == StatusType.User && tweet.ScreenName == username
+                                  && tweet.TweetMode == TweetMode.Extended
+                                  && tweet.Count == maxTweets && tweet.SinceID == since
+                                  && tweet.MaxID == maxID && tweet.Lang == "en"
+                                  && (tweet.Entities.UrlEntities.Count > 0 || tweet.IsQuotedStatus)
                                   select tweet).ToListAsync();
             } while (timeline.Any());
 
             allResults = removeNormalRetweets(allResults);
             return allResults;
-        }
-
-        public async Task<Status> getSingleQuotedTweet(string username)
-        {
-            int maxTweets = 1000;
-            ulong since = 1;
-            List<Status> timeline = new List<Status>();
-
-            try
-            {
-                timeline = await (from tweet in twitterContext.Status
-                                  where tweet.Type == StatusType.User && tweet.ScreenName == username && tweet.TweetMode == TweetMode.Extended && tweet.Count == maxTweets && tweet.SinceID == since && tweet.IsQuotedStatus
-                                  select tweet).ToListAsync();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.StackTrace);
-            }
-            timeline = removeNormalRetweets(timeline);
-            return timeline.First();
         }
 
         private List<Status> removeNormalRetweets(List<Status> statuses)
