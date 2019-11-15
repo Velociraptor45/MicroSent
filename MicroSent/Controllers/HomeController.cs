@@ -90,12 +90,13 @@ namespace MicroSent.Controllers
             }
             else
             {
-                //allTweets = await getTweetsAsync("AlanZucconi");
+                allTweets = await getTweetsAsync("AlanZucconi");
+                //allTweets = await getTweetsAsync("davidkrammer");
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
                 //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
-                Tweet tw = new Tweet("You are so GREAT! :)", "aa", 0);
-                allTweets.Add(tw);
+                //Tweet tw = new Tweet("You are so GREAT! :)", "aa", 0);
+                //allTweets.Add(tw);
             }
 
             foreach (Tweet tweet in allTweets)
@@ -109,6 +110,10 @@ namespace MicroSent.Controllers
                     /// TEST AREA
                     //if (tweet.fullText.Contains("That didn't work out very well.")) //(tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
                     if (tweet.fullText.Contains("GO"))
+                    {
+                        int a = 0;
+                    }
+                    else if(allTweets.IndexOf(tweet) == 32)
                     {
                         int a = 0;
                     }
@@ -166,6 +171,9 @@ namespace MicroSent.Controllers
 
                 if (!configuration.serializeData)
                 {
+                    if (tweet.urls.Count > 0)
+                        tweet.linkedDomain = tweetAnalyser.extractDomain(tweet.urls.Last());
+
                     tweetAnalyser.filterUselessInterogativeSentences(tweet);
 
                     //////////////////////////////////////////////////////////////
@@ -200,19 +208,17 @@ namespace MicroSent.Controllers
         private async Task<List<Tweet>> getTweetsAsync(string accountName)
         {
             List<Tweet> allTweets = new List<Tweet>();
-            List<Status> quotedRetweetStatuses = new List<Status>();
-            List<Status> linkStatuses = new List<Status>();
+            List<Status> relevantStatuses = new List<Status>();
 
             ConsolePrinter.printBeginCrawlingTweets(accountName);
-            quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets(accountName);
+            relevantStatuses = await twitterCrawler.getLinksAndQuotedRetweets(accountName);
             ConsolePrinter.printFinishedCrawlingTweets();
-            //linkStatuses = await twitterCrawler.getLinks("AlanZucconi");
-            //List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
-            //quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
+            //relevantStatuses = await twitterCrawler.searchFor("#irony", 200);
 
-            foreach(Status status in quotedRetweetStatuses)
+            foreach(Status status in relevantStatuses)
             {
                 Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.StatusID);
+                tweet.urls.AddRange(getNoneTwitterUrls(status));
                 allTweets.Add(tweet);
             }
 
@@ -243,6 +249,12 @@ namespace MicroSent.Controllers
                     token.smileyRating = wordRater.getSmileyRating(token);
                 }
             }
+        }
+
+        private IEnumerable<string> getNoneTwitterUrls(Status status)
+        {
+            var noneTwitterUrls = status.Entities.UrlEntities.Where(e => !e.DisplayUrl.StartsWith("twitter.com"));
+            return noneTwitterUrls.Select(e => e.ExpandedUrl);
         }
 
         private void printOnConsole(List<Tweet> allTweets)

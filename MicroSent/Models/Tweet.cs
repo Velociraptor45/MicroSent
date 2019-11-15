@@ -12,6 +12,9 @@ namespace MicroSent.Models
         public string userScreenName;
         public ulong statusID;
 
+        public List<string> urls;
+        public string linkedDomain = null;
+
         public int tokenCount;
         public int firstEndHashtagIndex;
 
@@ -33,6 +36,8 @@ namespace MicroSent.Models
             this.fullText = fullText;
             this.userScreenName = userScreenName;
             this.statusID = statusID;
+
+            urls = new List<string>();
 
             sentences = new List<List<Token>>();
             rest = new List<Token>();

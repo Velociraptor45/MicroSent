@@ -19,6 +19,8 @@ namespace MicroSent.Models.Analyser
         private List<string> whWords = new List<string> { "what", "where", "when", "why", "who" };
         private List<string> auxiliaryVerbs = new List<string> { "am", "is", "are", "was", "were", "do", "did", "does" };
 
+        private Regex domainDetection = new Regex(RegexConstants.DOMAIN_PATTERN);
+
         public TweetAnalyser()
         {
 
@@ -83,6 +85,12 @@ namespace MicroSent.Models.Analyser
                     return true;
             }
             return false;
+        }
+
+        public string extractDomain(string url)
+        {
+            string fullHost = new Uri(url).Host;
+            return domainDetection.Match(fullHost).Value;
         }
 
 
