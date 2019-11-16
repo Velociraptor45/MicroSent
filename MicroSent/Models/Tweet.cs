@@ -1,4 +1,5 @@
 ﻿using MicroSent.Models.Enums;
+using MicroSent.Models.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,7 +61,7 @@ namespace MicroSent.Models
             return tokenList.First();
         }
 
-        public string getFullSentence(int index)
+        public string getFullUnicodeSentence(int index)
         {
             string fullSentence = "";
 
@@ -71,7 +72,7 @@ namespace MicroSent.Models
                 else
                     fullSentence += $" {token.text}";
             }
-            return fullSentence;
+            return UnicodeHelper.removeNonUnicodeCharacters(fullSentence);
         }
     }
 }

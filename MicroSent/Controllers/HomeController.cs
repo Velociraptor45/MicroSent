@@ -91,7 +91,7 @@ namespace MicroSent.Controllers
             else
             {
                 allTweets = await getTweetsAsync("AlanZucconi");
-                allTweets = allTweets.Skip(55).ToList();
+                allTweets = allTweets.Skip(56).ToList();
                 //allTweets = await getTweetsAsync("davidkrammer");
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
@@ -149,7 +149,7 @@ namespace MicroSent.Controllers
                     {
                         for (int i = 0; i < tweet.sentences.Count; i++)
                         {
-                            networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
+                            networkSendClientSocket.sendStringToServer(tweet.getFullUnicodeSentence(i));
                             Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
 
                             await serverAnswere;

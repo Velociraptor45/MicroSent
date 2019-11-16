@@ -87,7 +87,7 @@ namespace MicroSent.Models.Analyser
             if (currentTokenIndex < tokens.Count - 1)
             {
                 string thisJTokenWord = token.Value<string>(GoogleParserConstants.TOKEN_WORD);
-                string thisSentenceTokenWord = tweet.sentences[sentenceIndex][currentTokenIndex].text;
+                string thisSentenceTokenWord = UnicodeHelper.removeNonUnicodeCharacters(tweet.sentences[sentenceIndex][currentTokenIndex].text);
                 if (thisJTokenWord != thisSentenceTokenWord && ($"'{thisJTokenWord}" != thisSentenceTokenWord || !(thisJTokenWord == "nt" && thisSentenceTokenWord == "n't")))
                 {
                     int deleteUnitilThisIndex = currentTokenIndex + 1;
@@ -100,7 +100,7 @@ namespace MicroSent.Models.Analyser
                         if (currentJTokenText + nextJTokenWord == thisSentenceTokenWord || $"{currentJTokenText}'{nextJTokenWord}" == thisSentenceTokenWord)
                         {
                             removeTokens(currentTokenIndex + 1, deleteUnitilThisIndex, tokens);
-                            ConsolePrinter.printCorrectedGoogleParsing(tweet.getFullSentence(sentenceIndex));
+                            ConsolePrinter.printCorrectedGoogleParsing(tweet.getFullUnicodeSentence(sentenceIndex));
                             break;
                         }
                         currentJTokenText += nextJTokenWord;
