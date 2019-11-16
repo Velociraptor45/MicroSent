@@ -255,7 +255,7 @@ namespace MicroSent.Controllers
 
         private IEnumerable<string> getNoneTwitterUrls(Status status)
         {
-            var noneTwitterUrls = status.Entities.UrlEntities.Where(e => !e.DisplayUrl.StartsWith("twitter.com"));
+            var noneTwitterUrls = status.Entities.UrlEntities.Where(e => !e.DisplayUrl.StartsWith(TokenPartConstants.TWITTER_DOMAIN));
             return noneTwitterUrls.Select(e => e.ExpandedUrl);
         }
 

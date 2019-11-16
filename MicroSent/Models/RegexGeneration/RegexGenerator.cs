@@ -33,8 +33,8 @@ namespace MicroSent.Models.RegexGeneration
             string positiveEmojiRegex = getEmojiRegexString(allPositiveEmojis);
             string negativeEmojiRegex = getEmojiRegexString(allNegativeEmojis);
 
-            RegexConstants.POSITIVE_EMOJI_DETECTION = positiveEmojiRegex;
-            RegexConstants.NEGATIVE_EMOJI_DETECTION = negativeEmojiRegex;
+            RegexConstants.POSITIVE_EMOJI_PATTERN = positiveEmojiRegex;
+            RegexConstants.NEGATIVE_EMOJI_PATTERN = negativeEmojiRegex;
         }
 
         public void generateSmileyRegexStrings()
@@ -46,9 +46,9 @@ namespace MicroSent.Models.RegexGeneration
             string positiveSmileyRegex = getSmileyRegexString(positiveSmileys);
             string negativeSmileyRegex = getSmileyRegexString(negativeSmileys);
 
-            RegexConstants.ALL_SMILEY_DETECTION = allSmileyRegex;
-            RegexConstants.POSITIVE_SMILEY_DETECTION = positiveSmileyRegex;
-            RegexConstants.NEGATIVE_SMILEY_DETECTION = negativeSmileyRegex;
+            RegexConstants.ALL_SMILEY_PATTERN = allSmileyRegex;
+            RegexConstants.POSITIVE_SMILEY_PATTERN = positiveSmileyRegex;
+            RegexConstants.NEGATIVE_SMILEY_PATTERN = negativeSmileyRegex;
         }
 
         private List<Emoji> loadAllRelevantEmojis()

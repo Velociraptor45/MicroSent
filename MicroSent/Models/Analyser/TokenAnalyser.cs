@@ -13,11 +13,11 @@ namespace MicroSent.Models.Analyser
     {
         private const string MentionReplacement = "Michael";
 
-        private Regex linkDetection = new Regex(RegexConstants.LINK_DETECTION);
-        private Regex puntuationDetection = new Regex(RegexConstants.PUNCTUATION_DETECTION);
-        private Regex sentenceStructureDetection = new Regex(RegexConstants.SENTENCE_STRUCTURE_DETECTION);
-        private Regex smileyDetection = new Regex(RegexConstants.ALL_SMILEY_DETECTION);
-        private Regex emoticonDetection = new Regex(RegexConstants.ALL_EMOJI_DETECTION);
+        private Regex linkDetection = new Regex(RegexConstants.LINK_PATTERN);
+        private Regex puntuationDetection = new Regex(RegexConstants.PUNCTUATION_PATTERN);
+        private Regex sentenceStructureDetection = new Regex(RegexConstants.SENTENCE_STRUCTURE_PATTERN);
+        private Regex smileyDetection = new Regex(RegexConstants.ALL_SMILEY_PATTERN);
+        private Regex emoticonDetection = new Regex(RegexConstants.ALL_EMOJI_PATTERN);
         private Regex laughingDetection = new Regex(@"a?(ha){2,}|i?(hi){2,}");
 
         IStemmer stemmer = new EnglishStemmer();

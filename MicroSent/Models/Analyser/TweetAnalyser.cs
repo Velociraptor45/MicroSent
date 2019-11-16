@@ -13,8 +13,8 @@ namespace MicroSent.Models.Analyser
         private const string SarcasmStringSlash = "/s";
         private const string SarcasmStringBackslash = "\\s";
         
-        private Regex negationToken = new Regex(RegexConstants.NEGATION_TOKEN_DETECTION);
-        private Regex negationHashtagPart = new Regex(RegexConstants.NEGATION_HASHTAG_DETECTION);
+        private Regex negationToken = new Regex(RegexConstants.NEGATION_TOKEN_PATTERN);
+        private Regex negationHashtagPart = new Regex(RegexConstants.NEGATION_HASHTAG_PATTERN);
 
         private List<string> whWords = new List<string> { "what", "where", "when", "why", "who" };
         private List<string> auxiliaryVerbs = new List<string> { "am", "is", "are", "was", "were", "do", "did", "does" };

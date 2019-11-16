@@ -13,7 +13,7 @@ namespace MicroSent.Models.Analyser
 {
     public class ParseTreeAnalyser
     {
-        private Regex negationToken = new Regex(RegexConstants.NEGATION_TOKEN_DETECTION);
+        private Regex negationToken = new Regex(RegexConstants.NEGATION_TOKEN_PATTERN);
 
         public void applyGoogleParseTreeNegation(Tweet tweet)
         {
@@ -88,7 +88,10 @@ namespace MicroSent.Models.Analyser
             {
                 string thisJTokenWord = token.Value<string>(GoogleParserConstants.TOKEN_WORD);
                 string thisSentenceTokenWord = UnicodeHelper.removeNonUnicodeCharacters(tweet.sentences[sentenceIndex][currentTokenIndex].text);
-                if (thisJTokenWord != thisSentenceTokenWord && ($"'{thisJTokenWord}" != thisSentenceTokenWord || !(thisJTokenWord == "nt" && thisSentenceTokenWord == "n't")))
+                if (thisJTokenWord != thisSentenceTokenWord
+                    && ($"'{thisJTokenWord}" != thisSentenceTokenWord
+                        || !(thisJTokenWord == TokenPartConstants.NEGATION_TOKEN_ENDING_WITHOUT_APOSTROPHE 
+                            && thisSentenceTokenWord == TokenPartConstants.NEGATION_TOKEN_ENDING_WITH_APOSTROPHE)))
                 {
                     int deleteUnitilThisIndex = currentTokenIndex + 1;
                     string currentJTokenText = thisJTokenWord;
@@ -97,7 +100,8 @@ namespace MicroSent.Models.Analyser
                         string nextJTokenWord = tokens[deleteUnitilThisIndex].Value<string>(GoogleParserConstants.TOKEN_WORD);
                         translateGoogleAbbreviation(ref nextJTokenWord);
 
-                        if (currentJTokenText + nextJTokenWord == thisSentenceTokenWord || $"{currentJTokenText}'{nextJTokenWord}" == thisSentenceTokenWord)
+                        if (currentJTokenText + nextJTokenWord == thisSentenceTokenWord
+                            || $"{currentJTokenText}{TokenPartConstants.APOSTROPHE}{nextJTokenWord}" == thisSentenceTokenWord)
                         {
                             removeTokens(currentTokenIndex + 1, deleteUnitilThisIndex, tokens);
                             ConsolePrinter.printCorrectedGoogleParsing(tweet.getFullUnicodeSentence(sentenceIndex));
@@ -115,10 +119,10 @@ namespace MicroSent.Models.Analyser
             switch (word)
             {
                 case GoogleParserConstants.RIGHT_ROUND_BRACKED:
-                    word = ")";
+                    word = TokenPartConstants.CLOSING_BRACKET;
                     break;
                 case GoogleParserConstants.LEFT_ROUND_BRACKED:
-                    word = "(";
+                    word = TokenPartConstants.OPENING_BRACKET;
                     break;
             }
         }
@@ -139,7 +143,7 @@ namespace MicroSent.Models.Analyser
 
         private PosLabels translateToPosLabel(string tag)
         {
-            tag = tag.Replace("$", "D");
+            tag = tag.Replace(TokenPartConstants.DOLLAR, TokenPartConstants.LETTER_D);
             if (!Enum.TryParse(tag, out PosLabels posLabel))
             {
                 return PosLabels.Default;
