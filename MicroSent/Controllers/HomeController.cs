@@ -90,14 +90,14 @@ namespace MicroSent.Controllers
             }
             else
             {
-                allTweets = await getTweetsAsync("AlanZucconi");
-                allTweets = allTweets.Skip(56).ToList();
+                //allTweets = await getTweetsAsync("AlanZucconi");
+                //allTweets = allTweets.Skip(56).ToList();
                 //allTweets = await getTweetsAsync("davidkrammer");
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
                 //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
-                //Tweet tw = new Tweet("You are so GREAT! :)", "aa", 0);
-                //allTweets.Add(tw);
+                Tweet tw = new Tweet("You are so GREAT! 🏃🏾‍♀️ :)", "aa", 0);
+                allTweets.Add(tw);
             }
 
             foreach (Tweet tweet in allTweets)

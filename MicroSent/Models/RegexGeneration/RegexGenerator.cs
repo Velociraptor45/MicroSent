@@ -30,11 +30,9 @@ namespace MicroSent.Models.RegexGeneration
                 .Where(e => e.positiveScore >= configuration.minimalPositiveEmojiScore).ToList();
             var allNegativeEmojis = allRelevantEmojis
                 .Where(e => e.negativeScore >= configuration.minimalNegativeEmojiScore).ToList();
-            string allEmojiRegex = getEmojiRegexString(allRelevantEmojis);
             string positiveEmojiRegex = getEmojiRegexString(allPositiveEmojis);
             string negativeEmojiRegex = getEmojiRegexString(allNegativeEmojis);
 
-            RegexConstants.ALL_EMOJI_DETECTION = allEmojiRegex;
             RegexConstants.POSITIVE_EMOJI_DETECTION = positiveEmojiRegex;
             RegexConstants.NEGATIVE_EMOJI_DETECTION = negativeEmojiRegex;
         }

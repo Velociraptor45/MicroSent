@@ -9,7 +9,7 @@
         public const string PUNCTUATION_DETECTION = @"[\?!]+|\.+|,|:";
         public const string WORDS_DETECTION = @"(@|#[a-z]|\\|/)?(\w([''-]\w)?)+";
         public const string SENTENCE_STRUCTURE_DETECTION = @"(\(|\)|-|""|'')";
-        public static string ALL_EMOJI_DETECTION = "";
+        public const string ALL_EMOJI_DETECTION = @"\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]";
         public static string POSITIVE_EMOJI_DETECTION = "";
         public static string NEGATIVE_EMOJI_DETECTION = "";
 
