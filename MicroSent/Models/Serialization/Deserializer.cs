@@ -33,6 +33,14 @@ namespace MicroSent.Models.Serialization
             }
         }
 
+        public void deserializeList(out List<Item> list)
+        {
+            using (StreamReader streamReader = new StreamReader(filePath))
+            {
+                list = ((Item[])xmlSerializer.Deserialize(streamReader)).ToList();
+            }
+        }
+
 
 
         public List<Tweet> deserializeTweets(string filePath)
