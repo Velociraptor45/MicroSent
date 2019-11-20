@@ -1,5 +1,8 @@
 ﻿using MicroSent.Models.Constants;
+using MicroSent.Models.Enums;
 using OpenNLP.Tools.Parser;
+using OpenNLP.Tools.PosTagger;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,10 +11,12 @@ namespace MicroSent.Models.Analyser
     public class PosTagger
     {
         private EnglishTreebankParser nlpParser;
+        private EnglishMaximumEntropyPosTagger nlpPosTagger;
 
         public PosTagger()
         {
             nlpParser = new EnglishTreebankParser(DataPath.NBIN_FOLDER, true, false);
+            nlpPosTagger = new EnglishMaximumEntropyPosTagger(DataPath.NBIN_FOLDER + "EnglishPOS.nbin", DataPath.NBIN_FOLDER + "tagdict");
         }
 
         public void cutIntoSentences(Tweet tweet, List<Token> tokens)
@@ -54,6 +59,22 @@ namespace MicroSent.Models.Analyser
         {
             string[] sentenceTokenText = sentence.Select(t => t.text).ToArray();
             return nlpParser.DoParse(sentenceTokenText).GetChildren()[0];
+        }
+
+        public void tagAllTokens(Tweet tweet)
+        {
+            foreach (List<Token> sentenceTokens in tweet.sentences)
+            {
+                var tags = nlpPosTagger.Tag(sentenceTokens.Select(t => t.text).ToArray());
+                for (int j = 0; j < tags.Length; j++)
+                {
+                    if (!Enum.TryParse(tags[j], out PosLabels label))
+                    {
+                        label = PosLabels.Default;
+                    }
+                    sentenceTokens[j].posLabel = label;
+                }
+            }
         }
     }
 }
