@@ -15,6 +15,7 @@ namespace MicroSent.Models
 
         public List<string> urls;
         public string linkedDomain = null;
+        public string referencedAccount = null;
 
         public int tokenCount;
         public int firstEndHashtagIndex;

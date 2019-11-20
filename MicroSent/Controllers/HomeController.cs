@@ -17,6 +17,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MicroSent.Models.Configuration;
 using MicroSent.Models.RegexGeneration;
+using MicroSent.ViewModels;
 
 namespace MicroSent.Controllers
 {
@@ -90,14 +91,14 @@ namespace MicroSent.Controllers
             }
             else
             {
-                //allTweets = await getTweetsAsync("AlanZucconi");
+                allTweets = await getTweetsAsync("AlanZucconi");
                 //allTweets = allTweets.Skip(56).ToList();
                 //allTweets = await getTweetsAsync("davidkrammer");
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
                 //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
-                Tweet tw = new Tweet("You are so GREAT! 🏃🏾‍♀️ :)", "aa", 0);
-                allTweets.Add(tw);
+                //Tweet tw = new Tweet("You are so GREAT! 🏃🏾‍♀️ :)", "aa", 0);
+                //allTweets.Add(tw);
             }
 
             foreach (Tweet tweet in allTweets)
@@ -204,7 +205,68 @@ namespace MicroSent.Controllers
             else
                 printOnConsole(allTweets);
 
+            if (!configuration.testing)
+            {
+                translateTweetsToRating(allTweets, out List<Rating> linkRatings, out List<Rating> accountRatings);
+                return View(new HomeViewModel("", linkRatings, accountRatings));
+            }
             return View();
+        }
+
+        private void translateTweetsToRating(List<Tweet> tweets, out List<Rating> linkRatings, out List<Rating> accountRating)
+        {
+            linkRatings = new List<Rating>();
+            accountRating = new List<Rating>();
+
+            var distinctLinks = tweets.Where(t => t.linkedDomain != null).Select(t => t.linkedDomain).Distinct();
+            var distinctAccounts = tweets.Where(t => t.referencedAccount != null).Select(t => t.referencedAccount).Distinct();
+
+            createAndAddRatingsToList(tweets, distinctLinks, linkRatings, true);
+            createAndAddRatingsToList(tweets, distinctAccounts, accountRating, false);
+        }
+
+        private void createAndAddRatingsToList(List<Tweet> tweets, IEnumerable<string> entities, List<Rating> ratingList, bool isLink)
+        {
+            foreach (var entity in entities)
+            {
+                IEnumerable<Tweet> allTweetsContainingEntity;
+                if (isLink)
+                    allTweetsContainingEntity = tweets.Where(t => t.linkedDomain != null && t.linkedDomain == entity);
+                else
+                    allTweetsContainingEntity = tweets.Where(t => t.referencedAccount != null && t.referencedAccount == entity);
+
+                var positiveRatedTweets = allTweetsContainingEntity.Where(t => getHigherTweetPolarity(t) > 0);
+                var negativeRatedTweets = allTweetsContainingEntity.Where(t => getHigherTweetPolarity(t) < 0);
+                var neutralRatedTweets = allTweetsContainingEntity.Where(t => getHigherTweetPolarity(t) == 0);
+
+                int occurencesPositive = positiveRatedTweets.Count();
+                int occurencesNegative = negativeRatedTweets.Count();
+                int occurencesNeutral = neutralRatedTweets.Count();
+
+                if (occurencesPositive > 0)
+                {
+                    float averageRatingPositive = positiveRatedTweets.Average(t => getHigherTweetPolarity(t));
+                    Rating rating = new Rating(entity, averageRatingPositive, occurencesPositive);
+                    ratingList.Add(rating);
+                }
+                if (occurencesNegative > 0)
+                {
+                    float averageRatingNegative = negativeRatedTweets.Average(t => getHigherTweetPolarity(t));
+                    Rating rating = new Rating(entity, averageRatingNegative, occurencesNegative);
+                    ratingList.Add(rating);
+                }
+                if (occurencesNeutral > 0)
+                {
+                    float averageRatingNeutral = neutralRatedTweets.Average(t => getHigherTweetPolarity(t));
+                    Rating rating = new Rating(entity, averageRatingNeutral, occurencesNeutral);
+                    ratingList.Add(rating);
+                }
+            }
+        }
+
+        private float getHigherTweetPolarity(Tweet tweet)
+        {
+            return tweet.positiveRating > Math.Abs(tweet.negativeRating) ? tweet.positiveRating : tweet.negativeRating;
         }
 
         private async Task<List<Tweet>> getTweetsAsync(string accountName)
@@ -221,10 +283,19 @@ namespace MicroSent.Controllers
             {
                 Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.StatusID);
                 tweet.urls.AddRange(getNoneTwitterUrls(status));
+                if (status.IsQuotedStatus)
+                {
+                    User referencedAccount = status.QuotedStatus.User;
+                    if (referencedAccount == null)
+                        continue; //quoted tweets without a referenced account are ... broken?
+                                  //if you attempt to find those tweet, they don't exist -> skip them
+                    else
+                        tweet.referencedAccount = $"@{referencedAccount.ScreenNameResponse}";
+                }
                 allTweets.Add(tweet);
             }
 
-            return allTweets;
+            return allTweets.Where(t => t.referencedAccount != null).ToList();
         }
 
         private void applyRating(Tweet tweet)
