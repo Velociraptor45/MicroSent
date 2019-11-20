@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MicroSent.Models;
+using MicroSent.Models.Analyser;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,8 +12,8 @@ namespace LexiconExtension
     {
         static void Main(string[] args)
         {
-
-
+            LexiconExtender lexiconExtender = new LexiconExtender();
+            lexiconExtender.extract();
         }
     }
 }
