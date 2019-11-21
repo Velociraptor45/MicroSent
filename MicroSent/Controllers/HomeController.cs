@@ -80,6 +80,26 @@ namespace MicroSent.Controllers
 
         public async Task<IActionResult> Index()
         {
+            //Rating r1 = new Rating("link1.com", -2.4f, 3);
+            //Rating r2 = new Rating("link2.com", -2.4f, 3);
+            //Rating r5 = new Rating("link2.com", -2.4f, 3);
+            //Rating r6 = new Rating("link2.com", -2.4f, 3);
+            //Rating r7 = new Rating("link2.com", -2.4f, 3);
+            //Rating r8 = new Rating("link2.com", -2.4f, 3);
+            //Rating r9 = new Rating("link2.com", -2.4f, 3);
+            //Rating r10 = new Rating("link2.com", -2.4f, 3);
+            //Rating r11 = new Rating("link2.com", -2.4f, 3);
+            //Rating r3 = new Rating("link2.com", 0, 4);
+            //Rating r4 = new Rating("@me", -1.5f, 2);
+            //Rating r12 = new Rating("@me2", 1.5f, 4);
+            //Rating r13 = new Rating("@me3", 3.5f, 5);
+            //Rating r14 = new Rating("@me4", 5.5f, 8);
+            //Rating r15 = new Rating("@me5", 1.55f, 4);
+
+            //return View(new HomeViewModel("testnameacc", new List<Rating>() { r1, r2, r3, r5, r6, r7, r8, r9, r10, r11 }, new List<Rating>() { r4, r12, r13, r14, r15 }));
+
+
+
             string accountName = "AlanZucconi";
 
             List<Tweet> allTweets = new List<Tweet>();
@@ -94,7 +114,7 @@ namespace MicroSent.Controllers
             else
             {
                 allTweets = await getTweetsAsync(accountName);
-                //allTweets = allTweets.Skip(56).ToList();
+                //allTweets = allTweets.Skip(264).ToList();
                 //allTweets = await getTweetsAsync("davidkrammer");
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
@@ -297,7 +317,7 @@ namespace MicroSent.Controllers
                 allTweets.Add(tweet);
             }
 
-            return allTweets.Where(t => t.referencedAccount != null).ToList();
+            return allTweets.ToList();
         }
 
         private void applyRating(Tweet tweet)

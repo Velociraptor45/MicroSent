@@ -1,5 +1,8 @@
-﻿namespace MicroSent.Models
+﻿using System;
+
+namespace MicroSent.Models
 {
+    [Serializable]
     public class Rating
     {
         public string entityName { get; }

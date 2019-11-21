@@ -1,5 +1,146 @@
-﻿@{
+﻿@model MicroSent.ViewModels.HomeViewModel
+
+@{
     ViewData["Title"] = "Analysis";
 }
 
+<div id="chart-parent">
+    <canvas id="chart-canvas"></canvas>
+</div>
 
+
+@section scripts{
+    <script src="~/lib/chartsjs/charts.js"></script>
+    <script>
+        var Microsent = Microsent || {}
+
+        Microsent.App = (function () {
+            "use strict";
+
+            let that = {};
+
+            function init() {
+                let dataPoints = getDataPoints();
+                buildChart(dataPoints);
+            }
+
+            function getDataPoints() {
+                @{
+                    var accountRatings = Newtonsoft.Json.JsonConvert.SerializeObject(Model.accountRatings);
+                    var linkRatings = Newtonsoft.Json.JsonConvert.SerializeObject(Model.linkRatings);
+                }
+                let accountRatings = @Html.Raw(accountRatings);
+                let linkRatings = @Html.Raw(linkRatings);
+                let allRatings = accountRatings.concat(linkRatings);
+
+                let positiveDataPoints = [],
+                    negativeDataPoints = [],
+                    neutralDataPoints = [];
+
+                allRatings.forEach(function (element) {
+                    let xCoordinate = element.occurences,
+                        yCoordinate = element.averageRating,
+                        sameIndexDataPoint,
+                        correspondingDataPoints;
+
+                    if (yCoordinate != 0) {
+                        if (yCoordinate > 0) {
+                            correspondingDataPoints = positiveDataPoints;
+                        } else {
+                            correspondingDataPoints = negativeDataPoints;
+                        }
+                    } else {
+                        correspondingDataPoints = neutralDataPoints;
+                    }
+
+                    sameIndexDataPoint = getDataPointIndexWithSameCoordinates(correspondingDataPoints, xCoordinate, yCoordinate);
+
+                    if (sameIndexDataPoint === undefined) {
+                        let point = {};
+                        point.x = xCoordinate;
+                        point.y = yCoordinate;
+                        point.r = 8; // TODO?
+                        point.entities = [element.entityName];
+                        correspondingDataPoints.push(point);
+                    } else {
+                        correspondingDataPoints[sameIndexDataPoint].entities.push(element.entityName);
+                    }
+                });
+
+                return {
+                    positiveDataPoints: positiveDataPoints,
+                    negativeDataPoints: negativeDataPoints,
+                    neutralDataPoints: neutralDataPoints
+                };
+            }
+
+            function getFittingColor(rating) { // TODO?
+                if (rating != 0) {
+                    return rating > 0 ? "green" : "red";
+                } else {
+                    return "grey";
+                }
+            }
+
+            function getDataPointIndexWithSameCoordinates(dataPoints, x, y) {
+                for (let i = 0; i < dataPoints.length; i++) {
+                    if (dataPoints[i].x === x && dataPoints[i].y === y)
+                        return i;
+                }
+                return undefined;
+            }
+
+            function getColors(dataPoints) {
+                let colors = [];
+                dataPoints.forEach(function (e) {
+                    colors.push(e.color);
+                });
+                return colors;
+            }
+
+            function getLabels(dataPoints) {
+                let labels = [];
+                dataPoints.forEach(function (e) {
+                    labels.push(e.entities.join(", "));
+                });
+                return labels;
+            }
+
+            function buildChart(dataPoints) {
+                let ctx = document.getElementById("chart-canvas").getContext('2d');
+                let bubbleChart = new Chart(ctx, {
+                    type: 'bubble',
+                    data: {
+                        datasets: [{
+                            label: 'positive',
+                            data: dataPoints.positiveDataPoints,
+                            backgroundColor: 'rgba(0, 255, 0, 0.5)'
+                        }, {
+                            label: 'negative',
+                            data: dataPoints.negativeDataPoints,
+                            backgroundColor: 'rgba(255, 0, 0, 0.5)'
+                        }, {
+                            label: 'neutral',
+                            data: dataPoints.neutralDataPoints,
+                            backgroundColor: 'rgba(200, 200, 200, 0.5)'
+                        }]
+                    },
+                    options: {
+                        tooltips: {
+                            callbacks: {
+                                label: function (tooltipItem, data) {
+                                    return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].entities.join(", ");
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            that.init = init;
+            return that;
+        }());
+
+        Microsent.App.init();
+    </script>
+}
