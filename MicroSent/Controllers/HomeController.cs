@@ -80,6 +80,8 @@ namespace MicroSent.Controllers
 
         public async Task<IActionResult> Index()
         {
+            string accountName = "AlanZucconi";
+
             List<Tweet> allTweets = new List<Tweet>();
             if (configuration.useSerializedData)
             {
@@ -91,7 +93,7 @@ namespace MicroSent.Controllers
             }
             else
             {
-                allTweets = await getTweetsAsync("AlanZucconi");
+                allTweets = await getTweetsAsync(accountName);
                 //allTweets = allTweets.Skip(56).ToList();
                 //allTweets = await getTweetsAsync("davidkrammer");
 
@@ -208,7 +210,7 @@ namespace MicroSent.Controllers
             if (!configuration.testing)
             {
                 translateTweetsToRating(allTweets, out List<Rating> linkRatings, out List<Rating> accountRatings);
-                return View(new HomeViewModel("", linkRatings, accountRatings));
+                return View(new HomeViewModel(accountName, linkRatings, accountRatings));
             }
             return View();
         }
