@@ -1,14 +1,18 @@
 ﻿using MicroSent.Models;
-using System;
 using System.Collections.Generic;
 
 namespace MicroSent.ViewModels
 {
     public class HomeViewModel
     {
-        public string accountName { get; }
-        public List<Rating> linkRatings { get; }
-        public List<Rating> accountRatings { get; }
+        public string accountName { get; set; }
+        public List<Rating> linkRatings { get; set; }
+        public List<Rating> accountRatings { get; set; }
+
+        public HomeViewModel()
+        {
+
+        }
 
         public HomeViewModel(string accountName, List<Rating> linkRatings, List<Rating> accountRatings)
         {

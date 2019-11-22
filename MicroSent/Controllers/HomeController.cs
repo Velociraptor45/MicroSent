@@ -78,8 +78,13 @@ namespace MicroSent.Controllers
             tester = new Tester();
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(HomeViewModel homeViewModel)
         {
+            if(homeViewModel.accountName == null || homeViewModel.accountName == "")
+            {
+                return View(homeViewModel);
+            }
+
             //Rating r1 = new Rating("link1.com", -2.4f, 3);
             //Rating r2 = new Rating("link2.com", -2.4f, 3);
             //Rating r5 = new Rating("link2.com", -2.4f, 3);
@@ -100,7 +105,7 @@ namespace MicroSent.Controllers
 
 
 
-            string accountName = "AlanZucconi";
+            homeViewModel.accountName = "AlanZucconi"; //TODO: REMOVE
 
             List<Tweet> allTweets = new List<Tweet>();
             Random r = new Random();
@@ -118,7 +123,7 @@ namespace MicroSent.Controllers
             }
             else
             {
-                allTweets = await getTweetsAsync(accountName);
+                allTweets = await getTweetsAsync(homeViewModel.accountName);
                 //allTweets = allTweets.Skip(264).ToList();
                 //allTweets = await getTweetsAsync("davidkrammer");
 
@@ -233,8 +238,9 @@ namespace MicroSent.Controllers
                 printOnConsole(allTweets);
 
             translateTweetsToRating(allTweets, out List<Rating> linkRatings, out List<Rating> accountRatings);
-            return View(new HomeViewModel(accountName, linkRatings, accountRatings));
-            //return View();
+            homeViewModel.linkRatings = linkRatings;
+            homeViewModel.accountRatings = accountRatings;
+            return View(homeViewModel);
         }
 
         private void translateTweetsToRating(List<Tweet> tweets, out List<Rating> linkRatings, out List<Rating> accountRating)

@@ -1,17 +1,26 @@
 ﻿@model MicroSent.ViewModels.HomeViewModel
 
 @{
-    ViewData["Title"] = $"{Model.accountName} - Analysis";
+    if (Model.accountName != null && Model.accountName != "")
+    {
+        ViewData["Title"] = $"{Model.accountName} - Analysis";
+    }
+    else
+    {
+        ViewData["Title"] = "Analysis";
+    }
 }
 <h1>@{@Html.Raw(Model.accountName)}</h1>
 
-<div class="input-group mb-3" id="username-search">
-    <span class="input-group-addon">@@</span>
-    <input type="text" class="form-control" id="username-input-field" placeholder="Username">
-    <span class="input-group-btn">
-        <button class="btn" type="button">Analyse user data</button>
-    </span>
-</div>
+<form asp-controller="Home" asp-action="Index" method="post" class="form-horizontal" role="form" id="usernameForm">
+    <div class="input-group mb-3" id="username-search">
+        <span class="input-group-addon">@@</span>
+        <input asp-for="accountName" type="text" class="form-control" id="username-input-field" placeholder="Username">
+        <span class="input-group-btn">
+            <input class="btn" type="submit" value="Analyse user data"/>
+        </span>
+    </div>
+</form>
 
 <div id="chart-parent">
     <canvas id="chart-canvas"></canvas>
@@ -21,25 +30,25 @@
 @section scripts{
     <script src="~/lib/chartsjs/charts.js"></script>
     <script>
-        var Microsent = Microsent || {}
+    var Microsent = Microsent || {}
 
-        Microsent.App = (function () {
-            "use strict";
+    Microsent.App = (function () {
+        "use strict";
 
-            let that = {},
-                dataPointRadius = 2.5;
+        let that = {},
+            dataPointRadius = 2.5;
 
-            function init() {
-                let dataPoints = getDataPoints();
-                buildChart(dataPoints);
+        function init() {
+            let dataPoints = getDataPoints();
+            buildChart(dataPoints);
+        }
+
+        function getDataPoints() {
+            @{
+                var accountRatings = Newtonsoft.Json.JsonConvert.SerializeObject(Model.accountRatings ?? new List<Rating>());
+                var linkRatings = Newtonsoft.Json.JsonConvert.SerializeObject(Model.linkRatings ?? new List<Rating>());
             }
-
-            function getDataPoints() {
-                @{
-                    var accountRatings = Newtonsoft.Json.JsonConvert.SerializeObject(Model.accountRatings);
-                    var linkRatings = Newtonsoft.Json.JsonConvert.SerializeObject(Model.linkRatings);
-                }
-                let accountRatings = @Html.Raw(accountRatings);
+            let accountRatings = @Html.Raw(accountRatings);
                 let linkRatings = @Html.Raw(linkRatings);
                 let allRatings = accountRatings.concat(linkRatings);
 
@@ -79,54 +88,54 @@
 
                 return {
                     positiveDataPoints: positiveDataPoints,
-                    negativeDataPoints: negativeDataPoints,
-                    neutralDataPoints: neutralDataPoints
+                negativeDataPoints: negativeDataPoints,
+                neutralDataPoints: neutralDataPoints
                 };
-            }
+        }
 
-            function getDataPointIndexWithSameCoordinates(dataPoints, x, y) {
-                for (let i = 0; i < dataPoints.length; i++) {
-                    if (dataPoints[i].x === x && dataPoints[i].y === y)
-                        return i;
-                }
-                return undefined;
+        function getDataPointIndexWithSameCoordinates(dataPoints, x, y) {
+            for (let i = 0; i < dataPoints.length; i++) {
+                if (dataPoints[i].x === x && dataPoints[i].y === y)
+                    return i;
             }
+            return undefined;
+        }
 
-            function buildChart(dataPoints) {
-                let ctx = document.getElementById("chart-canvas").getContext('2d');
-                let bubbleChart = new Chart(ctx, {
-                    type: 'bubble',
-                    data: {
-                        datasets: [{
-                            label: 'positive',
-                            data: dataPoints.positiveDataPoints,
-                            backgroundColor: 'rgba(0, 255, 0, 0.5)'
-                        }, {
-                            label: 'negative',
-                            data: dataPoints.negativeDataPoints,
-                            backgroundColor: 'rgba(255, 0, 0, 0.5)'
-                        }, {
-                            label: 'neutral',
-                            data: dataPoints.neutralDataPoints,
-                            backgroundColor: 'rgba(200, 200, 200, 0.5)'
-                        }]
-                    },
-                    options: {
-                        tooltips: {
-                            callbacks: {
-                                label: function (tooltipItem, data) {
-                                    return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].entities.join(", ");
-                                }
+        function buildChart(dataPoints) {
+            let ctx = document.getElementById("chart-canvas").getContext('2d');
+            let bubbleChart = new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'positive',
+                        data: dataPoints.positiveDataPoints,
+                        backgroundColor: 'rgba(0, 255, 0, 0.5)'
+                    }, {
+                        label: 'negative',
+                        data: dataPoints.negativeDataPoints,
+                        backgroundColor: 'rgba(255, 0, 0, 0.5)'
+                    }, {
+                        label: 'neutral',
+                        data: dataPoints.neutralDataPoints,
+                        backgroundColor: 'rgba(200, 200, 200, 0.5)'
+                    }]
+                },
+                options: {
+                    tooltips: {
+                        callbacks: {
+                            label: function (tooltipItem, data) {
+                                return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].entities.join(", ");
                             }
                         }
                     }
-                });
-            }
+                }
+            });
+        }
 
-            that.init = init;
-            return that;
-        }());
+        that.init = init;
+        return that;
+    }());
 
-        Microsent.App.init();
+    Microsent.App.init();
     </script>
 }
