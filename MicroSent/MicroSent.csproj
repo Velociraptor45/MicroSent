@@ -5,6 +5,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\images\**" />
+    <Compile Remove="wwwroot\js\**" />
+    <Content Remove="wwwroot\images\**" />
+    <Content Remove="wwwroot\js\**" />
+    <EmbeddedResource Remove="wwwroot\images\**" />
+    <EmbeddedResource Remove="wwwroot\js\**" />
+    <None Remove="wwwroot\images\**" />
+    <None Remove="wwwroot\js\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EcoCore" Version="7.0.0.11683" />
     <PackageReference Include="LemmaGenerator" Version="1.1.0" />
     <PackageReference Include="linqtotwitter" Version="5.0.0" />
@@ -16,11 +27,6 @@
     <PackageReference Include="Stanford.NLP.Parser" Version="3.9.2" />
     <PackageReference Include="StemmersNet" Version="1.1.1" />
     <PackageReference Include="System.Runtime.Caching" Version="4.5.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\images\" />
-    <Folder Include="wwwroot\js\" />
   </ItemGroup>
 
 </Project>
