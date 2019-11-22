@@ -103,9 +103,14 @@ namespace MicroSent.Controllers
             string accountName = "AlanZucconi";
 
             List<Tweet> allTweets = new List<Tweet>();
+            Random r = new Random();
             if (configuration.useSerializedData)
             {
                 allTweets = deserializer.deserializeTweets(SerializedTweetsPath);
+                foreach (Tweet tweet in allTweets)
+                {
+                    tweet.referencedAccount = $"@testacc{r.Next(70)}";
+                }
             }
             else if (configuration.testing)
             {
@@ -227,12 +232,9 @@ namespace MicroSent.Controllers
             else
                 printOnConsole(allTweets);
 
-            if (!configuration.testing)
-            {
-                translateTweetsToRating(allTweets, out List<Rating> linkRatings, out List<Rating> accountRatings);
-                return View(new HomeViewModel(accountName, linkRatings, accountRatings));
-            }
-            return View();
+            translateTweetsToRating(allTweets, out List<Rating> linkRatings, out List<Rating> accountRatings);
+            return View(new HomeViewModel(accountName, linkRatings, accountRatings));
+            //return View();
         }
 
         private void translateTweetsToRating(List<Tweet> tweets, out List<Rating> linkRatings, out List<Rating> accountRating)

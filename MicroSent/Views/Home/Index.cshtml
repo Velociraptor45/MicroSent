@@ -1,8 +1,17 @@
 ﻿@model MicroSent.ViewModels.HomeViewModel
 
 @{
-    ViewData["Title"] = "Analysis";
+    ViewData["Title"] = $"{Model.accountName} - Analysis";
 }
+<h1>@{@Html.Raw(Model.accountName)}</h1>
+
+<div class="input-group mb-3" id="username-search">
+    <span class="input-group-addon">@@</span>
+    <input type="text" class="form-control" id="username-input-field" placeholder="Username">
+    <span class="input-group-btn">
+        <button class="btn" type="button">Analyse user data</button>
+    </span>
+</div>
 
 <div id="chart-parent">
     <canvas id="chart-canvas"></canvas>
@@ -17,7 +26,8 @@
         Microsent.App = (function () {
             "use strict";
 
-            let that = {};
+            let that = {},
+                dataPointRadius = 2.5;
 
             function init() {
                 let dataPoints = getDataPoints();
@@ -59,7 +69,7 @@
                         let point = {};
                         point.x = xCoordinate;
                         point.y = yCoordinate;
-                        point.r = 8; // TODO?
+                        point.r = dataPointRadius;
                         point.entities = [element.entityName];
                         correspondingDataPoints.push(point);
                     } else {
@@ -74,36 +84,12 @@
                 };
             }
 
-            function getFittingColor(rating) { // TODO?
-                if (rating != 0) {
-                    return rating > 0 ? "green" : "red";
-                } else {
-                    return "grey";
-                }
-            }
-
             function getDataPointIndexWithSameCoordinates(dataPoints, x, y) {
                 for (let i = 0; i < dataPoints.length; i++) {
                     if (dataPoints[i].x === x && dataPoints[i].y === y)
                         return i;
                 }
                 return undefined;
-            }
-
-            function getColors(dataPoints) {
-                let colors = [];
-                dataPoints.forEach(function (e) {
-                    colors.push(e.color);
-                });
-                return colors;
-            }
-
-            function getLabels(dataPoints) {
-                let labels = [];
-                dataPoints.forEach(function (e) {
-                    labels.push(e.entities.join(", "));
-                });
-                return labels;
             }
 
             function buildChart(dataPoints) {
