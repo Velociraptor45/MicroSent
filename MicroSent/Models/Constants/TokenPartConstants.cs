@@ -12,8 +12,15 @@
         public const string EMPTY_STRING = "";
 
         public const char LETTER_I = 'I';
+        public const char LETTER_D = 'D';
 
+        public const string TWITTER_DOMAIN = "twitter.com";
         public const char TWITTER_MENTION = '@';
         public const char TWITTER_HASHTAG = '#';
+
+        public const char DOLLAR = '$';
+
+        public const string OPENING_BRACKET = "(";
+        public const string CLOSING_BRACKET = ")";
     }
 }

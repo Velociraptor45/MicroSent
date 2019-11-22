@@ -1,4 +1,5 @@
 ﻿using MicroSent.Models.Enums;
+using MicroSent.Models.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,10 @@ namespace MicroSent.Models
         public string fullText;
         public string userScreenName;
         public ulong statusID;
+
+        public List<string> urls;
+        public string linkedDomain = null;
+        public string referencedAccount = null;
 
         public int tokenCount;
         public int firstEndHashtagIndex;
@@ -34,6 +39,8 @@ namespace MicroSent.Models
             this.userScreenName = userScreenName;
             this.statusID = statusID;
 
+            urls = new List<string>();
+
             sentences = new List<List<Token>>();
             rest = new List<Token>();
             parseTrees = new List<Node>();
@@ -55,7 +62,7 @@ namespace MicroSent.Models
             return tokenList.First();
         }
 
-        public string getFullSentence(int index)
+        public string getFullUnicodeSentence(int index)
         {
             string fullSentence = "";
 
@@ -66,7 +73,7 @@ namespace MicroSent.Models
                 else
                     fullSentence += $" {token.text}";
             }
-            return fullSentence;
+            return UnicodeHelper.removeNonUnicodeCharacters(fullSentence);
         }
     }
 }

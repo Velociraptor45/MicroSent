@@ -17,6 +17,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MicroSent.Models.Configuration;
 using MicroSent.Models.RegexGeneration;
+using MicroSent.ViewModels;
 
 namespace MicroSent.Controllers
 {
@@ -77,12 +78,44 @@ namespace MicroSent.Controllers
             tester = new Tester();
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(HomeViewModel homeViewModel)
         {
+            if(homeViewModel.accountName == null || homeViewModel.accountName == "")
+            {
+                return View(homeViewModel);
+            }
+
+            //Rating r1 = new Rating("link1.com", -2.4f, 3);
+            //Rating r2 = new Rating("link2.com", -2.4f, 3);
+            //Rating r5 = new Rating("link2.com", -2.4f, 3);
+            //Rating r6 = new Rating("link2.com", -2.4f, 3);
+            //Rating r7 = new Rating("link2.com", -2.4f, 3);
+            //Rating r8 = new Rating("link2.com", -2.4f, 3);
+            //Rating r9 = new Rating("link2.com", -2.4f, 3);
+            //Rating r10 = new Rating("link2.com", -2.4f, 3);
+            //Rating r11 = new Rating("link2.com", -2.4f, 3);
+            //Rating r3 = new Rating("link2.com", 0, 4);
+            //Rating r4 = new Rating("@me", -1.5f, 2);
+            //Rating r12 = new Rating("@me2", 1.5f, 4);
+            //Rating r13 = new Rating("@me3", 3.5f, 5);
+            //Rating r14 = new Rating("@me4", 5.5f, 8);
+            //Rating r15 = new Rating("@me5", 1.55f, 4);
+
+            //return View(new HomeViewModel("testnameacc", new List<Rating>() { r1, r2, r3, r5, r6, r7, r8, r9, r10, r11 }, new List<Rating>() { r4, r12, r13, r14, r15 }));
+
+
+
+            homeViewModel.accountName = "AlanZucconi"; //TODO: REMOVE
+
             List<Tweet> allTweets = new List<Tweet>();
+            Random r = new Random();
             if (configuration.useSerializedData)
             {
                 allTweets = deserializer.deserializeTweets(SerializedTweetsPath);
+                foreach (Tweet tweet in allTweets)
+                {
+                    tweet.referencedAccount = $"@testacc{r.Next(70)}";
+                }
             }
             else if (configuration.testing)
             {
@@ -90,12 +123,14 @@ namespace MicroSent.Controllers
             }
             else
             {
-                //allTweets = await getTweetsAsync("AlanZucconi");
+                allTweets = await getTweetsAsync(homeViewModel.accountName);
+                //allTweets = allTweets.Skip(264).ToList();
+                //allTweets = await getTweetsAsync("davidkrammer");
 
                 //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
                 //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
-                Tweet tw = new Tweet("You are so GREAT! :)", "aa", 0);
-                allTweets.Add(tw);
+                //Tweet tw = new Tweet("You are so GREAT! 🏃🏾‍♀️ :)", "aa", 0);
+                //allTweets.Add(tw);
             }
 
             foreach (Tweet tweet in allTweets)
@@ -109,6 +144,10 @@ namespace MicroSent.Controllers
                     /// TEST AREA
                     //if (tweet.fullText.Contains("That didn't work out very well.")) //(tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
                     if (tweet.fullText.Contains("GO"))
+                    {
+                        int a = 0;
+                    }
+                    else if(allTweets.IndexOf(tweet) == 32)
                     {
                         int a = 0;
                     }
@@ -129,6 +168,7 @@ namespace MicroSent.Controllers
                         if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                         {
                             tokenAnalyser.removeRepeatedLetters(token);
+                            tokenAnalyser.replaceMutatedVowel(token);
                             tokenAnalyser.stem(token);
                             tokenAnalyser.lemmatize(token);
                         }
@@ -142,7 +182,7 @@ namespace MicroSent.Controllers
                     {
                         for (int i = 0; i < tweet.sentences.Count; i++)
                         {
-                            networkSendClientSocket.sendStringToServer(tweet.getFullSentence(i));
+                            networkSendClientSocket.sendStringToServer(tweet.getFullUnicodeSentence(i));
                             Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
 
                             await serverAnswere;
@@ -166,6 +206,9 @@ namespace MicroSent.Controllers
 
                 if (!configuration.serializeData)
                 {
+                    if (tweet.urls.Count > 0)
+                        tweet.linkedDomain = tweetAnalyser.extractDomain(tweet.urls.Last());
+
                     tweetAnalyser.filterUselessInterogativeSentences(tweet);
 
                     //////////////////////////////////////////////////////////////
@@ -194,29 +237,95 @@ namespace MicroSent.Controllers
             else
                 printOnConsole(allTweets);
 
-            return View();
+            translateTweetsToRating(allTweets, out List<Rating> linkRatings, out List<Rating> accountRatings);
+            homeViewModel.linkRatings = linkRatings;
+            homeViewModel.accountRatings = accountRatings;
+            return View(homeViewModel);
+        }
+
+        private void translateTweetsToRating(List<Tweet> tweets, out List<Rating> linkRatings, out List<Rating> accountRating)
+        {
+            linkRatings = new List<Rating>();
+            accountRating = new List<Rating>();
+
+            var distinctLinks = tweets.Where(t => t.linkedDomain != null).Select(t => t.linkedDomain).Distinct();
+            var distinctAccounts = tweets.Where(t => t.referencedAccount != null).Select(t => t.referencedAccount).Distinct();
+
+            createAndAddRatingsToList(tweets, distinctLinks, linkRatings, true);
+            createAndAddRatingsToList(tweets, distinctAccounts, accountRating, false);
+        }
+
+        private void createAndAddRatingsToList(List<Tweet> tweets, IEnumerable<string> entities, List<Rating> ratingList, bool isLink)
+        {
+            foreach (var entity in entities)
+            {
+                IEnumerable<Tweet> allTweetsContainingEntity;
+                if (isLink)
+                    allTweetsContainingEntity = tweets.Where(t => t.linkedDomain != null && t.linkedDomain == entity);
+                else
+                    allTweetsContainingEntity = tweets.Where(t => t.referencedAccount != null && t.referencedAccount == entity);
+
+                var positiveRatedTweets = allTweetsContainingEntity.Where(t => getHigherTweetPolarity(t) > 0);
+                var negativeRatedTweets = allTweetsContainingEntity.Where(t => getHigherTweetPolarity(t) < 0);
+                var neutralRatedTweets = allTweetsContainingEntity.Where(t => getHigherTweetPolarity(t) == 0);
+
+                int occurencesPositive = positiveRatedTweets.Count();
+                int occurencesNegative = negativeRatedTweets.Count();
+                int occurencesNeutral = neutralRatedTweets.Count();
+
+                if (occurencesPositive > 0)
+                {
+                    float averageRatingPositive = positiveRatedTweets.Average(t => getHigherTweetPolarity(t));
+                    Rating rating = new Rating(entity, averageRatingPositive, occurencesPositive);
+                    ratingList.Add(rating);
+                }
+                if (occurencesNegative > 0)
+                {
+                    float averageRatingNegative = negativeRatedTweets.Average(t => getHigherTweetPolarity(t));
+                    Rating rating = new Rating(entity, averageRatingNegative, occurencesNegative);
+                    ratingList.Add(rating);
+                }
+                if (occurencesNeutral > 0)
+                {
+                    float averageRatingNeutral = neutralRatedTweets.Average(t => getHigherTweetPolarity(t));
+                    Rating rating = new Rating(entity, averageRatingNeutral, occurencesNeutral);
+                    ratingList.Add(rating);
+                }
+            }
+        }
+
+        private float getHigherTweetPolarity(Tweet tweet)
+        {
+            return tweet.positiveRating > Math.Abs(tweet.negativeRating) ? tweet.positiveRating : tweet.negativeRating;
         }
 
         private async Task<List<Tweet>> getTweetsAsync(string accountName)
         {
             List<Tweet> allTweets = new List<Tweet>();
-            List<Status> quotedRetweetStatuses = new List<Status>();
-            List<Status> linkStatuses = new List<Status>();
+            List<Status> relevantStatuses = new List<Status>();
 
             ConsolePrinter.printBeginCrawlingTweets(accountName);
-            quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets(accountName);
+            relevantStatuses = await twitterCrawler.getLinksAndQuotedRetweets(accountName);
             ConsolePrinter.printFinishedCrawlingTweets();
-            //linkStatuses = await twitterCrawler.getLinks("AlanZucconi");
-            //List<Status> ironyHashtags = await twitterCrawler.searchFor("#irony", 200);
-            //quotedRetweetStatuses = await twitterCrawler.getQuotedRetweets("davidkrammer");
+            //relevantStatuses = await twitterCrawler.searchFor("#irony", 200);
 
-            foreach(Status status in quotedRetweetStatuses)
+            foreach(Status status in relevantStatuses)
             {
                 Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.StatusID);
+                tweet.urls.AddRange(getNoneTwitterUrls(status));
+                if (status.IsQuotedStatus)
+                {
+                    User referencedAccount = status.QuotedStatus.User;
+                    if (referencedAccount == null)
+                        continue; //quoted tweets without a referenced account are ... broken?
+                                  //if you attempt to find those tweet, they don't exist -> skip them
+                    else
+                        tweet.referencedAccount = $"@{referencedAccount.ScreenNameResponse}";
+                }
                 allTweets.Add(tweet);
             }
 
-            return allTweets;
+            return allTweets.ToList();
         }
 
         private void applyRating(Tweet tweet)
@@ -243,6 +352,12 @@ namespace MicroSent.Controllers
                     token.smileyRating = wordRater.getSmileyRating(token);
                 }
             }
+        }
+
+        private IEnumerable<string> getNoneTwitterUrls(Status status)
+        {
+            var noneTwitterUrls = status.Entities.UrlEntities.Where(e => !e.DisplayUrl.StartsWith(TokenPartConstants.TWITTER_DOMAIN));
+            return noneTwitterUrls.Select(e => e.ExpandedUrl);
         }
 
         private void printOnConsole(List<Tweet> allTweets)

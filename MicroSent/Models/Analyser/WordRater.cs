@@ -16,10 +16,10 @@ namespace MicroSent.Models.Analyser
         private const string SentWordLabelAdverb = "r";
         private const string SentWordLabelVerb = "v";
 
-        private Regex positiveEmojiDetection = new Regex(RegexConstants.POSITIVE_EMOJI_DETECTION);
-        private Regex negativeEmojiDetection = new Regex(RegexConstants.NEGATIVE_EMOJI_DETECTION);
-        private Regex positiveSmileyDetection = new Regex(RegexConstants.POSITIVE_SMILEY_DETECTION);
-        private Regex negativeSmileyDetection = new Regex(RegexConstants.NEGATIVE_SMILEY_DETECTION);
+        private Regex positiveEmojiDetection = new Regex(RegexConstants.POSITIVE_EMOJI_PATTERN);
+        private Regex negativeEmojiDetection = new Regex(RegexConstants.NEGATIVE_EMOJI_PATTERN);
+        private Regex positiveSmileyDetection = new Regex(RegexConstants.POSITIVE_SMILEY_PATTERN);
+        private Regex negativeSmileyDetection = new Regex(RegexConstants.NEGATIVE_SMILEY_PATTERN);
 
         private static Dictionary<string, float> polarityDictionary;
 
