@@ -38,7 +38,7 @@ namespace MicroSent.Models.Configuration
 
         public MicroSentConfiguration()
         {
-            testing = true;
+            testing = false;
             useGoogleParser = false;
             useSerializedData = false;
             serializeData = false;

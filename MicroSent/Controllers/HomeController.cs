@@ -125,6 +125,8 @@ namespace MicroSent.Controllers
             else
             {
                 allTweets = await getTweetsAsync(homeViewModel.accountName);
+                if (allTweets == null)
+                    return View(homeViewModel);
                 //allTweets = allTweets.Skip(264).ToList();
                 //allTweets = await getTweetsAsync("davidkrammer");
 
@@ -314,7 +316,9 @@ namespace MicroSent.Controllers
             ConsolePrinter.printBeginCrawlingTweets(accountName);
             relevantStatuses = await twitterCrawler.getLinksAndQuotedRetweets(accountName);
             ConsolePrinter.printFinishedCrawlingTweets();
-            //relevantStatuses = await twitterCrawler.searchFor("#irony", 200);
+
+            if (relevantStatuses == null)
+                return null;
 
             foreach(Status status in relevantStatuses)
             {

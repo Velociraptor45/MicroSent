@@ -1,3 +1,7 @@
 ﻿#usernameForm {
     width: 400px;
 }
+
+#usernameNotFound{
+    color: red;
+}

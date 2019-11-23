@@ -54,9 +54,9 @@ namespace MicroSent.Models.TwitterConnection
                                   && (tweet.Entities.UrlEntities.Count > 0 || tweet.IsQuotedStatus)
                                   select tweet).ToListAsync();
             }
-            catch (Exception e)
+            catch (TwitterQueryException e)
             {
-                Console.WriteLine(e.StackTrace);
+                return null;
             }
 
             do
