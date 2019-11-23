@@ -6,9 +6,9 @@
         public static string ALL_SMILEY_PATTERN = "";
         public static string POSITIVE_SMILEY_PATTERN = "";
         public static string NEGATIVE_SMILEY_PATTERN = "";
-        public const string PUNCTUATION_PATTERN = @"[\?!]+|\.+|,|:";
+        public const string PUNCTUATION_PATTERN = @"[\?!]+|\.|,|:";
         public const string WORDS_PATTERN = @"(@|#[a-z]|\\|/)?(\w([''-]\w)?)+";
-        public const string SENTENCE_STRUCTURE_PATTERN = @"(\(|\)|-|""|'')";
+        public const string SENTENCE_STRUCTURE_PATTERN = @"(\(|\)|-|""|''|\.{2,})";
         public const string ALL_EMOJI_PATTERN = @"\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]";
         public static string POSITIVE_EMOJI_PATTERN = "";
         public static string NEGATIVE_EMOJI_PATTERN = "";

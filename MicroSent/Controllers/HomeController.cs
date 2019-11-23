@@ -104,9 +104,6 @@ namespace MicroSent.Controllers
             //return View(new HomeViewModel("testnameacc", new List<Rating>() { r1, r2, r3, r5, r6, r7, r8, r9, r10, r11 }, new List<Rating>() { r4, r12, r13, r14, r15 }));
 
 
-
-            homeViewModel.accountName = "AlanZucconi"; //TODO: REMOVE
-
             List<Tweet> allTweets = new List<Tweet>();
             Random r = new Random();
             if (configuration.useSerializedData)
@@ -120,6 +117,10 @@ namespace MicroSent.Controllers
             else if (configuration.testing)
             {
                 allTweets = tester.getTestTweets().Skip(configuration.skipTweetsAmount).ToList();
+                foreach (Tweet tweet in allTweets)
+                {
+                    tweet.referencedAccount = $"@testacc{r.Next(70)}";
+                }
             }
             else
             {
@@ -164,7 +165,6 @@ namespace MicroSent.Controllers
                         if (token.isHashtag)
                             tokenAnalyser.splitHashtag(token);
                         tokenAnalyser.checkForUppercase(token);
-                        tokenAnalyser.convertToLowercase(token);
                         if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                         {
                             tokenAnalyser.removeRepeatedLetters(token);
@@ -194,13 +194,20 @@ namespace MicroSent.Controllers
                     }
                     else
                     {
-                        foreach (var sentence in tweet.sentences)
-                        {
-                            Parse tree = posTagger.parseTweet(sentence);
-                            Node rootNode = parseTreeAnalyser.translateToNodeTree(tree, tweet);
-                            tweet.parseTrees.Add(rootNode);
-                        }
+                        //foreach (var sentence in tweet.sentences)
+                        //{
+                        //    Parse tree = posTagger.parseTweet(sentence);
+                        //    Node rootNode = parseTreeAnalyser.translateToNodeTree(tree, tweet);
+                        //    tweet.parseTrees.Add(rootNode);
+                        //}
+                        posTagger.tagAllTokens(tweet);
                     }
+
+                    // converting to lowercase is important for matching words from the lexicon
+                    // but lowercasing can only be applied after Pos-Tagging because
+                    // the stanford parser has problems if all is lowercase
+                    foreach (Token token in allTokens)
+                        tokenAnalyser.convertToLowercase(token);
                 }
 
 

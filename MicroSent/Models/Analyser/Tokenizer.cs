@@ -23,9 +23,9 @@ namespace MicroSent.Models.Analyser
         {
             tokenDetection = new Regex($"({RegexConstants.LINK_PATTERN})" +
                 $"|({RegexConstants.ALL_SMILEY_PATTERN})" +
+                $"|({RegexConstants.SENTENCE_STRUCTURE_PATTERN})" +
                 $"|({RegexConstants.PUNCTUATION_PATTERN})" +
                 $"|({RegexConstants.WORDS_PATTERN})" +
-                $"|({RegexConstants.SENTENCE_STRUCTURE_PATTERN})" +
                 $"|({RegexConstants.ALL_EMOJI_PATTERN})");
             negationDetection = new Regex($"{RegexConstants.NEGATION_WORD_PATTERN}");
         }
