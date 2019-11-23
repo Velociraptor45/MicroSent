@@ -39,7 +39,7 @@ namespace MicroSent.Models.Configuration
         public MicroSentConfiguration()
         {
             testing = true;
-            useGoogleParser = true;
+            useGoogleParser = false;
             useSerializedData = false;
             serializeData = false;
             skipTweetsAmount = 0;
