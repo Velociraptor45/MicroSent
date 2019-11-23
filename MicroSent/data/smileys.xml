@@ -1,239 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
 <smileys xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Smiley>
-    <smiley>:‑)</smiley>
+    <smiley>%-(</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>%-)</smiley>
     <polarity>Positive</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:)</smiley>
+    <smiley>(-:</smiley>
     <polarity>Positive</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:-]</smiley>
+    <smiley>(:</smiley>
     <polarity>Positive</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:]</smiley>
+    <smiley>(^ ^)</smiley>
     <polarity>Positive</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:-3</smiley>
+    <smiley>(^-^)</smiley>
     <polarity>Positive</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:3</smiley>
+    <smiley>(^.^)</smiley>
     <polarity>Positive</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:-&gt;</smiley>
+    <smiley>(^_^)</smiley>
     <polarity>Positive</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:&gt;</smiley>
+    <smiley>(o:</smiley>
     <polarity>Positive</polarity>
   </Smiley>
   <Smiley>
-    <smiley>8-)</smiley>
+    <smiley>(o;</smiley>
+    <polarity>Neutral</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>)-:</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>):</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>)o:</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>*)</smiley>
+    <polarity>Neutral</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>*\o/*</smiley>
     <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>--^--@</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>0:)</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>38*</smiley>
+    <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
     <smiley>8)</smiley>
     <polarity>Positive</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:-}</smiley>
-    <polarity>Positive</polarity>
+    <smiley>8-)</smiley>
+    <polarity>Neutral</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:}</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:o)</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:c)</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:^)</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>=]</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>=)</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:‑D</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:D</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>8‑D</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>8D</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>x‑D</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>xD</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>X‑D</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>XD</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>=D</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>=3</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>B^D</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:-))</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:'‑)</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:')</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:-*</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:*</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:×</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>;‑)</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>;)</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>*-)</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>*)</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>;‑]</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>;]</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>;^)</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:‑,</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>;D</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>\o/</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>&lt;3</smiley>
-    <polarity>Positive</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:‑(</smiley>
+    <smiley>8-0</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:(</smiley>
+    <smiley>8/</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:‑c</smiley>
+    <smiley>8\</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:c</smiley>
+    <smiley>8c</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:‑&lt;</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:&lt;</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:‑[</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:[</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:-||</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>&gt;:[</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:{</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:@</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>&gt;:(</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:'‑(</smiley>
+    <smiley>:#</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
@@ -241,35 +105,115 @@
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>D‑':</smiley>
+    <smiley>:'-(</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>D:&lt;</smiley>
+    <smiley>:(</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>D:</smiley>
+    <smiley>:)</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:*(</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>D8</smiley>
+    <smiley>:,(</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>D;</smiley>
+    <smiley>:-&amp;</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>D=</smiley>
+    <smiley>:-(</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>DX</smiley>
+    <smiley>:-(o)</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:‑O</smiley>
+    <smiley>:-)</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-*</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-*</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-/</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-/</smiley>
+    <polarity>Neutral</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-D</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-O</smiley>
+    <polarity>Neutral</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-P</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-S</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-\</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-\</smiley>
+    <polarity>Neutral</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-|</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:-}</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:/</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:0-&gt;-&lt;|:</smiley>
+    <polarity>Neutral</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:3</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:9</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:D</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:E</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:F</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
@@ -277,43 +221,27 @@
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:‑o</smiley>
+    <smiley>:P</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:P</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:S</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:o</smiley>
+    <smiley>:X</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:[</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:-0</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>8‑0</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>&gt;:O</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:‑/</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:/</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>:‑.</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>&gt;:\</smiley>
-    <polarity>Negative</polarity>
-  </Smiley>
-  <Smiley>
-    <smiley>&gt;:/</smiley>
+    <smiley>:[</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
@@ -321,35 +249,219 @@
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>=/</smiley>
+    <smiley>:]</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:_(</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>=\</smiley>
+    <smiley>:b)</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:l</smiley>
+    <polarity>Neutral</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:o(</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:L</smiley>
+    <smiley>:o)</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:p</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:s</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>=L</smiley>
+    <smiley>:|</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>:S</smiley>
+    <smiley>:|</smiley>
+    <polarity>Neutral</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:�</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>:�(</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>&lt;/3</smiley>
+    <smiley>;)</smiley>
+    <polarity>Neutral</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>;^)</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>;o)</smiley>
+    <polarity>Neutral</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&lt;/3-1</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>&lt;\3</smiley>
+    <smiley>&lt;3</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&lt;:}</smiley>
+    <polarity>Neutral</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&lt;o&lt;</smiley>
     <polarity>Negative</polarity>
   </Smiley>
   <Smiley>
-    <smiley>&gt;.&lt;</smiley>
+    <smiley>=(</smiley>
     <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>=)</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>=[</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>=]</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&gt;/</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&gt;:(</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&gt;:)</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&gt;:D</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&gt;:L</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&gt;:O</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&gt;=D</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&gt;[</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&gt;\</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>&gt;o&gt;</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>@}-&gt;--</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>B(</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>Bc</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>D:</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>X(</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>X(</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>X-(</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>XD</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>XD</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>XO</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>XP</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>XP</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>^_^</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>^o)</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>x3?</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>xD</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>xP</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>|8C</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>|8c</smiley>
+    <polarity>Negative</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>|D</smiley>
+    <polarity>Positive</polarity>
+  </Smiley>
+  <Smiley>
+    <smiley>}:)</smiley>
+    <polarity>Positive</polarity>
   </Smiley>
 </smileys>
