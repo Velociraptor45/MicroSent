@@ -85,155 +85,11 @@ namespace MicroSent.Controllers
                 return View(homeViewModel);
             }
 
-            //Rating r1 = new Rating("link1.com", -2.4f, 3);
-            //Rating r2 = new Rating("link2.com", -2.4f, 3);
-            //Rating r5 = new Rating("link2.com", -2.4f, 3);
-            //Rating r6 = new Rating("link2.com", -2.4f, 3);
-            //Rating r7 = new Rating("link2.com", -2.4f, 3);
-            //Rating r8 = new Rating("link2.com", -2.4f, 3);
-            //Rating r9 = new Rating("link2.com", -2.4f, 3);
-            //Rating r10 = new Rating("link2.com", -2.4f, 3);
-            //Rating r11 = new Rating("link2.com", -2.4f, 3);
-            //Rating r3 = new Rating("link2.com", 0, 4);
-            //Rating r4 = new Rating("@me", -1.5f, 2);
-            //Rating r12 = new Rating("@me2", 1.5f, 4);
-            //Rating r13 = new Rating("@me3", 3.5f, 5);
-            //Rating r14 = new Rating("@me4", 5.5f, 8);
-            //Rating r15 = new Rating("@me5", 1.55f, 4);
+            List<Tweet> allTweets = await getTweets(homeViewModel);
+            if (allTweets == null)
+                return View(homeViewModel);
 
-            //return View(new HomeViewModel("testnameacc", new List<Rating>() { r1, r2, r3, r5, r6, r7, r8, r9, r10, r11 }, new List<Rating>() { r4, r12, r13, r14, r15 }));
-
-
-            List<Tweet> allTweets = new List<Tweet>();
-            Random r = new Random();
-            if (configuration.useSerializedData)
-            {
-                allTweets = deserializer.deserializeTweets(SerializedTweetsPath);
-                foreach (Tweet tweet in allTweets)
-                {
-                    tweet.referencedAccount = $"@testacc{r.Next(70)}";
-                }
-            }
-            else if (configuration.testing)
-            {
-                allTweets = tester.getTestTweets().Skip(configuration.skipTweetsAmount).ToList();
-                foreach (Tweet tweet in allTweets)
-                {
-                    tweet.referencedAccount = $"@testacc{r.Next(70)}";
-                }
-            }
-            else
-            {
-                allTweets = await getTweetsAsync(homeViewModel.accountName);
-                //allTweets = allTweets.Skip(264).ToList();
-                //allTweets = await getTweetsAsync("davidkrammer");
-
-                //Tweet tw = new Tweet("@Men is so under control. Is this not cool? He's new #new #cool #wontbeveryinteresting", "aa", 0);
-                //Tweet tw = new Tweet("This is not a simple english sentence to understand the parser further.", "aa", 0);
-                //Tweet tw = new Tweet("You are so GREAT! 🏃🏾‍♀️ :)", "aa", 0);
-                //allTweets.Add(tw);
-            }
-
-            foreach (Tweet tweet in allTweets)
-            {
-                ConsolePrinter.printAnalysisStart(allTweets, tweet);
-                if (!configuration.useSerializedData || !configuration.useGoogleParser)
-                {
-                    tweet.fullText = preprocessor.replaceAbbrevations(tweet.fullText);
-
-                    //////////////////////////////////////////////////////////////
-                    /// TEST AREA
-                    //if (tweet.fullText.Contains("That didn't work out very well.")) //(tweet.fullText.StartsWith("Please @msexcel, don't be jealous."))
-                    if (tweet.fullText.Contains("GO"))
-                    {
-                        int a = 0;
-                    }
-                    else if(allTweets.IndexOf(tweet) == 32)
-                    {
-                        int a = 0;
-                    }
-                    //////////////////////////////////////////////////////////////
-
-                    List<Token> allTokens = tokenizer.splitIntoTokens(tweet);
-                    tweet.tokenCount = allTokens.Count;
-
-                    foreach (Token token in allTokens)
-                    {
-                        //single Token analysis
-
-                        tokenAnalyser.analyseTokenType(token);
-                        if (token.isHashtag)
-                            tokenAnalyser.splitHashtag(token);
-                        tokenAnalyser.checkForUppercase(token);
-                        if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
-                        {
-                            tokenAnalyser.removeRepeatedLetters(token);
-                            tokenAnalyser.replaceMutatedVowel(token);
-                            tokenAnalyser.stem(token);
-                            tokenAnalyser.lemmatize(token);
-                        }
-                    }
-
-                    //single tweet analysis
-                    tweetAnalyser.analyseFirstEndHashtagPosition(allTokens, tweet);
-                    posTagger.cutIntoSentences(tweet, allTokens);
-
-                    if (configuration.useGoogleParser)
-                    {
-                        for (int i = 0; i < tweet.sentences.Count; i++)
-                        {
-                            networkSendClientSocket.sendStringToServer(tweet.getFullUnicodeSentence(i));
-                            Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
-
-                            await serverAnswere;
-                            JObject treeJSON = JObject.Parse(serverAnswere.Result);
-
-                            JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
-                            parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
-                        }
-                    }
-                    else
-                    {
-                        //foreach (var sentence in tweet.sentences)
-                        //{
-                        //    Parse tree = posTagger.parseTweet(sentence);
-                        //    Node rootNode = parseTreeAnalyser.translateToNodeTree(tree, tweet);
-                        //    tweet.parseTrees.Add(rootNode);
-                        //}
-                        posTagger.tagAllTokens(tweet);
-                    }
-
-                    // converting to lowercase is important for matching words from the lexicon
-                    // but lowercasing can only be applied after Pos-Tagging because
-                    // the stanford parser has problems if all is lowercase
-                    foreach (Token token in allTokens)
-                        tokenAnalyser.convertToLowercase(token);
-                }
-
-
-                if (!configuration.serializeData)
-                {
-                    if (tweet.urls.Count > 0)
-                        tweet.linkedDomain = tweetAnalyser.extractDomain(tweet.urls.Last());
-
-                    tweetAnalyser.filterUselessInterogativeSentences(tweet);
-
-                    //////////////////////////////////////////////////////////////
-                    /// NEGATION
-                    //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
-                    //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
-                    tweetAnalyser.applyKWordNegation(tweet, configuration.negationWindowSize);
-                    tweetAnalyser.applySpecialStructureNegation(tweet);
-                    tweetAnalyser.applyEndHashtagNegation(tweet);
-                    //////////////////////////////////////////////////////////////
-
-                    tweetAnalyser.checkforIrony(tweet);
-
-                    applyRating(tweet);
-
-                    sentimentCalculator.calculateFinalSentiment(tweet);
-                }
-            }
+            await analyseTweets(allTweets);
 
             if(configuration.serializeData && !configuration.useSerializedData)
                 serializer.serializeTweets(allTweets, SerializedTweetsPath);
@@ -248,6 +104,152 @@ namespace MicroSent.Controllers
             homeViewModel.linkRatings = linkRatings;
             homeViewModel.accountRatings = accountRatings;
             return View(homeViewModel);
+        }
+
+        private void printOnConsole(List<Tweet> allTweets)
+        {
+            foreach (Tweet tweet in allTweets)
+            {
+                ConsolePrinter.printTweetAnalysisHead(tweet);
+                ConsolePrinter.printPositiveRating(tweet);
+                ConsolePrinter.printEmptyLine();
+                ConsolePrinter.printNegativeRating(tweet);
+                ConsolePrinter.printEmptyLine();
+            }
+        }
+
+        #region ANALYSIS
+        //////////////////////////////////////////////////////////////
+        /// ANALYSIS
+        //////////////////////////////////////////////////////////////
+
+        private async Task analyseTweets(List<Tweet> tweets)
+        {
+            foreach (Tweet tweet in tweets)
+            {
+                ConsolePrinter.printAnalysisStart(tweets, tweet);
+                if (!configuration.useSerializedData || !configuration.useGoogleParser)
+                {
+                    preprocessor.replaceAbbrevations(tweet);
+
+                    List<Token> allTokens = tokenizer.splitIntoTokens(tweet);
+                    tweet.tokenCount = allTokens.Count;
+
+                    basicTokenAnalysis(allTokens);
+
+                    //single tweet analysis
+                    tweetAnalyser.analyseFirstEndHashtagPosition(allTokens, tweet);
+                    posTagger.cutIntoSentences(tweet, allTokens);
+
+                    await parseTweet(tweet);
+
+                    // converting to lowercase is important for matching words from the lexicon
+                    // but lowercasing can only be applied after Pos-Tagging because
+                    // the stanford parser has problems if all is lowercase
+                    foreach (Token token in allTokens)
+                        tokenAnalyser.convertToLowercase(token);
+                }
+
+                if (!configuration.serializeData)
+                {
+                    if (tweet.urls.Count > 0)
+                        tweet.linkedDomain = tweetAnalyser.extractDomain(tweet.urls.Last());
+
+                    tweetAnalyser.filterUselessInterogativeSentences(tweet);
+                    applyNegation(tweet);
+                    tweetAnalyser.checkforIrony(tweet);
+                    applyRating(tweet);
+                    sentimentCalculator.calculateFinalSentiment(tweet);
+                }
+            }
+        }
+
+        private void basicTokenAnalysis(List<Token> tokens)
+        {
+            foreach (Token token in tokens)
+            {
+                tokenAnalyser.analyseTokenType(token);
+                if (token.isHashtag)
+                    tokenAnalyser.splitHashtag(token);
+                tokenAnalyser.checkForUppercase(token);
+                if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
+                {
+                    tokenAnalyser.removeRepeatedLetters(token);
+                    tokenAnalyser.replaceMutatedVowel(token);
+                    tokenAnalyser.stem(token);
+                    tokenAnalyser.lemmatize(token);
+                }
+            }
+        }
+
+        private async Task parseTweet(Tweet tweet)
+        {
+            if (configuration.useGoogleParser)
+            {
+                for (int i = 0; i < tweet.sentences.Count; i++)
+                {
+                    networkSendClientSocket.sendStringToServer(tweet.getFullUnicodeSentence(i));
+                    Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
+
+                    await serverAnswere;
+                    JObject treeJSON = JObject.Parse(serverAnswere.Result);
+
+                    JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
+                    parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
+                }
+            }
+            else
+            {
+                //foreach (var sentence in tweet.sentences)
+                //{
+                //    Parse tree = posTagger.parseTweet(sentence);
+                //    Node rootNode = parseTreeAnalyser.translateToNodeTree(tree, tweet);
+                //    tweet.parseTrees.Add(rootNode);
+                //}
+                posTagger.tagAllTokens(tweet);
+            }
+        }
+
+        private void applyNegation(Tweet tweet)
+        {
+            //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
+            //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
+            tweetAnalyser.applyKWordNegation(tweet, configuration.negationWindowSize);
+            tweetAnalyser.applySpecialStructureNegation(tweet);
+            tweetAnalyser.applyEndHashtagNegation(tweet);
+        }
+        #endregion
+
+
+        #region RATING
+        //////////////////////////////////////////////////////////////
+        /// RATING
+        //////////////////////////////////////////////////////////////
+
+        private void applyRating(Tweet tweet)
+        {
+            foreach (List<Token> sentence in tweet.sentences)
+            {
+                foreach (Token token in sentence)
+                {
+                    if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
+                    {
+                        token.wordRating = wordRater.getWordRating(token);
+                    }
+                }
+            }
+
+            foreach (Token token in tweet.rest)
+            {
+                if (token.isEmoji)
+                {
+                    token.emojiRating = wordRater.getEmojiRating(token);
+                }
+                else if (token.isSmiley)
+                {
+                    token.smileyRating = wordRater.getSmileyRating(token);
+                }
+            }
         }
 
         private void translateTweetsToRating(List<Tweet> tweets, out List<Rating> linkRatings, out List<Rating> accountRating)
@@ -305,18 +307,59 @@ namespace MicroSent.Controllers
         {
             return tweet.positiveRating > Math.Abs(tweet.negativeRating) ? tweet.positiveRating : tweet.negativeRating;
         }
+        #endregion
 
-        private async Task<List<Tweet>> getTweetsAsync(string accountName)
+
+        #region TWEET CRAWLING
+        //////////////////////////////////////////////////////////////
+        /// TWEET CRAWLING
+        //////////////////////////////////////////////////////////////
+
+        private async Task<List<Tweet>> getTweets(HomeViewModel homeViewModel)
         {
-            List<Tweet> allTweets = new List<Tweet>();
-            List<Status> relevantStatuses = new List<Status>();
+            List<Tweet> tweets = new List<Tweet>();
+            Random r = new Random();
+            if (configuration.useSerializedData)
+            {
+                tweets = deserializer.deserializeTweets(SerializedTweetsPath);
+                foreach (Tweet tweet in tweets)
+                {
+                    tweet.referencedAccount = $"@testacc{r.Next(70)}";
+                }
+            }
+            else if (configuration.testing)
+            {
+                tweets = tester.getTestTweets().Skip(configuration.skipTweetsAmount).ToList();
+                foreach (Tweet tweet in tweets)
+                {
+                    tweet.referencedAccount = $"@testacc{r.Next(70)}";
+                }
+            }
+            else
+            {
+                tweets = await crawlTweetsAsync(homeViewModel.accountName);
+                if (tweets == null)
+                    return null;
+            }
+            return tweets;
+        }
 
+        private async Task<List<Tweet>> crawlTweetsAsync(string accountName)
+        {
             ConsolePrinter.printBeginCrawlingTweets(accountName);
-            relevantStatuses = await twitterCrawler.getLinksAndQuotedRetweets(accountName);
+            List<Status> relevantStatuses = await twitterCrawler.getLinksAndQuotedRetweets(accountName);
             ConsolePrinter.printFinishedCrawlingTweets();
-            //relevantStatuses = await twitterCrawler.searchFor("#irony", 200);
 
-            foreach(Status status in relevantStatuses)
+            if (relevantStatuses == null)
+                return null;
+            else
+                return transformStatusesToTweets(relevantStatuses);
+        }
+
+        private List<Tweet> transformStatusesToTweets(List<Status> statuses)
+        {
+            List<Tweet> tweets = new List<Tweet>();
+            foreach (Status status in statuses)
             {
                 Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.StatusID);
                 tweet.urls.AddRange(getNoneTwitterUrls(status));
@@ -329,36 +372,9 @@ namespace MicroSent.Controllers
                     else
                         tweet.referencedAccount = $"@{referencedAccount.ScreenNameResponse}";
                 }
-                allTweets.Add(tweet);
+                tweets.Add(tweet);
             }
-
-            return allTweets.ToList();
-        }
-
-        private void applyRating(Tweet tweet)
-        {
-            foreach (List<Token> sentence in tweet.sentences)
-            {
-                foreach (Token token in sentence)
-                {
-                    if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
-                    {
-                        token.wordRating = wordRater.getWordRating(token);
-                    }
-                }
-            }
-
-            foreach(Token token in tweet.rest)
-            {
-                if (token.isEmoji)
-                {
-                    token.emojiRating = wordRater.getEmojiRating(token);
-                }
-                else if (token.isSmiley)
-                {
-                    token.smileyRating = wordRater.getSmileyRating(token);
-                }
-            }
+            return tweets;
         }
 
         private IEnumerable<string> getNoneTwitterUrls(Status status)
@@ -366,17 +382,6 @@ namespace MicroSent.Controllers
             var noneTwitterUrls = status.Entities.UrlEntities.Where(e => !e.DisplayUrl.StartsWith(TokenPartConstants.TWITTER_DOMAIN));
             return noneTwitterUrls.Select(e => e.ExpandedUrl);
         }
-
-        private void printOnConsole(List<Tweet> allTweets)
-        {
-            foreach (Tweet tweet in allTweets)
-            {
-                ConsolePrinter.printTweetAnalysisHead(tweet);
-                ConsolePrinter.printPositiveRating(tweet);
-                ConsolePrinter.printEmptyLine();
-                ConsolePrinter.printNegativeRating(tweet);
-                ConsolePrinter.printEmptyLine();
-            }
-        }
+        #endregion
     }
 }

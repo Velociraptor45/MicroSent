@@ -33,7 +33,7 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        public string replaceAbbrevations(string tweetText)
+        public void replaceAbbrevations(Tweet tweet)
         {
             foreach(string key in slangs.Keys)
             {
@@ -45,14 +45,13 @@ namespace MicroSent.Models.Analyser
                     .Replace("<", "\\<");
 
                 Regex regex = new Regex($@"(^| |""|''){regexString}($| |""|'')", RegexOptions.Multiline);
-                MatchCollection matches = regex.Matches(tweetText);
+                MatchCollection matches = regex.Matches(tweet.fullText);
                 if (matches.Count > 0)
                 {
-                    Console.WriteLine($"{tweetText} :: Replaced {key} with {slangs[key]}");
-                    tweetText = tweetText.Replace(key, slangs[key]);
+                    Console.WriteLine($"{tweet.fullText} :: Replaced {key} with {slangs[key]}");
+                    tweet.fullText = tweet.fullText.Replace(key, slangs[key]);
                 }
             }
-            return tweetText;
         }
     }
 }

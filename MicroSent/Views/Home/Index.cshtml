@@ -22,6 +22,8 @@
     </div>
 </form>
 
+<div id="usernameNotFound" hidden>Username not found</div>
+
 <div id="chart-parent">
     <canvas id="chart-canvas"></canvas>
 </div>
@@ -36,61 +38,88 @@
         "use strict";
 
         let that = {},
-            dataPointRadius = 2.5;
+            dataPointRadius = 2.5,
+            usernameNotFoundAlert;
 
         function init() {
-            let dataPoints = getDataPoints();
-            buildChart(dataPoints);
+            initAlerts();
+
+            if (wasUsernameFound()) {
+                let dataPoints = getDataPoints();
+                buildChart(dataPoints);
+            } else {
+                showUsernameNotFoundAlert();
+            }
+        }
+
+        function initAlerts() {
+            usernameNotFoundAlert = document.getElementById("usernameNotFound");
+        }
+
+        function showUsernameNotFoundAlert() {
+            usernameNotFoundAlert.removeAttribute("hidden");
+        }
+
+        function wasUsernameFound() {
+            @{ 
+                string found = "true";
+                if(Model.accountName != null && (Model.accountRatings == null || Model.linkRatings == null))
+                {
+                    found = "false";
+                }
+            }
+
+            return @Html.Raw(found) === true;
         }
 
         function getDataPoints() {
             @{
-                var accountRatings = Newtonsoft.Json.JsonConvert.SerializeObject(Model.accountRatings ?? new List<Rating>());
-                var linkRatings = Newtonsoft.Json.JsonConvert.SerializeObject(Model.linkRatings ?? new List<Rating>());
+                    string accountRatings = Newtonsoft.Json.JsonConvert.SerializeObject(Model.accountRatings ?? new List<Rating>());
+                    string linkRatings = Newtonsoft.Json.JsonConvert.SerializeObject(Model.linkRatings ?? new List<Rating>());
             }
-            let accountRatings = @Html.Raw(accountRatings);
-                let linkRatings = @Html.Raw(linkRatings);
-                let allRatings = accountRatings.concat(linkRatings);
+            let accountRatings = @Html.Raw(accountRatings),
+                linkRatings = @Html.Raw(linkRatings),
+                allRatings = accountRatings.concat(linkRatings);
 
-                let positiveDataPoints = [],
-                    negativeDataPoints = [],
-                    neutralDataPoints = [];
+            let positiveDataPoints = [],
+                negativeDataPoints = [],
+                neutralDataPoints = [];
 
-                allRatings.forEach(function (element) {
-                    let xCoordinate = element.occurences,
-                        yCoordinate = element.averageRating,
-                        sameIndexDataPoint,
-                        correspondingDataPoints;
+            allRatings.forEach(function (element) {
+                let xCoordinate = element.occurences,
+                    yCoordinate = element.averageRating,
+                    sameIndexDataPoint,
+                    correspondingDataPoints;
 
-                    if (yCoordinate != 0) {
-                        if (yCoordinate > 0) {
-                            correspondingDataPoints = positiveDataPoints;
-                        } else {
-                            correspondingDataPoints = negativeDataPoints;
-                        }
+                if (yCoordinate != 0) {
+                    if (yCoordinate > 0) {
+                        correspondingDataPoints = positiveDataPoints;
                     } else {
-                        correspondingDataPoints = neutralDataPoints;
+                        correspondingDataPoints = negativeDataPoints;
                     }
+                } else {
+                    correspondingDataPoints = neutralDataPoints;
+                }
 
-                    sameIndexDataPoint = getDataPointIndexWithSameCoordinates(correspondingDataPoints, xCoordinate, yCoordinate);
+                sameIndexDataPoint = getDataPointIndexWithSameCoordinates(correspondingDataPoints, xCoordinate, yCoordinate);
 
-                    if (sameIndexDataPoint === undefined) {
-                        let point = {};
-                        point.x = xCoordinate;
-                        point.y = yCoordinate;
-                        point.r = dataPointRadius;
-                        point.entities = [element.entityName];
-                        correspondingDataPoints.push(point);
-                    } else {
-                        correspondingDataPoints[sameIndexDataPoint].entities.push(element.entityName);
-                    }
-                });
+                if (sameIndexDataPoint === undefined) {
+                    let point = {};
+                    point.x = xCoordinate;
+                    point.y = yCoordinate;
+                    point.r = dataPointRadius;
+                    point.entities = [element.entityName];
+                    correspondingDataPoints.push(point);
+                } else {
+                    correspondingDataPoints[sameIndexDataPoint].entities.push(element.entityName);
+                }
+            });
 
-                return {
-                    positiveDataPoints: positiveDataPoints,
-                negativeDataPoints: negativeDataPoints,
-                neutralDataPoints: neutralDataPoints
-                };
+            return {
+                positiveDataPoints: positiveDataPoints,
+            negativeDataPoints: negativeDataPoints,
+            neutralDataPoints: neutralDataPoints
+            };
         }
 
         function getDataPointIndexWithSameCoordinates(dataPoints, x, y) {
