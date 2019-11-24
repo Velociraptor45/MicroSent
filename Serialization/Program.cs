@@ -12,7 +12,14 @@ namespace Serialization
         static void Main(string[] args)
         {
             //serializeDict();
-            serializeSmileys();
+            //serializeSmileys();
+            serializeSlang();
+        }
+
+        static void serializeSlang()
+        {
+            SlangConverter slangConverter = new SlangConverter();
+            slangConverter.convert("data/slang.txt", "data/slang.xml");
         }
 
         static void serializeSmileys()

@@ -12,7 +12,7 @@
 
         public const string NBIN_FOLDER = @"data\NBIN_files\";
 
-        public const string SLANG_FILE = @"data\slang\slang.txt";
+        public const string SLANG_FILE = @"data\slang\slang.xml";
 
         public const string TEST_DATA = @"data\testdata\testdata.xml";
 

@@ -20,5 +20,7 @@
         public const string NEGATION_TOKEN_PATTERN = @"\bno(t|n-?)?\b|\b(never|barely|hardly)\b|\bn'?t\b";
 
         public const string DOMAIN_PATTERN = @"\w+\.(\w+|co\.uk)$";
+
+        public static string SLANG_PATTERN = "";
     }
 }

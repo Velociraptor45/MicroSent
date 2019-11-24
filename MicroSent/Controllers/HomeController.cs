@@ -80,6 +80,9 @@ namespace MicroSent.Controllers
 
         public async Task<IActionResult> Index(HomeViewModel homeViewModel)
         {
+            if (configuration.testing)
+                homeViewModel.accountName = "test";
+
             if(homeViewModel.accountName == null || homeViewModel.accountName == "")
             {
                 return View(homeViewModel);
