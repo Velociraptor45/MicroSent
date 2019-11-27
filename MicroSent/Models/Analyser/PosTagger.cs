@@ -65,15 +65,44 @@ namespace MicroSent.Models.Analyser
         {
             foreach (List<Token> sentenceTokens in tweet.sentences)
             {
-                var tags = nlpPosTagger.Tag(sentenceTokens.Select(t => t.text).ToArray());
-                for (int j = 0; j < tags.Length; j++)
+                tagTokenSequence(sentenceTokens);
+            }
+            foreach (Token token in tweet.rest.Where(t => t.isHashtag))
+            {
+                if (token.subTokens.Count > 0)
                 {
-                    if (!Enum.TryParse(tags[j], out PosLabels label))
-                    {
-                        label = PosLabels.Default;
-                    }
-                    sentenceTokens[j].posLabel = label;
+                    tagSubTokenSequence(token.subTokens);
                 }
+                else
+                {
+                    tagTokenSequence(new List<Token>() { token });
+                }
+            }
+        }
+
+        private void tagTokenSequence(List<Token> tokenSequence)
+        {
+            var tags = nlpPosTagger.Tag(tokenSequence.Select(t => t.text).ToArray());
+            for (int j = 0; j < tags.Length; j++)
+            {
+                if (!Enum.TryParse(tags[j], out PosLabels label))
+                {
+                    label = PosLabels.Default;
+                }
+                tokenSequence[j].posLabel = label;
+            }
+        }
+
+        private void tagSubTokenSequence(List<SubToken> subTokenSequence)
+        {
+            var tags = nlpPosTagger.Tag(subTokenSequence.Select(t => t.text).ToArray());
+            for (int j = 0; j < tags.Length; j++)
+            {
+                if (!Enum.TryParse(tags[j], out PosLabels label))
+                {
+                    label = PosLabels.Default;
+                }
+                subTokenSequence[j].posLabel = label;
             }
         }
     }

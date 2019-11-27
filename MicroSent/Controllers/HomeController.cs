@@ -174,6 +174,7 @@ namespace MicroSent.Controllers
                 tokenAnalyser.analyseTokenType(token);
                 if (token.isHashtag)
                     tokenAnalyser.splitHashtag(token);
+
                 tokenAnalyser.checkForUppercase(token);
                 if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                 {
@@ -237,7 +238,7 @@ namespace MicroSent.Controllers
                 {
                     if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
-                        token.wordRating = wordRater.getWordRating(token);
+                        wordRater.setWordRating(token);
                     }
                 }
             }
