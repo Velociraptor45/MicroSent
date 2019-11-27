@@ -10,8 +10,6 @@ namespace MicroSent.Models.Analyser
 {
     public class Preprocessor
     {
-        private const string Separator = "---";
-
         private List<Slang> slangs;
         private Deserializer deserializer = new Deserializer("slang", DataPath.SLANG_FILE, typeof(List<Slang>));
 
@@ -23,19 +21,6 @@ namespace MicroSent.Models.Analyser
 
         private void loadSlang()
         {
-            //using (StreamReader streamReader = new StreamReader(DataPath.SLANG_FILE))
-            //{
-            //    string line;
-            //    while ((line = streamReader.ReadLine()) != null)
-            //    {
-            //        if (line != TokenPartConstants.EMPTY_STRING)
-            //        {
-            //            string[] parts = line.Split(Separator);
-            //            slangs.Add(parts[0], parts[1]);
-            //        }
-            //    }
-            //}
-
             deserializer.deserializeSlangList(out slangs);
         }
 
