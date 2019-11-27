@@ -163,12 +163,32 @@ namespace MicroSent.Models.Analyser
 
         public void stem(Token token)
         {
-            token.stemmedText = stemmer.Stem(token.text);
+            if (token.subTokens.Count > 0)
+            {
+                foreach (SubToken subToken in token.subTokens)
+                {
+                    token.stemmedText = stemmer.Stem(subToken.text);
+                }
+            }
+            else
+            {
+                token.stemmedText = stemmer.Stem(token.text);
+            }
         }
 
         public void lemmatize(Token token)
         {
-            token.lemmatizedText = lemmatizer.Lemmatize(token.text);
+            if (token.subTokens.Count > 0)
+            {
+                foreach (SubToken subToken in token.subTokens)
+                {
+                    subToken.lemmatizedText = lemmatizer.Lemmatize(subToken.text);
+                }
+            }
+            else
+            {
+                token.lemmatizedText = lemmatizer.Lemmatize(token.text);
+            }
         }
 
         public void checkForUppercase(Token token)
@@ -198,6 +218,13 @@ namespace MicroSent.Models.Analyser
 
         public void replaceMutatedVowel(Token token)
         {
+            if (token.subTokens.Count > 0)
+            {
+                foreach(SubToken subToken in token.subTokens)
+                {
+                    subToken.text = subToken.text.Replace("ä", "ae").Replace("ö", "oe").Replace("ü", "ue");
+                }
+            }
             token.text = token.text.Replace("ä", "ae").Replace("ö", "oe").Replace("ü", "ue");
         }
 

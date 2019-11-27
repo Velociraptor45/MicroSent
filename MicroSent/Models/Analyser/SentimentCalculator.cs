@@ -54,7 +54,7 @@ namespace MicroSent.Models.Analyser
             if (token.subTokens.Count > 0)
             {
                 float wordRatingSum = token.subTokens.Sum(st => st.wordRating);
-                tokenRating = token.negationRating * token.wordRating;
+                tokenRating = token.negationRating * wordRatingSum;
             }
             else if (token.isEmoji)
             {
@@ -83,9 +83,7 @@ namespace MicroSent.Models.Analyser
                 tokenRating *= RatingConstants.END_HASHTAG_MULIPLIER;
             }
 
-
-            //is token in last sentence?
-            if (configuration.intensifyLastSentence && tweet.sentences.Last().Contains(token))
+            if (configuration.intensifyLastSentence && isTokenInLastSentence(tweet, token))
             {
                 tokenRating *= RatingConstants.LAST_SENTENCE_INTENSIFIER;
             }
@@ -111,7 +109,7 @@ namespace MicroSent.Models.Analyser
         private void setTokenRating(Token token, Tweet tweet, float tokenRating)
         {
             token.totalRating = tokenRating;
-            if (Math.Abs(tokenRating) < configuration.singleTokenThreshold && configuration.useSingleTokenThreshold)
+            if (Math.Abs(tokenRating) < configuration.singleTokenThreshold && configuration.useSingleTokenThreshold && !token.isHashtag)
             {
                 token.wordRating = RatingConstants.WORD_NEUTRAL;
                 token.totalRating = 0;
@@ -123,6 +121,15 @@ namespace MicroSent.Models.Analyser
                 else
                     tweet.negativeRating += tokenRating;
             }
+        }
+
+        private bool isTokenInLastSentence(Tweet tweet, Token token)
+        {
+            if(tweet.sentences.Count > 0)
+            {
+                return tweet.sentences.Last().Contains(token);
+            }
+            return false;
         }
     }
 }
