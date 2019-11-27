@@ -83,9 +83,7 @@ namespace MicroSent.Models.Analyser
                 tokenRating *= RatingConstants.END_HASHTAG_MULIPLIER;
             }
 
-
-            //is token in last sentence?
-            if (configuration.intensifyLastSentence && tweet.sentences.Last().Contains(token))
+            if (configuration.intensifyLastSentence && isTokenInLastSentence(tweet, token))
             {
                 tokenRating *= RatingConstants.LAST_SENTENCE_INTENSIFIER;
             }
@@ -123,6 +121,15 @@ namespace MicroSent.Models.Analyser
                 else
                     tweet.negativeRating += tokenRating;
             }
+        }
+
+        private bool isTokenInLastSentence(Tweet tweet, Token token)
+        {
+            if(tweet.sentences.Count > 0)
+            {
+                return tweet.sentences.Last().Contains(token);
+            }
+            return false;
         }
     }
 }
