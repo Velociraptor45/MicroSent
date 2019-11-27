@@ -54,7 +54,7 @@ namespace MicroSent.Models.Analyser
             if (token.subTokens.Count > 0)
             {
                 float wordRatingSum = token.subTokens.Sum(st => st.wordRating);
-                tokenRating = token.negationRating * token.wordRating;
+                tokenRating = token.negationRating * wordRatingSum;
             }
             else if (token.isEmoji)
             {
