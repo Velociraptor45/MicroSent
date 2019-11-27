@@ -21,6 +21,7 @@ namespace LexiconExtension
 
         //Dictionary<string, List<float>> lexiconExtension = new Dictionary<string, List<float>>();
         private List<Word> wordList = new List<Word>();
+        private Dictionary<string, Word> wordDict = new Dictionary<string, Word>();
         private int positiveTweetsCount;
         private int negativeTweetsCount;
 
@@ -116,14 +117,18 @@ namespace LexiconExtension
             //this will be kept for the lexicon extension
             if (lexiconKey != null && !polarityLexicon.ContainsKey(lexiconKey))
             {
-                var wordListItems = wordList.Where(i => i.word == lexiconKey);
-                if (wordListItems.Count() == 0)
+                Word word;
+                if (!wordDict.ContainsKey(lexiconKey))
                 {
-                    Word w = new Word(lexiconKey);
-                    wordList.Add(w);
+                    word = new Word(lexiconKey);
+                    wordList.Add(word);
+                    wordDict.Add(lexiconKey, word);
+                }
+                else
+                {
+                    word = wordDict[lexiconKey];
                 }
 
-                Word word = wordListItems.First();
                 switch (polarity)
                 {
                     case Polarity.Positive:

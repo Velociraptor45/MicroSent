@@ -45,6 +45,8 @@ namespace MicroSent.Models
         public bool isAllUppercase = false;
         public bool hasRepeatedLetters = false;
 
+        public Token() { }
+
         public Token(string text, int position)
         {
             this.text = text;
