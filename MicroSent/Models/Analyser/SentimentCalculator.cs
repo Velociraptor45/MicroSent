@@ -111,7 +111,7 @@ namespace MicroSent.Models.Analyser
         private void setTokenRating(Token token, Tweet tweet, float tokenRating)
         {
             token.totalRating = tokenRating;
-            if (Math.Abs(tokenRating) < configuration.singleTokenThreshold && configuration.useSingleTokenThreshold)
+            if (Math.Abs(tokenRating) < configuration.singleTokenThreshold && configuration.useSingleTokenThreshold && !token.isHashtag)
             {
                 token.wordRating = RatingConstants.WORD_NEUTRAL;
                 token.totalRating = 0;
