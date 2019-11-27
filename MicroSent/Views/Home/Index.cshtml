@@ -150,6 +150,20 @@
                     }]
                 },
                 options: {
+                    scales: {
+                        yAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Dominant Rating Value'
+                            }
+                        }],
+                        xAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Occurences per Account / Domain'
+                            }
+                        }]
+                    },
                     tooltips: {
                         callbacks: {
                             label: function (tooltipItem, data) {
