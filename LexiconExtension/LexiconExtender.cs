@@ -19,38 +19,56 @@ namespace LexiconExtension
         private const string SentWordLabelAdverb = "r";
         private const string SentWordLabelVerb = "v";
 
-        Dictionary<string, List<float>> lexiconExtension = new Dictionary<string, List<float>>();
+        //Dictionary<string, List<float>> lexiconExtension = new Dictionary<string, List<float>>();
+        private List<Word> wordList = new List<Word>();
+        private int positiveTweetsCount;
+        private int negativeTweetsCount;
 
         public void extract()
         {
             loadLexicon(out Dictionary<string, float> polarityLexicon);
+
             //polarityLexicon = polarityLexicon.Where(kv => kv.Value != 0).ToDictionary(kv => kv.Key, kv => kv.Value);
-            extractRelevantSentences(polarityLexicon);
+            buildWordList(polarityLexicon);
 
             //final calculation
-            Dictionary<string, float> finalScores = calculateFinalScore();
+            //Dictionary<string, float> finalScores = calculateFinalScore();
+            calculateChiSquareTest();
 
+
+            var significantWord = wordList.Where(w => w.chiSquareValue >= 6.63d).OrderByDescending(w => w.chiSquareValue).ToList();
+            foreach(var word in significantWord)
+            {
+                word.negativeTweets = null;
+                word.positiveTweets = null;
+            }
             //serialization
-            serializeData("LexiconExtension", @"data\extendedLexicon.xml", finalScores);
+            serializeData("LexiconExtension", @"data\lexiconExtension.xml", significantWord);
 
             int a = 0;
         }
 
-        private void extractRelevantSentences(Dictionary<string, float> polarityLexicon)
+        private void buildWordList(Dictionary<string, float> polarityLexicon)
         {
             Tokenizer tokenizer = new Tokenizer();
             TokenAnalyser tokenAnalyser = new TokenAnalyser();
             PosTagger posTagger = new PosTagger();
             loadTrainingTweets(out List<Item> trainingTweets);
+            List<Item> selectedTweets = trainingTweets.Where(t => t.value == 4).Skip(0).ToList();
+            selectedTweets.AddRange(trainingTweets.Where(t => t.value == 0).Skip(0).ToList());
+            trainingTweets = selectedTweets;
+            positiveTweetsCount = trainingTweets.Count(t => t.value == 4);
+            negativeTweetsCount = trainingTweets.Count(t => t.value == 0);
 
             foreach (Item tweetItem in trainingTweets)
             {
-                if (trainingTweets.IndexOf(tweetItem) > 20000)
-                    break;
+                //if (trainingTweets.IndexOf(tweetItem) > 20000)
+                //    break;
 
                 Console.WriteLine($"Analyzing tweet {trainingTweets.IndexOf(tweetItem)} of {trainingTweets.Count}");
 
                 Tweet tweet = new Tweet(tweetItem.key, "", 0);
+                Polarity tweetPolarity = translateItemPolarity(tweetItem);
                 var tokens = tokenizer.splitIntoTokens(tweet);
                 foreach (Token token in tokens)
                 {
@@ -59,90 +77,161 @@ namespace LexiconExtension
                 posTagger.cutIntoSentences(tweet, tokens);
                 posTagger.tagAllTokens(tweet);
 
-                foreach (Token token in tokens)
+                foreach (Token token in tokens.Where(t => !t.isLink && !t.isPunctuation && !t.isStructureToken && !t.isMention))
                 {
                     tokenAnalyser.convertToLowercase(token);
+                    analyseToken(tweet, token, tweetPolarity, polarityLexicon);
                 }
-
-                analyseSentences(tweet, polarityLexicon);
             }
         }
 
-
-        private void analyseSentences(Tweet tweet, Dictionary<string, float> polarityLexicon)
+        private void calculateChiSquareTest()
         {
-            foreach (List<Token> sentence in tweet.sentences)
+            foreach(Word word in wordList)
             {
-                List<int> sentenceIndexesOfTokensInLexicon = new List<int>();
-                foreach (Token token in sentence)
+                int positiveTweetCountWithoutWord = positiveTweetsCount - word.positiveOccurences;
+                int negativeTweetCountWithoutWord = negativeTweetsCount - word.negativeOccurences;
+
+                float allTweetsCount = positiveTweetsCount + negativeTweetsCount;
+                
+                float expected11 = (positiveTweetsCount * (word.positiveOccurences + word.negativeOccurences)) / allTweetsCount;
+                float expected12 = (positiveTweetsCount * (positiveTweetCountWithoutWord + negativeTweetCountWithoutWord)) / allTweetsCount;
+                float expected21 = (negativeTweetsCount * (word.positiveOccurences + word.negativeOccurences)) / allTweetsCount;
+                float expected22 = (negativeTweetsCount * (positiveTweetCountWithoutWord + negativeTweetCountWithoutWord)) / allTweetsCount;
+                
+                float chiSquare11 = (float)(Math.Pow((word.positiveOccurences - expected11), 2)) / (expected11);
+                float chiSquare12 = (float)(Math.Pow((positiveTweetCountWithoutWord - expected12), 2)) / (expected12);
+                float chiSquare21 = (float)(Math.Pow((word.negativeOccurences - expected21), 2)) / (expected21);
+                float chiSquare22 = (float)(Math.Pow((negativeTweetCountWithoutWord - expected22), 2)) / (expected22);
+
+                word.chiSquareValue = chiSquare11 + chiSquare12 + chiSquare21 + chiSquare22;
+            }
+        }
+
+        private void analyseToken(Tweet tweet, Token token, Polarity polarity, Dictionary<string, float> polarityLexicon)
+        {
+            string lexiconKey = getLexiconKey(token);
+
+            //the standard lexicon only recognizes verbs/nouns/adverbs/adjectives
+            //this will be kept for the lexicon extension
+            if (lexiconKey != null && !polarityLexicon.ContainsKey(lexiconKey))
+            {
+                var wordListItems = wordList.Where(i => i.word == lexiconKey);
+                if (wordListItems.Count() == 0)
                 {
-                    string key = getLexiconKey(token);
-                    if (polarityLexicon.ContainsKey(key)
-                        && polarityLexicon[key] != 0)
-                    {
-                        sentenceIndexesOfTokensInLexicon.Add(token.indexInSentence);
-                    }
+                    Word w = new Word(lexiconKey);
+                    wordList.Add(w);
                 }
-                if (sentenceIndexesOfTokensInLexicon.Count > 0)
+
+                Word word = wordListItems.First();
+                switch (polarity)
                 {
-                    calculateDistance(sentence, sentenceIndexesOfTokensInLexicon, polarityLexicon);
+                    case Polarity.Positive:
+                        if (word.positiveTweets.Contains(tweet))
+                            return;
+                        word.positiveOccurences++;
+                        word.positiveTweets.Add(tweet);
+                        break;
+                    case Polarity.Negative:
+                        if (word.negativeTweets.Contains(tweet))
+                            return;
+                        word.negativeOccurences++;
+                        word.negativeTweets.Add(tweet);
+                        break;
+                    default:
+                        int a = 0;
+                        break;
                 }
             }
         }
 
-        private void calculateDistance(List<Token> sentence, List<int> sentenceIndexesOfTokensInLexicon, Dictionary<string, float> polarityLexicon)
+        private Polarity translateItemPolarity(Item item)
         {
-            foreach(int tokenIndex in sentenceIndexesOfTokensInLexicon)
+            switch (item.value)
             {
-                Token referenceToken = sentence.Where(t => t.indexInSentence == tokenIndex).First();
-                foreach(Token token in sentence)
-                {
-                    if (sentenceIndexesOfTokensInLexicon.Contains(token.indexInSentence)
-                        || convertToSentiWordPosLabel(token.posLabel) == null
-                        || polarityLexicon.ContainsKey(getLexiconKey(token)))
-                        continue;
-
-                    int distance = Math.Abs(token.indexInSentence - tokenIndex);
-                    float rating = polarityLexicon[getLexiconKey(referenceToken)];
-                    float score = calculateEntityScore(distance, rating);
-
-                    extendLexicon(token, score);
-                }
+                case 0:
+                    return Polarity.Negative;
+                case 4:
+                    return Polarity.Positive;
             }
+            return Polarity.Neutral;
         }
 
-        private Dictionary<string, float> calculateFinalScore()
-        {
-            Dictionary<string, float> finalScores = new Dictionary<string, float>();
-            var keys = lexiconExtension.Keys;
-            foreach(var key in keys)
-            {
-                List<float> scores = lexiconExtension[key];
-                float finalScore = scores.Sum() / scores.Count;
-                finalScores.Add(key, finalScore);
-            }
-            return finalScores;
-        }
 
-        private void extendLexicon(Token token, float score)
-        {
-            string key = getLexiconKey(token);
-            if (lexiconExtension.ContainsKey(key))
-            {
-                lexiconExtension[key].Add(score);
-            }
-            else
-            {
-                lexiconExtension.Add(key, new List<float>() { score });
-            }
-        }
+        //private void analyseSentences(Tweet tweet, Dictionary<string, float> polarityLexicon)
+        //{
+        //    foreach (List<Token> sentence in tweet.sentences)
+        //    {
+        //        List<int> sentenceIndexesOfTokensInLexicon = new List<int>();
+        //        foreach (Token token in sentence)
+        //        {
+        //            string key = getLexiconKey(token);
+        //            if (polarityLexicon.ContainsKey(key)
+        //                && polarityLexicon[key] != 0)
+        //            {
+        //                sentenceIndexesOfTokensInLexicon.Add(token.indexInSentence);
+        //            }
+        //        }
+        //        if (sentenceIndexesOfTokensInLexicon.Count > 0)
+        //        {
+        //            calculateDistance(sentence, sentenceIndexesOfTokensInLexicon, polarityLexicon);
+        //        }
+        //    }
+        //}
 
-        private void serializeData(string rootName, string outputPath, Dictionary<string, float> finalScores)
+        //private void calculateDistance(List<Token> sentence, List<int> sentenceIndexesOfTokensInLexicon, Dictionary<string, float> polarityLexicon)
+        //{
+        //    foreach(int tokenIndex in sentenceIndexesOfTokensInLexicon)
+        //    {
+        //        Token referenceToken = sentence.Where(t => t.indexInSentence == tokenIndex).First();
+        //        foreach(Token token in sentence)
+        //        {
+        //            if (sentenceIndexesOfTokensInLexicon.Contains(token.indexInSentence)
+        //                || convertToSentiWordPosLabel(token.posLabel) == null
+        //                || polarityLexicon.ContainsKey(getLexiconKey(token)))
+        //                continue;
+
+        //            int distance = Math.Abs(token.indexInSentence - tokenIndex);
+        //            float rating = polarityLexicon[getLexiconKey(referenceToken)];
+        //            float score = calculateEntityScore(distance, rating);
+
+        //            extendLexicon(token, score);
+        //        }
+        //    }
+        //}
+
+        //private Dictionary<string, float> calculateFinalScore()
+        //{
+        //    Dictionary<string, float> finalScores = new Dictionary<string, float>();
+        //    var keys = lexiconExtension.Keys;
+        //    foreach(var key in keys)
+        //    {
+        //        List<float> scores = lexiconExtension[key];
+        //        float finalScore = scores.Sum() / scores.Count;
+        //        finalScores.Add(key, finalScore);
+        //    }
+        //    return finalScores;
+        //}
+
+        //private void extendLexicon(Token token, float score)
+        //{
+        //    string key = getLexiconKey(token);
+        //    if (lexiconExtension.ContainsKey(key))
+        //    {
+        //        lexiconExtension[key].Add(score);
+        //    }
+        //    else
+        //    {
+        //        lexiconExtension.Add(key, new List<float>() { score });
+        //    }
+        //}
+
+        private void serializeData(string rootName, string outputPath, List<Word> selectedWords)
         {
-            XmlSerializer xmlSerializer = new XmlSerializer(typeof(Item[]), new XmlRootAttribute() { ElementName = rootName });
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Word>), new XmlRootAttribute() { ElementName = rootName });
             using (StreamWriter writer = new StreamWriter(outputPath))
             {
-                xmlSerializer.Serialize(writer, finalScores.Select(e => new Item() { key = e.Key, value = e.Value }).ToArray());
+                xmlSerializer.Serialize(writer, selectedWords);
             }
         }
 
@@ -153,7 +242,11 @@ namespace LexiconExtension
 
         private string getLexiconKey(Token token)
         {
-            return $"{token.text}!{convertToSentiWordPosLabel(token.posLabel)}";
+            string posType = convertToSentiWordPosLabel(token.posLabel);
+            if (posType != null)
+                return $"{token.text}!{posType}";
+            else
+                return null;
         }
 
         private void loadLexicon(out Dictionary<string, float> polarityLexicon)
