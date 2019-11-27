@@ -41,6 +41,8 @@
             dataPointRadius = 2.5,
             usernameNotFoundAlert;
 
+        const EntitiesPerRow = 6;
+
         function init() {
             initAlerts();
 
@@ -150,15 +152,48 @@
                     }]
                 },
                 options: {
+                    scales: {
+                        yAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Dominant Rating Value'
+                            }
+                        }],
+                        xAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Occurences per Account / Domain'
+                            }
+                        }]
+                    },
                     tooltips: {
                         callbacks: {
                             label: function (tooltipItem, data) {
-                                return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].entities.join(", ");
+                                let datapoint = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index],
+                                    labelArray = [["Ra: " + datapoint.y], ["Oc: " + datapoint.x]];
+                                extendArrayByFormattedEntities(datapoint.entities, labelArray);
+                                return labelArray;
                             }
                         }
                     }
                 }
             });
+        }
+
+        function extendArrayByFormattedEntities(entities, labelArray) {
+            let partialString = "";
+            for (let i = 0; i < entities.length; i++) {
+                if (i === entities.length - 1) {
+                    partialString += entities[i];
+                } else {
+                    partialString += entities[i] + ", ";
+                }
+
+                if ((i !== 0 && (i + 1) % EntitiesPerRow === 0) || i === entities.length - 1) {
+                    labelArray.push([partialString]);
+                    partialString = "";
+                }
+            }
         }
 
         that.init = init;
