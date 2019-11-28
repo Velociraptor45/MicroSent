@@ -38,11 +38,6 @@ namespace LexiconExtension
 
 
             var significantWord = wordList.Where(w => w.chiSquareValue >= 6.63d).OrderByDescending(w => w.chiSquareValue).ToList();
-            foreach(var word in significantWord)
-            {
-                word.negativeTweets = null;
-                word.positiveTweets = null;
-            }
             //serialization
             serializeData("LexiconExtension", @"data\lexiconExtension.xml", significantWord);
 
@@ -61,6 +56,8 @@ namespace LexiconExtension
             positiveTweetsCount = trainingTweets.Count(t => t.value == 4);
             negativeTweetsCount = trainingTweets.Count(t => t.value == 0);
 
+            ulong id = 0;
+
             foreach (Item tweetItem in trainingTweets)
             {
                 //if (trainingTweets.IndexOf(tweetItem) > 20000)
@@ -68,8 +65,9 @@ namespace LexiconExtension
 
                 Console.WriteLine($"Analyzing tweet {trainingTweets.IndexOf(tweetItem)} of {trainingTweets.Count}");
 
-                Tweet tweet = new Tweet(tweetItem.key, "", 0);
+                Tweet tweet = new Tweet(tweetItem.key, "", id);
                 Polarity tweetPolarity = translateItemPolarity(tweetItem);
+                List<string> alreadyAnalysedLexiconKeys = new List<string>();
                 var tokens = tokenizer.splitIntoTokens(tweet);
                 foreach (Token token in tokens)
                 {
@@ -81,8 +79,9 @@ namespace LexiconExtension
                 foreach (Token token in tokens.Where(t => !t.isLink && !t.isPunctuation && !t.isStructureToken && !t.isMention))
                 {
                     tokenAnalyser.convertToLowercase(token);
-                    analyseToken(tweet, token, tweetPolarity, polarityLexicon);
+                    analyseToken(token, tweetPolarity, alreadyAnalysedLexiconKeys, polarityLexicon);
                 }
+                id++;
             }
         }
 
@@ -109,7 +108,8 @@ namespace LexiconExtension
             }
         }
 
-        private void analyseToken(Tweet tweet, Token token, Polarity polarity, Dictionary<string, float> polarityLexicon)
+        private void analyseToken(Token token, Polarity polarity, List<string> alreadyAnalysedLexiconKeys,
+            Dictionary<string, float> polarityLexicon)
         {
             string lexiconKey = getLexiconKey(token);
 
@@ -132,16 +132,16 @@ namespace LexiconExtension
                 switch (polarity)
                 {
                     case Polarity.Positive:
-                        if (word.positiveTweets.Contains(tweet))
+                        if (alreadyAnalysedLexiconKeys.Contains(lexiconKey))
                             return;
                         word.positiveOccurences++;
-                        word.positiveTweets.Add(tweet);
+                        alreadyAnalysedLexiconKeys.Add(lexiconKey);
                         break;
                     case Polarity.Negative:
-                        if (word.negativeTweets.Contains(tweet))
+                        if (alreadyAnalysedLexiconKeys.Contains(lexiconKey))
                             return;
                         word.negativeOccurences++;
-                        word.negativeTweets.Add(tweet);
+                        alreadyAnalysedLexiconKeys.Add(lexiconKey);
                         break;
                     default:
                         int a = 0;

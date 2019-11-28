@@ -12,9 +12,6 @@ namespace LexiconExtension
         public int negativeOccurences { get; set; }
         public float chiSquareValue { get; set; }
 
-        public List<Tweet> positiveTweets { get; set; }
-        public List<Tweet> negativeTweets { get; set; }
-
         public Word() { }
 
         public Word(string word)
@@ -22,9 +19,6 @@ namespace LexiconExtension
             this.word = word;
             this.positiveOccurences = 0;
             this.negativeOccurences = 0;
-
-            this.positiveTweets = new List<Tweet>();
-            this.negativeTweets = new List<Tweet>();
         }
     }
 }
