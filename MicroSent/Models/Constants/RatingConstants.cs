@@ -20,5 +20,7 @@
         public const float NEGATION = -1f;
 
         public const float LAST_SENTENCE_INTENSIFIER = 1.5f;
+
+        public const float LEXICON_EXTENSION_WORD = 0.5f;
     }
 }

@@ -24,6 +24,7 @@ namespace MicroSent.Models.Configuration
         public string clientHost { get; }
 
 
+        public bool useExtendedLexicon { get; }
         public bool useAvarageRatingScore { get; }
         public bool useOnlyAverageRatingScore { get; }
         public bool useSingleTokenThreshold { get;}
@@ -39,8 +40,8 @@ namespace MicroSent.Models.Configuration
         public MicroSentConfiguration()
         {
             testing = true;
-            useGoogleParser = true;
-            useSerializedData = true;
+            useGoogleParser = false;
+            useSerializedData = false;
             serializeData = false;
             skipTweetsAmount = 0;
 
@@ -54,6 +55,7 @@ namespace MicroSent.Models.Configuration
             clientReceivingPort = 6050;
             clientHost = "localhost";
 
+            useExtendedLexicon = false;
             useAvarageRatingScore = false;
             useOnlyAverageRatingScore = false;
             useSingleTokenThreshold = true;
