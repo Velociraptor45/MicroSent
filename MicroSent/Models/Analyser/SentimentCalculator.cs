@@ -2,6 +2,7 @@
 using MicroSent.Models.Configuration;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
 namespace MicroSent.Models.Analyser
 {
@@ -20,31 +21,40 @@ namespace MicroSent.Models.Analyser
             {
                 foreach(Token token in sentence)
                 {
-                    calculateTokenRating(tweet, token);
+                    if (!token.ignoreInRating)
+                    {
+                        float tokenRating = calculateTokenRating(tweet, token);
+                        setTokenRating(token, tweet, tokenRating);
+                    }
                 }
             }
 
             foreach (Token token in tweet.rest)
             {
-                calculateTokenRating(tweet, token);
+                if (!token.ignoreInRating)
+                {
+                    float tokenRating = calculateTokenRating(tweet, token);
+                    setTokenRating(token, tweet, tokenRating);
+                }
             }
 
             if (tweet.isIronic)
                 invertRatings(tweet);
 
-            applyTotalThreshold(tweet);
+
+            if (configuration.useTotalThreshold)
+            {
+                applyTotalThreshold(tweet);
+            }
         }
 
-        private void calculateTokenRating(Tweet tweet, Token token)
+        private float calculateTokenRating(Tweet tweet, Token token)
         {
-            if (token.ignoreInRating)
-                return;
-
             float tokenRating;
             if (token.subTokens.Count > 0)
             {
                 float wordRatingSum = token.subTokens.Sum(st => st.wordRating);
-                tokenRating = token.negationRating * token.wordRating;
+                tokenRating = token.negationRating * wordRatingSum;
             }
             else if (token.isEmoji)
             {
@@ -73,14 +83,12 @@ namespace MicroSent.Models.Analyser
                 tokenRating *= RatingConstants.END_HASHTAG_MULIPLIER;
             }
 
-
-            //is token in last sentence?
-            if (configuration.intensifyLastSentence && tweet.sentences.Last().Contains(token))
+            if (configuration.intensifyLastSentence && isTokenInLastSentence(tweet, token))
             {
                 tokenRating *= RatingConstants.LAST_SENTENCE_INTENSIFIER;
             }
 
-            setTokenRating(token, tweet, tokenRating);
+            return tokenRating;
         }
 
         private void invertRatings(Tweet tweet)
@@ -92,42 +100,36 @@ namespace MicroSent.Models.Analyser
 
         private void applyTotalThreshold(Tweet tweet)
         {
-            if (configuration.useTotalThreshold)
-            {
-                if (tweet.positiveRating < configuration.totalThreshold)
-                    tweet.positiveRating = 0;
-                if (tweet.negativeRating > -configuration.totalThreshold)
-                    tweet.negativeRating = 0;
-            }
+            if (tweet.positiveRating < configuration.totalThreshold)
+                tweet.positiveRating = 0;
+            if (tweet.negativeRating > -configuration.totalThreshold)
+                tweet.negativeRating = 0;
         }
 
         private void setTokenRating(Token token, Tweet tweet, float tokenRating)
         {
             token.totalRating = tokenRating;
-            if (tokenRating > 0)
+            if (Math.Abs(tokenRating) < configuration.singleTokenThreshold && configuration.useSingleTokenThreshold && !token.isHashtag)
             {
-                if (tokenRating < configuration.singleTokenThreshold && configuration.useSingleTokenThreshold)
-                {
-                    token.wordRating = RatingConstants.NEUTRAL;
-                    token.totalRating = 0;
-                }
-                else
-                {
-                    tweet.positiveRating += tokenRating;
-                }
+                token.wordRating = RatingConstants.WORD_NEUTRAL;
+                token.totalRating = 0;
             }
             else
             {
-                if (tokenRating > -configuration.singleTokenThreshold && configuration.useSingleTokenThreshold)
-                {
-                    token.wordRating = RatingConstants.NEUTRAL;
-                    token.totalRating = 0;
-                }
+                if(tokenRating > 0)
+                    tweet.positiveRating += tokenRating;
                 else
-                {
                     tweet.negativeRating += tokenRating;
-                }
             }
+        }
+
+        private bool isTokenInLastSentence(Tweet tweet, Token token)
+        {
+            if(tweet.sentences.Count > 0)
+            {
+                return tweet.sentences.Last().Contains(token);
+            }
+            return false;
         }
     }
 }

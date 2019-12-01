@@ -65,7 +65,7 @@ namespace MicroSent.Models.Util
             if (allowPrinting)
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine($"Ignoring sentence \"{tweet.getFullSentence(sentenceIndex)}\"");
+                Console.WriteLine($"Ignoring sentence \"{tweet.getFullUnicodeSentence(sentenceIndex)}\"");
                 Console.ResetColor();
             }
         }

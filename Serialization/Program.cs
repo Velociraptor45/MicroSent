@@ -11,13 +11,21 @@ namespace Serialization
     {
         static void Main(string[] args)
         {
-            serializeDict();
+            //serializeDict();
+            //serializeSmileys();
+            serializeSlang();
+        }
+
+        static void serializeSlang()
+        {
+            SlangConverter slangConverter = new SlangConverter();
+            slangConverter.convert("data/slang.txt", "data/slang.xml");
         }
 
         static void serializeSmileys()
         {
             SmileyEmojiConverter converter = new SmileyEmojiConverter();
-            var smileyList = converter.loadSmileyLists("./data/positiveSmileys.txt", "./data/negativeSmileys.txt");
+            var smileyList = converter.loadSmileyList("./data/EmoticonLookupTable.txt");
             converter.serializeSmileys(smileyList, "./data/smileys.xml");
         }
 

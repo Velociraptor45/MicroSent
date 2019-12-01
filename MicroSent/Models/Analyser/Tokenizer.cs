@@ -21,13 +21,13 @@ namespace MicroSent.Models.Analyser
 
         private void initRegex()
         {
-            tokenDetection = new Regex($"({RegexConstants.LINK_DETECTION})" +
-                $"|({RegexConstants.ALL_SMILEY_DETECTION})" +
-                $"|({RegexConstants.PUNCTUATION_DETECTION})" +
-                $"|({RegexConstants.WORDS_DETECTION})" +
-                $"|({RegexConstants.SENTENCE_STRUCTURE_DETECTION})" +
-                $"|({RegexConstants.ALL_EMOJI_DETECTION})");
-            negationDetection = new Regex($"{RegexConstants.NEGATION_WORD_DETECTION}");
+            tokenDetection = new Regex($"({RegexConstants.LINK_PATTERN})" +
+                $"|({RegexConstants.ALL_SMILEY_PATTERN})" +
+                $"|({RegexConstants.SENTENCE_STRUCTURE_PATTERN})" +
+                $"|({RegexConstants.PUNCTUATION_PATTERN})" +
+                $"|({RegexConstants.WORDS_PATTERN})" +
+                $"|({RegexConstants.ALL_EMOJI_PATTERN})");
+            negationDetection = new Regex($"{RegexConstants.NEGATION_WORD_PATTERN}");
         }
 
         public List<Token> splitIntoTokens(Tweet tweet)

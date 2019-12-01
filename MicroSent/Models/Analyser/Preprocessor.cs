@@ -1,58 +1,70 @@
 ﻿using MicroSent.Models.Constants;
+using MicroSent.Models.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace MicroSent.Models.Analyser
 {
     public class Preprocessor
     {
-        private const string Separator = "---";
-
-        private Dictionary<string, string> slangs = new Dictionary<string, string>();
+        private List<Slang> slangs;
+        private Deserializer deserializer = new Deserializer("slang", DataPath.SLANG_FILE, typeof(List<Slang>));
 
         public Preprocessor()
         {
             loadSlang();
+            generateSlangRegex();
         }
 
         private void loadSlang()
         {
-            using (StreamReader streamReader = new StreamReader(DataPath.SLANG_FILE))
+            deserializer.deserializeSlangList(out slangs);
+        }
+
+        private void generateSlangRegex()
+        {
+            string pattern = escapeRegexCharacters(slangs.First().slang);
+            foreach (Slang slangObj in slangs.Skip(1))
             {
-                string line;
-                while ((line = streamReader.ReadLine()) != null)
+                pattern += $"|{escapeRegexCharacters(slangObj.slang)}";
+            }
+            RegexConstants.SLANG_PATTERN = pattern;
+        }
+
+        public void replaceAbbrevations(Tweet tweet)
+        {
+            Regex slangRegex = new Regex($@"(^| |""|'')({RegexConstants.SLANG_PATTERN})($| |""|'')", RegexOptions.Multiline);
+            MatchCollection matches = slangRegex.Matches(tweet.fullText);
+            foreach(Match match in matches)
+            {
+                Slang slangObj;
+                try
                 {
-                    if (line != TokenPartConstants.EMPTY_STRING)
-                    {
-                        string[] parts = line.Split(Separator);
-                        slangs.Add(parts[0], parts[1]);
-                    }
+                    slangObj = slangs.Where(s => s.slang == match.Value.Trim()).First();
+                } catch (Exception e)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(e.StackTrace);
+                    Console.ResetColor();
+                    continue;
                 }
+
+                Console.WriteLine($"{tweet.fullText} :: Replaced {slangObj.slang} with {slangObj.replacement}");
+                tweet.fullText = tweet.fullText.Replace(slangObj.slang, slangObj.replacement);
             }
         }
 
-        public string replaceAbbrevations(string tweetText)
+        private string escapeRegexCharacters(string text)
         {
-            foreach(string key in slangs.Keys)
-            {
-                string regexString = key.Replace(".", "\\.")
-                    .Replace("*", "\\*")
-                    .Replace("\\", "\\\\")
-                    .Replace("|", "\\>")
-                    .Replace(">", "\\>")
-                    .Replace("<", "\\<");
-
-                Regex regex = new Regex($@"(^| |""|''){regexString}($| |""|'')", RegexOptions.Multiline);
-                MatchCollection matches = regex.Matches(tweetText);
-                if (matches.Count > 0)
-                {
-                    Console.WriteLine($"{tweetText} :: Replaced {key} with {slangs[key]}");
-                    tweetText = tweetText.Replace(key, slangs[key]);
-                }
-            }
-            return tweetText;
+            return text.Replace(".", "\\.")
+                .Replace("*", "\\*")
+                .Replace("\\", "\\\\")
+                .Replace("|", "\\>")
+                .Replace(">", "\\>")
+                .Replace("<", "\\<");
         }
     }
 }

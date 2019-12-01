@@ -60,15 +60,7 @@ namespace Serialization
             }
         }
 
-        public List<Smiley> loadSmileyLists(string positivePath, string negativePath)
-        {
-            List<Smiley> smileyList = new List<Smiley>();
-            smileyList.AddRange(loadSmileyList(positivePath, Polarity.Positive));
-            smileyList.AddRange(loadSmileyList(negativePath, Polarity.Negative));
-            return smileyList;
-        }
-
-        private List<Smiley> loadSmileyList(string path, Polarity polarity)
+        public List<Smiley> loadSmileyList(string path)
         {
             List<Smiley> list = new List<Smiley>();
             using (StreamReader file = new StreamReader(path))
@@ -76,10 +68,21 @@ namespace Serialization
                 string line;
                 while ((line = file.ReadLine()) != null)
                 {
-                    list.Add(new Smiley(line, polarity));
+                    var parts = line.Split('\t');
+                    list.Add(new Smiley(parts[0], getPolarityFromSmileyRating(float.Parse(parts[1]))));
                 }
             }
             return list;
+        }
+
+        private Polarity getPolarityFromSmileyRating(float rating)
+        {
+            if (rating > 0)
+                return Polarity.Positive;
+            else if (rating < 0)
+                return Polarity.Negative;
+            else
+                return Polarity.Neutral;
         }
     }
 }

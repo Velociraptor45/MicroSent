@@ -76,5 +76,13 @@ namespace MicroSent.Models.Serialization
                 smileyList = (List<Smiley>)xmlSerializer.Deserialize(streamReader);
             }
         }
+
+        public void deserializeSlangList(out List<Slang> slangList)
+        {
+            using (StreamReader streamReader = new StreamReader(filePath))
+            {
+                slangList = (List<Slang>)xmlSerializer.Deserialize(streamReader);
+            }
+        }
     }
 }

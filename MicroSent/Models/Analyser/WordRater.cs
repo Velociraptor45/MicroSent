@@ -18,10 +18,10 @@ namespace MicroSent.Models.Analyser
         private const string SentWordLabelAdverb = "r";
         private const string SentWordLabelVerb = "v";
 
-        private Regex positiveEmojiDetection = new Regex(RegexConstants.POSITIVE_EMOJI_DETECTION);
-        private Regex negativeEmojiDetection = new Regex(RegexConstants.NEGATIVE_EMOJI_DETECTION);
-        private Regex positiveSmileyDetection = new Regex(RegexConstants.POSITIVE_SMILEY_DETECTION);
-        private Regex negativeSmileyDetection = new Regex(RegexConstants.NEGATIVE_SMILEY_DETECTION);
+        private Regex positiveEmojiDetection = new Regex(RegexConstants.POSITIVE_EMOJI_PATTERN);
+        private Regex negativeEmojiDetection = new Regex(RegexConstants.NEGATIVE_EMOJI_PATTERN);
+        private Regex positiveSmileyDetection = new Regex(RegexConstants.POSITIVE_SMILEY_PATTERN);
+        private Regex negativeSmileyDetection = new Regex(RegexConstants.NEGATIVE_SMILEY_PATTERN);
 
         private static Dictionary<string, float> polarityDictionary;
 
@@ -100,20 +100,37 @@ namespace MicroSent.Models.Analyser
             return 0f; //TODO: change this
         }
 
-        public float getWordRating(Token token)
+        public void setWordRating(Token token)
         {
-            string sentiWordLabel = convertToSentiWordPosLabel(token.posLabel);
+            if (token.subTokens.Count > 0)
+            {
+                foreach (SubToken subToken in token.subTokens)
+                {
+                    subToken.wordRating = getWordRating(subToken.text, subToken.stemmedText, subToken.lemmatizedText, subToken.posLabel);
+                }
+            }
+            else
+            {
+                token.wordRating = getWordRating(token.text, token.stemmedText, token.lemmatizedText, token.posLabel);
+            }
 
-            float normalRating = getFittingRating(token.text, sentiWordLabel);
+            
+        }
+
+        private float getWordRating(string text, string stemmedText, string lemmatizedText, PosLabels posLabel)
+        {
+            string sentiWordLabel = convertToSentiWordPosLabel(posLabel);
+
+            float normalRating = getFittingRating(text, sentiWordLabel);
             if (normalRating == RatingConstants.WORD_NEUTRAL)
             {
                 if (configuration.useStemmedText)
                 {
-                    return getFittingRating(token.stemmedText, sentiWordLabel);
+                    return getFittingRating(stemmedText, sentiWordLabel);
                 }
                 else if (configuration.useLemmatizedText)
                 {
-                    return getFittingRating(token.lemmatizedText, sentiWordLabel);
+                    return getFittingRating(lemmatizedText, sentiWordLabel);
                 }
             }
             return normalRating;
