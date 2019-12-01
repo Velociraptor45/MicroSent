@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MicroSent.Models.Constants;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -30,6 +31,23 @@ namespace MicroSent.Models.Serialization
             using (StreamReader streamReader = new StreamReader(filePath))
             {
                 dictionary = ((Item[])xmlSerializer.Deserialize(streamReader)).ToDictionary(e => e.key, e => e.value);
+            }
+        }
+
+        public void deserializeLexiconExtension(out Dictionary<string, float> extensionLexicon)
+        {
+            using (StreamReader streamReader = new StreamReader(filePath))
+            {
+                extensionLexicon = ((List<Word>)xmlSerializer.Deserialize(streamReader)).ToDictionary(
+                    w => w.word, e => e.negativeOccurences > e.positiveOccurences ? -RatingConstants.LEXICON_EXTENSION_WORD : RatingConstants.LEXICON_EXTENSION_WORD);
+            }
+        }
+
+        public void deserializeList(out List<Item> list)
+        {
+            using (StreamReader streamReader = new StreamReader(filePath))
+            {
+                list = ((Item[])xmlSerializer.Deserialize(streamReader)).ToList();
             }
         }
 

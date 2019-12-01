@@ -4,12 +4,14 @@ using MicroSent.Models.Serialization;
 using MicroSent.Models.Configuration;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace MicroSent.Models.Analyser
 {
     public class WordRater
     {
         private const string SentiLexiconRootName = "SentiWords";
+        private const string LexiconExtensionRootName = "LexiconExtension";
 
         private const string SentWordLabelAdjective = "a";
         private const string SentWordLabelNoun = "n";
@@ -23,7 +25,8 @@ namespace MicroSent.Models.Analyser
 
         private static Dictionary<string, float> polarityDictionary;
 
-        private Deserializer deserializer = new Deserializer(SentiLexiconRootName, DataPath.POLARITY_LEXICON, typeof(Item[]));
+        private Deserializer lexiconDeserializer = new Deserializer(SentiLexiconRootName, DataPath.POLARITY_LEXICON, typeof(Item[]));
+        private Deserializer lexiconExtensionDeserializer = new Deserializer(LexiconExtensionRootName, DataPath.LEXICON_EXTENSION, typeof(List<Word>));
 
         private const float ValueNotFound = float.MinValue;
 
@@ -49,7 +52,12 @@ namespace MicroSent.Models.Analyser
             //}
             if(polarityDictionary == null)
             {
-                deserializer.deserializeDictionary(out polarityDictionary);
+                lexiconDeserializer.deserializeDictionary(out polarityDictionary);
+                if (configuration.useExtendedLexicon)
+                {
+                    lexiconExtensionDeserializer.deserializeLexiconExtension(out Dictionary<string, float> extensionLexicon);
+                    polarityDictionary = polarityDictionary.Concat(extensionLexicon).ToDictionary(pair => pair.Key, pair => pair.Value);
+                }
             }
         }
 

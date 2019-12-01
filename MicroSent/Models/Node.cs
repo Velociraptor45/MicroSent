@@ -9,11 +9,11 @@ namespace MicroSent.Models
     [Serializable]
     public class Node
     {
-        public Node parent { get; private set; }
-        public List<Node> children { get; private set; }
+        public Node parent { get; set; }
+        public List<Node> children { get; set; }
 
-        public Token correspondingToken { get; private set; }
-
+        public Token correspondingToken { get; set; }
+        
         public Node(Token token, Node parent)
         {
             this.parent = parent;

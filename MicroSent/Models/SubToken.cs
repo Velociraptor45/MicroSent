@@ -16,6 +16,8 @@ namespace MicroSent.Models
 
         public float wordRating = RatingConstants.WORD_NEUTRAL;
 
+        public SubToken() { }
+
         public SubToken(string text, int indexInToken)
         {
             this.text = text;

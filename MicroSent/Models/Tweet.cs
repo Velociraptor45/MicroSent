@@ -33,6 +33,8 @@ namespace MicroSent.Models
         // only needed for evaluation of algorithm
         public Polarity annotatedPolarity;
 
+        public Tweet() { }
+
         public Tweet(string fullText, string userScreenName, ulong statusID)
         {
             this.fullText = fullText;

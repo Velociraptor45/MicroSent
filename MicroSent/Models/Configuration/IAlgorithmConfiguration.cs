@@ -21,6 +21,7 @@
         string clientHost { get; }
 
         //rating:
+        bool useExtendedLexicon { get; }
         bool useAvarageRatingScore { get; }
         bool useOnlyAverageRatingScore { get; }
         bool useSingleTokenThreshold { get; }
