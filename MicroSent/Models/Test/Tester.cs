@@ -167,7 +167,7 @@ namespace MicroSent.Models.Test
                 else
                 {
                     rating = positiveRating;
-                    return Polarity.Negative; // TODO: What to do with indecisive tweet ratings?
+                    return Polarity.Negative;
                 }
             }
         }
