@@ -2,7 +2,6 @@ import socket
 import os
 import _thread
 
-#src: https://docs.python.org/2/library/simplehttpserver.html
 #src: https://realpython.com/python-sockets/#tcp-sockets
 
 class RunParsingServer:
