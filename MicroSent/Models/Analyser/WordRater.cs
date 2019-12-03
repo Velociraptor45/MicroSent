@@ -32,24 +32,9 @@ namespace MicroSent.Models.Analyser
 
         IAlgorithmConfiguration configuration;
 
-        //private const string PositiveWordsFileName = "positive-words.txt";
-        //private const string NegativeWordsFileName = "negative-words.txt";
-        //private const string IgnoreLine = ";";
-        //private static List<string> positiveWords = new List<string>();
-        //private static List<string> negativeWords = new List<string>();
-
         public WordRater(IAlgorithmConfiguration configuration)
         {
             this.configuration = configuration;
-
-            //if (positiveWords.Count == 0)
-            //{
-            //    loadWords(PositiveWordsFileName, positiveWords);
-            //}
-            //if(negativeWords.Count == 0)
-            //{
-            //    loadWords(NegativeWordsFileName, negativeWords);
-            //}
             if(polarityDictionary == null)
             {
                 lexiconDeserializer.deserializeDictionary(out polarityDictionary);
@@ -60,19 +45,6 @@ namespace MicroSent.Models.Analyser
                 }
             }
         }
-
-        //private void loadWords(string fileName, List<string> list)
-        //{
-        //    using(StreamReader streamReader = new StreamReader(FilePath + fileName))
-        //    {
-        //        string line;
-        //        while((line = streamReader.ReadLine()) != null)
-        //        {
-        //            if(!line.StartsWith(IgnoreLine) && line != "")
-        //                list.Add(line);
-        //        }
-        //    }
-        //}
 
         public float getEmojiRating(Token token)
         {
