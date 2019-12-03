@@ -56,7 +56,7 @@ namespace MicroSent.Models.Analyser
             {
                 return RatingConstants.NEGATIVE_EMOJI;
             }
-            return 0f; //TODO: change this
+            return RatingConstants.WORD_NEUTRAL;
         }
 
         public float getSmileyRating(Token token)
@@ -69,7 +69,7 @@ namespace MicroSent.Models.Analyser
             {
                 return RatingConstants.NEGATIVE_SMILEY;
             }
-            return 0f; //TODO: change this
+            return RatingConstants.WORD_NEUTRAL;
         }
 
         public void setWordRating(Token token)
