@@ -49,16 +49,16 @@ namespace MicroSent.Models.Configuration
 
             minimalEmojiOccurences = 100;
             minimalPositiveEmojiScore = .5f;
-            minimalNegativeEmojiScore = .4f;
+            minimalNegativeEmojiScore = .5f;
 
             clientSendingPort = 6048;
             clientReceivingPort = 6050;
             clientHost = "localhost";
 
-            useExtendedLexicon = true;
+            useExtendedLexicon = false;
             useAvarageRatingScore = false;
             useOnlyAverageRatingScore = false;
-            useSingleTokenThreshold = false;
+            useSingleTokenThreshold = true;
             useTotalThreshold = false;
             singleTokenThreshold = .2f;
             totalThreshold = .5f;
