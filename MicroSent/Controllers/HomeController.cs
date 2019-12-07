@@ -218,6 +218,7 @@ namespace MicroSent.Controllers
         {
             //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
             //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
+            //tweetAnalyser.applyNegationTilNextPunctuation(tweet);
             tweetAnalyser.applyKWordNegation(tweet, configuration.negationWindowSize);
             tweetAnalyser.applySpecialStructureNegation(tweet);
             tweetAnalyser.applyEndHashtagNegation(tweet);
