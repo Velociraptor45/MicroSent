@@ -18,7 +18,6 @@ namespace MicroSent.Models.Analyser
         private Regex sentenceStructureDetection = new Regex(RegexConstants.SENTENCE_STRUCTURE_PATTERN);
         private Regex smileyDetection = new Regex(RegexConstants.ALL_SMILEY_PATTERN);
         private Regex emoticonDetection = new Regex(RegexConstants.ALL_EMOJI_PATTERN);
-        private Regex laughingDetection = new Regex(@"a?(ha){2,}|i?(hi){2,}");
 
         IStemmer stemmer = new EnglishStemmer();
         Lemmatizer lemmatizer;
@@ -62,10 +61,6 @@ namespace MicroSent.Models.Analyser
                 return;
             }
             else if (checkForEmoji(token))
-            {
-                return;
-            }
-            else if (checkForLaughingExpression(token))
             {
                 return;
             }
@@ -145,17 +140,6 @@ namespace MicroSent.Models.Analyser
             if (emoticonMatches.Count > 0)
             {
                 return token.isEmoji = true;
-            }
-            return false;
-        }
-
-        private bool checkForLaughingExpression(Token token)
-        {
-            MatchCollection laughingMatches = laughingDetection.Matches(token.text);
-
-            if (laughingMatches.Count > 0)
-            {
-                return token.isLaughingExpression = true;
             }
             return false;
         }
