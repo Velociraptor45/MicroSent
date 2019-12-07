@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 using MicroSent.Models.Configuration;
 using MicroSent.Models.RegexGeneration;
 using MicroSent.ViewModels;
+using MicroSent.Models.Enums;
 
 namespace MicroSent.Controllers
 {
@@ -216,10 +217,18 @@ namespace MicroSent.Controllers
 
         private void applyNegation(Tweet tweet)
         {
-            //parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
-            //tweetAnalyser.applyParseTreeDependentNegation(tweet, true);
-            //tweetAnalyser.applyNegationTilNextPunctuation(tweet);
-            tweetAnalyser.applyKWordNegation(tweet, configuration.negationWindowSize);
+            switch (configuration.negationType)
+            {
+                case NegationType.GoogleParseTree:
+                    parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
+                    break;
+                case NegationType.TilNextPunctuation:
+                    tweetAnalyser.applyNegationTilNextPunctuation(tweet);
+                    break;
+                case NegationType.KWindow:
+                    tweetAnalyser.applyKWordNegation(tweet, configuration.negationWindowSize);
+                    break;
+            }
             tweetAnalyser.applySpecialStructureNegation(tweet);
             tweetAnalyser.applyEndHashtagNegation(tweet);
         }

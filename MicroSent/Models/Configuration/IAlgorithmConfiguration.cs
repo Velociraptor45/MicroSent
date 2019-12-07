@@ -1,4 +1,6 @@
-﻿namespace MicroSent.Models.Configuration
+﻿using MicroSent.Models.Enums;
+
+namespace MicroSent.Models.Configuration
 {
     public interface IAlgorithmConfiguration
     {
@@ -33,5 +35,6 @@
 
         //negation:
         int negationWindowSize { get; }
+        NegationType negationType { get; }
     }
 }

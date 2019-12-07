@@ -1,4 +1,5 @@
 ﻿using MicroSent.Models.Constants;
+using MicroSent.Models.Enums;
 
 namespace MicroSent.Models.Configuration
 {
@@ -36,6 +37,7 @@ namespace MicroSent.Models.Configuration
 
 
         public int negationWindowSize { get; }
+        public NegationType negationType { get; }
 
         public MicroSentConfiguration()
         {
@@ -66,6 +68,7 @@ namespace MicroSent.Models.Configuration
             useLemmatizedText = true;
 
             negationWindowSize = NegationConstants.FOUR_WORDS;
+            negationType = NegationType.TilNextPunctuation;
         }
     }
 }
