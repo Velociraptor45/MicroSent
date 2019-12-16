@@ -57,10 +57,10 @@ namespace MicroSent.Models.Configuration
             clientReceivingPort = 6050;
             clientHost = "localhost";
 
-            useExtendedLexicon = false;
+            useExtendedLexicon = true;
             useAvarageRatingScore = false;
             useOnlyAverageRatingScore = false;
-            useSingleTokenThreshold = true;
+            useSingleTokenThreshold = false;
             useTotalThreshold = false;
             singleTokenThreshold = .2f;
             totalThreshold = .5f;
