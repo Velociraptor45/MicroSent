@@ -13,12 +13,11 @@ namespace MicroSent.Models.Analyser
     {
         private const string MentionReplacement = "Michael";
 
-        private Regex linkDetection = new Regex(RegexConstants.LINK_DETECTION);
-        private Regex puntuationDetection = new Regex(RegexConstants.PUNCTUATION_DETECTION);
-        private Regex sentenceStructureDetection = new Regex(RegexConstants.SENTENCE_STRUCTURE_DETECTION);
-        private Regex smileyDetection = new Regex(RegexConstants.ALL_SMILEY_DETECTION);
-        private Regex emoticonDetection = new Regex(RegexConstants.ALL_EMOJI_DETECTION);
-        private Regex laughingDetection = new Regex(@"a?(ha){2,}|i?(hi){2,}");
+        private Regex linkDetection = new Regex(RegexConstants.LINK_PATTERN);
+        private Regex puntuationDetection = new Regex(RegexConstants.PUNCTUATION_PATTERN);
+        private Regex sentenceStructureDetection = new Regex(RegexConstants.SENTENCE_STRUCTURE_PATTERN);
+        private Regex smileyDetection = new Regex(RegexConstants.ALL_SMILEY_PATTERN);
+        private Regex emoticonDetection = new Regex(RegexConstants.ALL_EMOJI_PATTERN);
 
         IStemmer stemmer = new EnglishStemmer();
         Lemmatizer lemmatizer;
@@ -58,10 +57,6 @@ namespace MicroSent.Models.Analyser
                 return;
             }
             else if (checkForEmoji(token))
-            {
-                return;
-            }
-            else if (checkForLaughingExpression(token))
             {
                 return;
             }
@@ -144,27 +139,36 @@ namespace MicroSent.Models.Analyser
             }
             return false;
         }
-
-        private bool checkForLaughingExpression(Token token)
-        {
-            MatchCollection laughingMatches = laughingDetection.Matches(token.text);
-
-            if (laughingMatches.Count > 0)
-            {
-                return token.isLaughingExpression = true;
-            }
-            return false;
-        }
         #endregion
 
         public void stem(Token token)
         {
-            token.stemmedText = stemmer.Stem(token.text);
+            if (token.subTokens.Count > 0)
+            {
+                foreach (SubToken subToken in token.subTokens)
+                {
+                    token.stemmedText = stemmer.Stem(subToken.text);
+                }
+            }
+            else
+            {
+                token.stemmedText = stemmer.Stem(token.text);
+            }
         }
 
         public void lemmatize(Token token)
         {
-            token.lemmatizedText = lemmatizer.Lemmatize(token.text);
+            if (token.subTokens.Count > 0)
+            {
+                foreach (SubToken subToken in token.subTokens)
+                {
+                    subToken.lemmatizedText = lemmatizer.Lemmatize(subToken.text);
+                }
+            }
+            else
+            {
+                token.lemmatizedText = lemmatizer.Lemmatize(token.text);
+            }
         }
 
         public void checkForUppercase(Token token)
@@ -190,6 +194,18 @@ namespace MicroSent.Models.Analyser
             {
                 subToken.text = subToken.text.ToLower();
             }
+        }
+
+        public void replaceMutatedVowel(Token token)
+        {
+            if (token.subTokens.Count > 0)
+            {
+                foreach(SubToken subToken in token.subTokens)
+                {
+                    subToken.text = subToken.text.Replace("ä", "ae").Replace("ö", "oe").Replace("ü", "ue");
+                }
+            }
+            token.text = token.text.Replace("ä", "ae").Replace("ö", "oe").Replace("ü", "ue");
         }
 
         #region repeated Letters
