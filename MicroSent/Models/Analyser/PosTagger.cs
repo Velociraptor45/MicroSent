@@ -45,7 +45,7 @@ namespace MicroSent.Models.Analyser
                 tweet.sentences[sentenceIndex].Add(token);
 
 
-                if (token.isPunctuation && token.text != ",")
+                if (token.isPunctuation)
                 {
                     tokenInSentenceIndex = 0;
                     sentenceIndex++;

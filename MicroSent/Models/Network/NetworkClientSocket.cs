@@ -101,6 +101,7 @@ namespace MicroSent.Models.Network
                 ConsolePrinter.printSendingMessage(Host, Port);
                 if (stream.CanWrite)
                 {
+                    Console.WriteLine($"SENDING: {message}");
                     stream.Write(byteMessage, 0, byteMessage.Length);
                 }
                 ConsolePrinter.printMessageSuccessfullySent(Host, Port);

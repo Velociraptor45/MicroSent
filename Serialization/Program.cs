@@ -13,7 +13,15 @@ namespace Serialization
         {
             //serializeDict();
             //serializeSmileys();
-            serializeSlang();
+            //serializeSlang();
+            serializeNewTestData();
+        }
+
+        static void serializeNewTestData()
+        {
+            DictBuilder dictBuilder = new DictBuilder();
+            dictBuilder.buildAirlineTestData("data/Tweets.csv", out List<Tuple<string, float>> list);
+            serializeList("TestData", "data/testdata_airline.xml", list);
         }
 
         static void serializeSlang()
@@ -83,6 +91,23 @@ namespace Serialization
         public DictBuilder()
         {
             dictionary = new Dictionary<string, float>();
+        }
+
+        public void buildAirlineTestData(string filePath, out List<Tuple<string, float>> list)
+        {
+            list = new List<Tuple<string, float>>();
+            using (StreamReader streamReader = new StreamReader(filePath))
+            {
+                string line;
+                streamReader.ReadLine();
+                while ((line = streamReader.ReadLine()) != null)
+                {
+                    var parts = line.Split(',');
+                    float rating = parts[1] == "neutral" ? 2 : (parts[1] == "positive" ? 4 : 0);
+
+                    list.Add(new Tuple<string, float>(parts[10], rating));
+                }
+            }
         }
 
         public void buildTrainingList(string filePath, out List<Tuple<string, float>> list)

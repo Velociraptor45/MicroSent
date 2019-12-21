@@ -55,9 +55,16 @@ namespace MicroSent.Models.Analyser
         public void buildTreeFromGoogleParser(Tweet tweet, JArray tokens, int sentenceIndex)
         {
             List<Node> allNodes = new List<Node>();
+            List<int> deletedIndexes = new List<int>();
             for (int i = 0; i < tokens.Count; i++)
             {
-                removeWronglyParsedTokens(i, tweet, tokens, sentenceIndex);
+                List<int> delIndexes = removeWronglyParsedTokens(i, tweet, tokens, sentenceIndex);
+
+                for(int j = 0; j < delIndexes.Count; j++)
+                {
+                    delIndexes[j] = delIndexes[j] + deletedIndexes.Count;
+                }
+                deletedIndexes.AddRange(delIndexes);
 
                 string tag = tokens[i].Value<string>(GoogleParserConstants.TOKEN_TAG);
                 Token referencedToken = tweet.sentences[sentenceIndex][i];
@@ -70,7 +77,9 @@ namespace MicroSent.Models.Analyser
             for (int i = 0; i < tokens.Count; i++)
             {
                 JToken token = tokens[i];
-                int parentIndex = token.Value<int>(GoogleParserConstants.TOKEN_HEAD);
+                int originalParentIndex = token.Value<int>(GoogleParserConstants.TOKEN_HEAD);
+                //the parent index must be adapted because previous indexes might have been deleted
+                int parentIndex = originalParentIndex - deletedIndexes.Count(ind => ind <= originalParentIndex);
                 if (parentIndex != -1)
                 {
                     allNodes[i].setParent(allNodes[parentIndex]);
@@ -81,8 +90,9 @@ namespace MicroSent.Models.Analyser
             tweet.parseTrees.Add(allNodes.Where(n => n.parent == null).First());
         }
 
-        private void removeWronglyParsedTokens(int currentTokenIndex, Tweet tweet, JArray tokens, int sentenceIndex)
+        private List<int> removeWronglyParsedTokens(int currentTokenIndex, Tweet tweet, JArray tokens, int sentenceIndex)
         {
+            List<int> deletedIndexes = new List<int>();
             JToken token = tokens[currentTokenIndex];
             if (currentTokenIndex < tokens.Count - 1)
             {
@@ -103,7 +113,7 @@ namespace MicroSent.Models.Analyser
                         if (currentJTokenText + nextJTokenWord == thisSentenceTokenWord
                             || $"{currentJTokenText}{TokenPartConstants.APOSTROPHE}{nextJTokenWord}" == thisSentenceTokenWord)
                         {
-                            removeTokens(currentTokenIndex + 1, deleteUnitilThisIndex, tokens);
+                            deletedIndexes = removeTokens(currentTokenIndex + 1, deleteUnitilThisIndex, tokens);
                             ConsolePrinter.printCorrectedGoogleParsing(tweet.getFullUnicodeSentence(sentenceIndex));
                             break;
                         }
@@ -112,6 +122,7 @@ namespace MicroSent.Models.Analyser
                     }
                 }
             }
+            return deletedIndexes;
         }
 
         private void translateGoogleAbbreviation(ref string word)
@@ -127,12 +138,15 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        private void removeTokens(int firstIndexToDelete, int lastIndexToDelete, JArray tokens)
+        private List<int> removeTokens(int firstIndexToDelete, int lastIndexToDelete, JArray tokens)
         {
+            List<int> deletedIndexes = new List<int>();
             for (int i = lastIndexToDelete; i >= firstIndexToDelete; i--)
             {
                 tokens.RemoveAt(i);
+                deletedIndexes.Add(i);
             }
+            return deletedIndexes;
         }
 
         private void setPosLabel(Token token, string tag)

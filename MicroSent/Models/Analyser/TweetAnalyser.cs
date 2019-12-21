@@ -12,7 +12,7 @@ namespace MicroSent.Models.Analyser
         private const string IronyString = "irony";
         private const string SarcasmStringSlash = "/s";
         private const string SarcasmStringBackslash = "\\s";
-        
+
         private Regex negationToken = new Regex(RegexConstants.NEGATION_TOKEN_PATTERN);
         private Regex negationHashtagPart = new Regex(RegexConstants.NEGATION_HASHTAG_PATTERN);
 
@@ -28,7 +28,7 @@ namespace MicroSent.Models.Analyser
 
         public void analyseFirstEndHashtagPosition(List<Token> tokens, Tweet tweet)
         {
-            for(int i = tokens.Count - 1; i > 0; i--)
+            for (int i = tokens.Count - 1; i > 0; i--)
             {
                 Token currentToken = tokens[i];
                 Token previousToken = tokens[i - 1];
@@ -36,7 +36,7 @@ namespace MicroSent.Models.Analyser
                 {
                     continue;
                 }
-                else if(currentToken.isHashtag)
+                else if (currentToken.isHashtag)
                 {
                     if (!previousToken.isHashtag)
                     {
@@ -64,7 +64,7 @@ namespace MicroSent.Models.Analyser
             var endHastags = tweet.rest.Where(t => t.indexInTweet >= tweet.firstEndHashtagIndex && t.isHashtag);
             foreach (Token token in endHastags)
             {
-                if(token.text == IronyString)
+                if (token.text == IronyString)
                 {
                     return true;
                 }
@@ -78,7 +78,7 @@ namespace MicroSent.Models.Analyser
             if (tweet.sentences.Count == 0)
                 return false;
 
-            foreach(Token token in tweet.sentences.Last())
+            foreach (Token token in tweet.sentences.Last())
             {
                 if (token.text == SarcasmStringSlash
                     || token.text == SarcasmStringBackslash)
@@ -97,15 +97,15 @@ namespace MicroSent.Models.Analyser
         #region special structure filtering
         public void filterUselessInterogativeSentences(Tweet tweet)
         {
-            foreach(var sentence in tweet.sentences)
+            foreach (var sentence in tweet.sentences)
             {
-                if(sentence.Count > 3)
+                if (sentence.Count > 3)
                 {
                     Token firstToken = sentence.First();
                     Token secondToken = sentence[1];
                     Token lastToken = sentence.Last();
-                    
-                    if(isWhWord(firstToken)
+
+                    if (isWhWord(firstToken)
                         && isAuxiliaryVerb(secondToken)
                         && lastToken.text.Contains(TokenPartConstants.QUESTIONMARK))
                     {
@@ -146,7 +146,7 @@ namespace MicroSent.Models.Analyser
             foreach (Token token in sentenceTokens)
             {
                 MatchCollection matches = negationToken.Matches(token.text);
-                if(matches.Count > 0)
+                if (matches.Count > 0)
                 {
                     tokenIndexes.Add(token.indexInSentence);
                 }
@@ -159,6 +159,24 @@ namespace MicroSent.Models.Analyser
         //////////////////////////////////////////////////////////////////////////
         /// NEGATION APPLICATION
         //////////////////////////////////////////////////////////////////////////
+
+        public void applyNegationTilNextPunctuation(Tweet tweet)
+        {
+            foreach (List<Token> sentenceTokens in tweet.sentences)
+            {
+                foreach (int tokenSentenceIndex in getSentenceIndexesOfNegationWord(sentenceTokens, tweet))
+                {
+                    for(int i = tokenSentenceIndex + 1; i < sentenceTokens.Count; i++)
+                    {
+                        Token token = sentenceTokens[i];
+                        if (token.isPunctuation || token.isStructureToken)
+                            break;
+
+                        token.negationRating = RatingConstants.NEGATION;
+                    }
+                }
+            }
+        }
 
         public void applySpecialStructureNegation(Tweet tweet)
         {

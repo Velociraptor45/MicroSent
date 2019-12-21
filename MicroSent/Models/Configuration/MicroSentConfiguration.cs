@@ -1,4 +1,5 @@
 ﻿using MicroSent.Models.Constants;
+using MicroSent.Models.Enums;
 
 namespace MicroSent.Models.Configuration
 {
@@ -36,6 +37,7 @@ namespace MicroSent.Models.Configuration
 
 
         public int negationWindowSize { get; }
+        public NegationType negationType { get; }
 
         public MicroSentConfiguration()
         {
@@ -49,7 +51,7 @@ namespace MicroSent.Models.Configuration
 
             minimalEmojiOccurences = 100;
             minimalPositiveEmojiScore = .5f;
-            minimalNegativeEmojiScore = .4f;
+            minimalNegativeEmojiScore = .5f;
 
             clientSendingPort = 6048;
             clientReceivingPort = 6050;
@@ -58,7 +60,7 @@ namespace MicroSent.Models.Configuration
             useExtendedLexicon = true;
             useAvarageRatingScore = false;
             useOnlyAverageRatingScore = false;
-            useSingleTokenThreshold = true;
+            useSingleTokenThreshold = false;
             useTotalThreshold = false;
             singleTokenThreshold = .2f;
             totalThreshold = .5f;
@@ -66,6 +68,7 @@ namespace MicroSent.Models.Configuration
             useLemmatizedText = true;
 
             negationWindowSize = NegationConstants.FOUR_WORDS;
+            negationType = NegationType.TilNextPunctuation;
         }
     }
 }

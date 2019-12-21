@@ -10,7 +10,7 @@ namespace LexiconExtension
         public string word { get; set; }
         public int positiveOccurences { get; set; }
         public int negativeOccurences { get; set; }
-        public float chiSquareValue { get; set; }
+        public double chiSquareValue { get; set; }
 
         public Word() { }
 

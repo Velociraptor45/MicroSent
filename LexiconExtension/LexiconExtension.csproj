@@ -70,6 +70,9 @@
     <Compile Include="..\MicroSent\Models\Constants\RatingConstants.cs">
       <Link>MicroSentModels\RatingConstants.cs</Link>
     </Compile>
+    <Compile Include="..\MicroSent\Models\Constants\RegexConstants.cs">
+      <Link>MicroSentModels\RegexConstants.cs</Link>
+    </Compile>
     <Compile Include="..\MicroSent\Models\Emoji.cs">
       <Link>MicroSentModels\Emoji.cs</Link>
     </Compile>
@@ -87,6 +90,9 @@
     </Compile>
     <Compile Include="..\MicroSent\Models\Serialization\Deserializer.cs">
       <Link>MicroSentModels\Deserializer.cs</Link>
+    </Compile>
+    <Compile Include="..\MicroSent\Models\Slang.cs">
+      <Link>MicroSentModels\Slang.cs</Link>
     </Compile>
     <Compile Include="..\MicroSent\Models\Smiley.cs">
       <Link>MicroSentModels\Smiley.cs</Link>
@@ -108,7 +114,6 @@
     </Compile>
     <Compile Include="LexiconExtender.cs" />
     <Compile Include="MicroSentModels\GoogleParserConstants.cs" />
-    <Compile Include="MicroSentModels\RegexConstants.cs" />
     <Compile Include="MicroSentModels\TokenAnalyser.cs" />
     <Compile Include="MicroSentModels\Tokenizer.cs" />
     <Compile Include="MicroSentModels\TokenPartConstants.cs" />

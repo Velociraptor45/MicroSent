@@ -12,13 +12,13 @@ namespace MicroSent.Models.Test
         private const string RootName = "TestData";
 
         Deserializer deserializer = new Deserializer(RootName, DataPath.TEST_DATA, typeof(Item[]));
-        private static Dictionary<string, float> testTweetsDictionary;
+        private static List<Item> testTweetsItems;
 
         public Tester()
         {
-            if(testTweetsDictionary == null)
+            if(testTweetsItems == null)
             {
-                deserializer.deserializeDictionary(out testTweetsDictionary);
+                deserializer.deserializeList(out testTweetsItems);
             }
         }
 
@@ -26,11 +26,10 @@ namespace MicroSent.Models.Test
         {
             List<Tweet> tweets = new List<Tweet>();
 
-            List<string> dictionaryKeys = testTweetsDictionary.Keys.ToList();
-            foreach(string key in dictionaryKeys)
+            foreach(Item item in testTweetsItems)
             {
-                Tweet tweet = new Tweet(key, "", 0);
-                tweet.annotatedPolarity = getPolarityFromRating(testTweetsDictionary[key]);
+                Tweet tweet = new Tweet(item.key, "", 0);
+                tweet.annotatedPolarity = getPolarityFromRating(item.value);
                 tweets.Add(tweet);
             }
 

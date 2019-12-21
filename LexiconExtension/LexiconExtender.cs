@@ -28,17 +28,15 @@ namespace LexiconExtension
         public void extract()
         {
             loadLexicon(out Dictionary<string, float> polarityLexicon);
-
+            
             //polarityLexicon = polarityLexicon.Where(kv => kv.Value != 0).ToDictionary(kv => kv.Key, kv => kv.Value);
             buildWordList(polarityLexicon);
-
             //final calculation
             //Dictionary<string, float> finalScores = calculateFinalScore();
             calculateChiSquareTest();
-
-
             var significantWord = wordList.Where(w => w.chiSquareValue >= 6.63d).OrderByDescending(w => w.chiSquareValue).ToList();
             //serialization
+            serializeData("LexiconExtension", @"data\lexiconExtensionAll.xml", wordList);
             serializeData("LexiconExtension", @"data\lexiconExtension.xml", significantWord);
 
             int a = 0;
@@ -63,7 +61,7 @@ namespace LexiconExtension
                 //if (trainingTweets.IndexOf(tweetItem) > 20000)
                 //    break;
 
-                Console.WriteLine($"Analyzing tweet {trainingTweets.IndexOf(tweetItem)} of {trainingTweets.Count}");
+                Console.WriteLine($"Analyzing tweet {id + 1} of {trainingTweets.Count}");
 
                 Tweet tweet = new Tweet(tweetItem.key, "", id);
                 Polarity tweetPolarity = translateItemPolarity(tweetItem);
@@ -89,20 +87,23 @@ namespace LexiconExtension
         {
             foreach(Word word in wordList)
             {
-                int positiveTweetCountWithoutWord = positiveTweetsCount - word.positiveOccurences;
-                int negativeTweetCountWithoutWord = negativeTweetsCount - word.negativeOccurences;
+                long positiveTweetCountWithoutWord = positiveTweetsCount - word.positiveOccurences;
+                long negativeTweetCountWithoutWord = negativeTweetsCount - word.negativeOccurences;
+                
+                long tweetsWithWordCount = word.positiveOccurences + word.negativeOccurences;
+                long tweetsWithoutWordCount = positiveTweetsCount + negativeTweetsCount - tweetsWithWordCount;
 
-                float allTweetsCount = positiveTweetsCount + negativeTweetsCount;
+                double allTweetsCount = positiveTweetsCount + negativeTweetsCount;
                 
-                float expected11 = (positiveTweetsCount * (word.positiveOccurences + word.negativeOccurences)) / allTweetsCount;
-                float expected12 = (positiveTweetsCount * (positiveTweetCountWithoutWord + negativeTweetCountWithoutWord)) / allTweetsCount;
-                float expected21 = (negativeTweetsCount * (word.positiveOccurences + word.negativeOccurences)) / allTweetsCount;
-                float expected22 = (negativeTweetsCount * (positiveTweetCountWithoutWord + negativeTweetCountWithoutWord)) / allTweetsCount;
+                double expected11 = (positiveTweetsCount * tweetsWithWordCount) / allTweetsCount;
+                double expected12 = ((positiveTweetsCount * tweetsWithoutWordCount)) / allTweetsCount;
+                double expected21 = (negativeTweetsCount * tweetsWithWordCount) / allTweetsCount;
+                double expected22 = (negativeTweetsCount * tweetsWithoutWordCount) / allTweetsCount;
                 
-                float chiSquare11 = (float)(Math.Pow((word.positiveOccurences - expected11), 2)) / (expected11);
-                float chiSquare12 = (float)(Math.Pow((positiveTweetCountWithoutWord - expected12), 2)) / (expected12);
-                float chiSquare21 = (float)(Math.Pow((word.negativeOccurences - expected21), 2)) / (expected21);
-                float chiSquare22 = (float)(Math.Pow((negativeTweetCountWithoutWord - expected22), 2)) / (expected22);
+                double chiSquare11 = (float)(Math.Pow((word.positiveOccurences - expected11), 2)) / (expected11);
+                double chiSquare12 = (float)(Math.Pow((positiveTweetCountWithoutWord - expected12), 2)) / (expected12);
+                double chiSquare21 = (float)(Math.Pow((word.negativeOccurences - expected21), 2)) / (expected21);
+                double chiSquare22 = (float)(Math.Pow((negativeTweetCountWithoutWord - expected22), 2)) / (expected22);
 
                 word.chiSquareValue = chiSquare11 + chiSquare12 + chiSquare21 + chiSquare22;
             }
