@@ -355,8 +355,6 @@ namespace MicroSent.Controllers
         {
             List<Tweet> tweets = new List<Tweet>();
             Random r = new Random();
-            Tweet t = new Tweet("Can anyone HELP? I don't know this.... what am I to do :( #learningsucks http://www.mylastexam.com", "test", 0);
-            return new List<Tweet>() { t };
             if (configuration.useSerializedData)
             {
                 tweets = deserializer.deserializeTweets(SerializedTweetsPath);

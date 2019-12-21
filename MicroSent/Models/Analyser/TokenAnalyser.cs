@@ -295,12 +295,12 @@ namespace MicroSent.Models.Analyser
 
             ConsolePrinter.startHashtagParsing();
             ConsolePrinter.startForwardHashtagParsing();
-            Tuple<bool, List<string>> forwardTuple = parseHashtagForward(hashtag);
-
-            ConsolePrinter.startBackwardHashtagParsing();
             Tuple<bool, List<string>> backwardTuple = parseHashtagBackwards(hashtag);
 
-            setBetterSubTokenList(token, forwardTuple, backwardTuple);
+            ConsolePrinter.startBackwardHashtagParsing();
+            Tuple<bool, List<string>> forwardTuple = parseHashtagForward(hashtag);
+
+            setBetterSubTokenList(token, backwardTuple, forwardTuple);
         }
 
         private void setBetterSubTokenList(Token token, Tuple<bool, List<string>> forwardTuple, Tuple<bool, List<string>> backwardTuple)
@@ -341,23 +341,29 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        private Tuple<bool, List<string>> parseHashtagBackwards(string hashtag)
+        private Tuple<bool, List<string>> parseHashtagForward(string hashtag)
         {
             string restToAnalyse = hashtag;
             string currentWord = hashtag;
             List<string> backwardParsingList = new List<string>();
-            bool lastBackwardProcessedWordMakesSense = true;
+            bool lastForwardProcessedWordMakesSense = true;
 
             while (restToAnalyse.Length > 0)
             {
                 if (currentWord.Length == 0)
                 {
                     ConsolePrinter.printRestOfHashtagAnalysis(restToAnalyse);
-                    lastBackwardProcessedWordMakesSense = false;
+                    lastForwardProcessedWordMakesSense = false;
                     break;
                 }
 
-                if (hunspell.Spell(currentWord))
+                // accepting 'nt' as a valid word is tricky:
+                // on the one hand, finally negation can be detected in hashtags, e.g. #wontdothis -> wo - nt - do - this
+                // on the other hand, full words that are not recognised by NHunspell
+                // and end in 'nt' (but are not negated) might lead to negation. This is bad.
+                // But having this negation type is probably better than
+                // sometimes having wrong negation
+                if (hunspell.Spell(currentWord) || currentWord == TokenPartConstants.NEGATION_TOKEN_ENDING_WITHOUT_APOSTROPHE)
                 {
                     ConsolePrinter.printFoundWordInHashtagAnalysis(currentWord, hashtag);
                     backwardParsingList.Insert(0, currentWord);
@@ -369,22 +375,22 @@ namespace MicroSent.Models.Analyser
                     currentWord = currentWord.Substring(1);
                 }
             }
-            return new Tuple<bool, List<string>>(lastBackwardProcessedWordMakesSense, backwardParsingList);
+            return new Tuple<bool, List<string>>(lastForwardProcessedWordMakesSense, backwardParsingList);
         }
 
-        private Tuple<bool, List<string>> parseHashtagForward(string hashtag)
+        private Tuple<bool, List<string>> parseHashtagBackwards(string hashtag)
         {
             string restToAnalyse = hashtag;
             string currentWord = hashtag;
             List<string> forwardParsingList = new List<string>();
-            bool lastForwardProcessedWordMakesSense = true;
+            bool lastBackwardsProcessedWordMakesSense = true;
 
             while (restToAnalyse.Length > 0)
             {
                 if (currentWord.Length == 0)
                 {
                     ConsolePrinter.printRestOfHashtagAnalysis(restToAnalyse);
-                    lastForwardProcessedWordMakesSense = false;
+                    lastBackwardsProcessedWordMakesSense = false;
                     break;
                 }
 
@@ -400,7 +406,7 @@ namespace MicroSent.Models.Analyser
                     currentWord = currentWord.Substring(0, currentWord.Length - 2);
                 }
             }
-            return new Tuple<bool, List<string>>(lastForwardProcessedWordMakesSense, forwardParsingList);
+            return new Tuple<bool, List<string>>(lastBackwardsProcessedWordMakesSense, forwardParsingList);
         }
         #endregion
 
