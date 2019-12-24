@@ -51,22 +51,99 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        #region google parse tree
-        public void buildTreeAndTagTokensFromSyntaxNet(Tweet tweet, JArray tokens, int sentenceIndex)
+        public JArray correctSyntaxNetTokenizingDifferences(Tweet tweet, JArray conllArray, int sentenceIndex)
+        {
+            JArray correctedConllTokens = new JArray();
+            List<int> allDeletedIndexes = new List<int>();
+            for (int i = 0; i < conllArray.Count; i++)
+            {
+                List<int> newlyDeletedIndexes = removeWronglyParsedTokens(i, tweet, conllArray, sentenceIndex);
+                for (int j = 0; j < newlyDeletedIndexes.Count; j++)
+                {
+                    newlyDeletedIndexes[j] = newlyDeletedIndexes[j] + allDeletedIndexes.Count;
+                }
+                allDeletedIndexes.AddRange(newlyDeletedIndexes);
+
+                addNewJObjectToArray(conllArray[i], correctedConllTokens);
+            }
+
+            updateJTokenHeads(correctedConllTokens, allDeletedIndexes);
+
+            return correctedConllTokens;
+        }
+
+        private void updateJTokenHeads(JArray correctedConllTokens, List<int> allDeletedIndexes)
+        {
+            foreach (JObject correctedToken in correctedConllTokens)
+            {
+                int originalParentIndex = correctedToken.Value<int>(GoogleParserConstants.TOKEN_HEAD);
+                if (originalParentIndex != -1)
+                {
+                    int newParentIndex = originalParentIndex - allDeletedIndexes.Count(ind => ind <= originalParentIndex);
+                    if (newParentIndex != originalParentIndex)
+                    {
+                        correctedToken.Remove(GoogleParserConstants.TOKEN_HEAD);
+                        correctedToken.Add(GoogleParserConstants.TOKEN_HEAD, newParentIndex);
+                    }
+                }
+            }
+        }
+
+        private void addNewJObjectToArray(JToken conllToken, JArray correctedConllTokens)
+        {
+            JObject correctedToken = new JObject();
+
+            string tag = conllToken.Value<string>(GoogleParserConstants.TOKEN_TAG);
+            string word = conllToken.Value<string>(GoogleParserConstants.TOKEN_WORD);
+            int head = conllToken.Value<int>(GoogleParserConstants.TOKEN_HEAD);
+
+            correctedToken.Add(GoogleParserConstants.TOKEN_TAG, tag);
+            correctedToken.Add(GoogleParserConstants.TOKEN_WORD, word);
+            correctedToken.Add(GoogleParserConstants.TOKEN_HEAD, head);
+            correctedConllTokens.Add(correctedToken);
+        }
+
+        public void buildDependencyTree(Tweet tweet, JArray conllArray, int sentenceIndex)
         {
             List<Node> allNodes = new List<Node>();
-            List<int> deletedIndexes = new List<int>();
-            for (int i = 0; i < tokens.Count; i++)
+
+            for(int i = 0; i < conllArray.Count; i++)
             {
-                List<int> delIndexes = removeWronglyParsedTokens(i, tweet, tokens, sentenceIndex);
+                Token referencedToken = tweet.sentences[sentenceIndex][i];
+                Node node = new Node(referencedToken, null);
+                allNodes.Add(node);
+            }
 
-                for(int j = 0; j < delIndexes.Count; j++)
+            for (int i = 0; i < conllArray.Count; i++)
+            {
+                JToken conllToken = conllArray[i];
+                int parentIndex = conllToken.Value<int>(GoogleParserConstants.TOKEN_HEAD);
+                if (parentIndex != -1) // -1 indicates the root node
                 {
-                    delIndexes[j] = delIndexes[j] + deletedIndexes.Count;
+                    allNodes[i].setParent(allNodes[parentIndex]);
+                    allNodes[parentIndex].addChild(allNodes[i]);
                 }
-                deletedIndexes.AddRange(delIndexes);
+            }
 
-                string tag = tokens[i].Value<string>(GoogleParserConstants.TOKEN_TAG);
+            tweet.parseTrees.Add(allNodes.Where(n => n.parent == null).First());
+        }
+
+        #region google parse tree
+        public void buildTreeAndTagTokensFromSyntaxNet(Tweet tweet, JArray conllArray, int sentenceIndex)
+        {
+            List<Node> allNodes = new List<Node>();
+            List<int> allDeletedIndexes = new List<int>();
+            for (int i = 0; i < conllArray.Count; i++)
+            {
+                List<int> newlyDeletedIndexes = removeWronglyParsedTokens(i, tweet, conllArray, sentenceIndex);
+
+                for(int j = 0; j < newlyDeletedIndexes.Count; j++)
+                {
+                    newlyDeletedIndexes[j] = newlyDeletedIndexes[j] + allDeletedIndexes.Count;
+                }
+                allDeletedIndexes.AddRange(newlyDeletedIndexes);
+
+                string tag = conllArray[i].Value<string>(GoogleParserConstants.TOKEN_TAG);
                 Token referencedToken = tweet.sentences[sentenceIndex][i];
                 setPosLabel(referencedToken, tag);
 
@@ -74,12 +151,12 @@ namespace MicroSent.Models.Analyser
                 allNodes.Add(node);
             }
 
-            for (int i = 0; i < tokens.Count; i++)
+            for (int i = 0; i < conllArray.Count; i++)
             {
-                JToken token = tokens[i];
-                int originalParentIndex = token.Value<int>(GoogleParserConstants.TOKEN_HEAD);
+                JToken conllToken = conllArray[i];
+                int originalParentIndex = conllToken.Value<int>(GoogleParserConstants.TOKEN_HEAD);
                 //the parent index must be adapted because previous indexes might have been deleted
-                int parentIndex = originalParentIndex - deletedIndexes.Count(ind => ind <= originalParentIndex);
+                int parentIndex = originalParentIndex - allDeletedIndexes.Count(ind => ind <= originalParentIndex);
                 if (parentIndex != -1)
                 {
                     allNodes[i].setParent(allNodes[parentIndex]);

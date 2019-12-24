@@ -68,7 +68,7 @@ namespace MicroSent.Models.Configuration
             useLemmatizedText = true;
 
             negationWindowSize = NegationConstants.FOUR_WORDS;
-            negationType = NegationType.TilNextPunctuation;
+            negationType = NegationType.KWindow;
         }
     }
 }

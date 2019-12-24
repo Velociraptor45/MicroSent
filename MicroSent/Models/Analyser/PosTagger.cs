@@ -110,7 +110,10 @@ namespace MicroSent.Models.Analyser
             for (int i = 0; i < tweet.sentences.Count; i++)
             {
                 JArray conllArray = await getConllArrayFromServer(tweet.getFullUnicodeSentence(i));
-                parseTreeAnalyser.buildTreeAndTagTokensFromSyntaxNet(tweet, conllArray, i);
+                JArray correctedConllArray = parseTreeAnalyser.correctSyntaxNetTokenizingDifferences(tweet, conllArray, i);
+                mapPosLabelsOfConllArrayToTokens(correctedConllArray, tweet.sentences[i]);
+                parseTreeAnalyser.buildDependencyTree(tweet, correctedConllArray, sentenceIndex: i);
+                //parseTreeAnalyser.buildTreeAndTagTokensFromSyntaxNet(tweet, conllArray, i);
             }
         }
 
@@ -123,7 +126,7 @@ namespace MicroSent.Models.Analyser
                     Token hashtagToken = tweet.rest[i];
                     JArray conllArray = await getConllArrayFromServer(tweet.getFullUnicodeRestToken(i));
 
-                    mapConllArrayToSubTokens(conllArray, new List<Token>() { hashtagToken },
+                    mapPosLabelsOfConllArrayToTokens(conllArray, new List<Token>() { hashtagToken },
                         isHashtagAnalysis: true);
                 }
             }
@@ -152,7 +155,7 @@ namespace MicroSent.Models.Analyser
             }
         }
 
-        private void mapConllArrayToSubTokens(JArray conllArray, List<Token> tokens,
+        private void mapPosLabelsOfConllArrayToTokens(JArray conllArray, List<Token> tokens,
             bool isHashtagAnalysis = false)
         {
             for (int i = 0; i < conllArray.Count; i++)
