@@ -155,7 +155,7 @@ namespace MicroSent.Models.Analyser
             token.posLabel = posLabel;
         }
 
-        private PosLabels translateToPosLabel(string tag)
+        public static PosLabels translateToPosLabel(string tag)
         {
             tag = tag.Replace(TokenPartConstants.DOLLAR, TokenPartConstants.LETTER_D);
             if (!Enum.TryParse(tag, out PosLabels posLabel))

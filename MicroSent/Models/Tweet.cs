@@ -77,5 +77,23 @@ namespace MicroSent.Models
             }
             return UnicodeHelper.removeNonUnicodeCharacters(fullSentence);
         }
+
+        public string getFullUnicodeRestToken(int index)
+        {
+            if (this.rest[index].subTokens.Count == 0)
+                return UnicodeHelper.removeNonUnicodeCharacters(rest[index].text);
+            else
+            {
+                string fullText = "";
+                foreach(SubToken subToken in rest[index].subTokens)
+                {
+                    if (subToken == rest[index].subTokens.Last())
+                        fullText += subToken.text;
+                    else
+                        fullText += subToken.text + " ";
+                }
+                return UnicodeHelper.removeNonUnicodeCharacters(fullText);
+            }
+        }
     }
 }

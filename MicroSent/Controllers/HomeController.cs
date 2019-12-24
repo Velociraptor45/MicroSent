@@ -202,15 +202,37 @@ namespace MicroSent.Controllers
                     JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
                     parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
                 }
+                for(int i = 0; i < tweet.rest.Count; i++)
+                {
+                    if (tweet.rest[i].isHashtag)
+                    {
+                        networkSendClientSocket.sendStringToServer(tweet.getFullUnicodeRestToken(i));
+                        Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
+
+                        await serverAnswere;
+                        JObject treeJSON = JObject.Parse(serverAnswere.Result);
+                        JArray parsedTokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
+
+                        for(int j = 0; j < parsedTokens.Count; j++)
+                        {
+                            JToken token = parsedTokens[j];
+                            string tag = token.Value<string>(GoogleParserConstants.TOKEN_TAG);
+                            try
+                            {
+                                tweet.rest[i].subTokens[j].posLabel = ParseTreeAnalyser.translateToPosLabel(tag);
+                            }
+                            catch(Exception e)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine(e.StackTrace);
+                                Console.ResetColor();
+                            }
+                        }
+                    }
+                }
             }
             else
             {
-                //foreach (var sentence in tweet.sentences)
-                //{
-                //    Parse tree = posTagger.parseTweet(sentence);
-                //    Node rootNode = parseTreeAnalyser.translateToNodeTree(tree, tweet);
-                //    tweet.parseTrees.Add(rootNode);
-                //}
                 posTagger.tagAllTokens(tweet);
             }
         }
