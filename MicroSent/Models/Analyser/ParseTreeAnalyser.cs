@@ -52,7 +52,7 @@ namespace MicroSent.Models.Analyser
         }
 
         #region google parse tree
-        public void buildTreeFromGoogleParser(Tweet tweet, JArray tokens, int sentenceIndex)
+        public void buildTreeAndTagTokensFromSyntaxNet(Tweet tweet, JArray tokens, int sentenceIndex)
         {
             List<Node> allNodes = new List<Node>();
             List<int> deletedIndexes = new List<int>();
@@ -151,63 +151,9 @@ namespace MicroSent.Models.Analyser
 
         private void setPosLabel(Token token, string tag)
         {
-            PosLabels posLabel = translateToPosLabel(tag);
+            PosLabels posLabel = Converter.convertTagToPosLabel(tag);
             token.posLabel = posLabel;
         }
-
-        public static PosLabels translateToPosLabel(string tag)
-        {
-            tag = tag.Replace(TokenPartConstants.DOLLAR, TokenPartConstants.LETTER_D);
-            if (!Enum.TryParse(tag, out PosLabels posLabel))
-            {
-                return PosLabels.Default;
-            }
-            return posLabel;
-        }
-        #endregion
-
-        #region stanford parse tree
-        public Node translateToNodeTree(Parse parseTree, Tweet tweet)
-        {
-            Node root = new Node();
-
-            int lastUsedIndex = -1;
-            foreach (var child in parseTree.GetChildren())
-            {
-                lastUsedIndex = buildTreePart(child, root, tweet, lastUsedIndex);
-            }
-
-            return root;
-        }
-
-        private int buildTreePart(Parse partialTree, Node parentNode, Tweet tweet, int lastTokenId)
-        {
-            var children = partialTree.GetChildren();
-            if (children.Length == 1 && children.First().GetChildren().Length == 0)
-            {
-                Node node = new Node(tweet.getTokenByIndex(lastTokenId + 1), parentNode);
-                if (!Enum.TryParse(partialTree.Type, out PosLabels posLabel))
-                {
-                    posLabel = PosLabels.Default;
-                }
-                node.correspondingToken.posLabel = posLabel;
-                parentNode.addChild(node);
-                return lastTokenId + 1;
-            }
-            else
-            {
-                int lastUsedIndex = lastTokenId;
-                Node node = new Node(parentNode);
-                parentNode.addChild(node);
-                foreach (var child in children)
-                {
-                    lastUsedIndex = buildTreePart(child, node, tweet, lastUsedIndex);
-                }
-
-                return lastUsedIndex;
-            }
-        }
-
         #endregion
     }
 }

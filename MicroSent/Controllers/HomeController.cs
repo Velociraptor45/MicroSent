@@ -35,9 +35,6 @@ namespace MicroSent.Controllers
         private Preprocessor preprocessor;
         private ParseTreeAnalyser parseTreeAnalyser;
 
-        private NetworkClientSocket networkSendClientSocket;
-        private NetworkClientSocket networkReceiveClientSocket;
-
         private Serializer serializer;
         private Deserializer deserializer;
 
@@ -58,7 +55,7 @@ namespace MicroSent.Controllers
             regexGenerator.generateEmojiRegexStrings();
             regexGenerator.generateSmileyRegexStrings();
 
-            posTagger = new PosTagger();
+            posTagger = new PosTagger(configuration);
             twitterCrawler = new TwitterCrawler(crawlerConfig);
             tokenizer = new Tokenizer();
             tokenAnalyser = new TokenAnalyser();
@@ -68,10 +65,6 @@ namespace MicroSent.Controllers
             preprocessor = new Preprocessor();
             parseTreeAnalyser = new ParseTreeAnalyser();
 
-            networkSendClientSocket = new NetworkClientSocket(
-                configuration.clientSendingPort, configuration.clientHost);
-            networkReceiveClientSocket = new NetworkClientSocket(
-                configuration.clientReceivingPort, configuration.clientHost);
 
             serializer = new Serializer();
             deserializer = new Deserializer();
@@ -143,9 +136,9 @@ namespace MicroSent.Controllers
 
                     //single tweet analysis
                     tweetAnalyser.analyseFirstEndHashtagPosition(allTokens, tweet);
-                    posTagger.cutIntoSentences(tweet, allTokens);
+                    posTagger.cutTokensIntoSentences(tweet, allTokens);
 
-                    await parseTweet(tweet);
+                    await posTagger.tagAllTokensOfTweet(tweet);
 
                     // converting to lowercase is important for matching words from the lexicon
                     // but lowercasing can only be applied after Pos-Tagging because
@@ -184,56 +177,6 @@ namespace MicroSent.Controllers
                     tokenAnalyser.stem(token);
                     tokenAnalyser.lemmatize(token);
                 }
-            }
-        }
-
-        private async Task parseTweet(Tweet tweet)
-        {
-            if (configuration.useGoogleParser)
-            {
-                for (int i = 0; i < tweet.sentences.Count; i++)
-                {
-                    networkSendClientSocket.sendStringToServer(tweet.getFullUnicodeSentence(i));
-                    Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
-
-                    await serverAnswere;
-                    JObject treeJSON = JObject.Parse(serverAnswere.Result);
-
-                    JArray tokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
-                    parseTreeAnalyser.buildTreeFromGoogleParser(tweet, tokens, i);
-                }
-                for(int i = 0; i < tweet.rest.Count; i++)
-                {
-                    if (tweet.rest[i].isHashtag)
-                    {
-                        networkSendClientSocket.sendStringToServer(tweet.getFullUnicodeRestToken(i));
-                        Task<string> serverAnswere = networkReceiveClientSocket.receiveParseTree();
-
-                        await serverAnswere;
-                        JObject treeJSON = JObject.Parse(serverAnswere.Result);
-                        JArray parsedTokens = treeJSON.Value<JArray>(GoogleParserConstants.TOKEN_ARRAY);
-
-                        for(int j = 0; j < parsedTokens.Count; j++)
-                        {
-                            JToken token = parsedTokens[j];
-                            string tag = token.Value<string>(GoogleParserConstants.TOKEN_TAG);
-                            try
-                            {
-                                tweet.rest[i].subTokens[j].posLabel = ParseTreeAnalyser.translateToPosLabel(tag);
-                            }
-                            catch(Exception e)
-                            {
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine(e.StackTrace);
-                                Console.ResetColor();
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                posTagger.tagAllTokens(tweet);
             }
         }
 
