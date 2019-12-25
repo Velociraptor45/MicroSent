@@ -4,7 +4,6 @@ using MicroSent.Models.Enums;
 using MicroSent.Models.Network;
 using MicroSent.Models.Util;
 using Newtonsoft.Json.Linq;
-using OpenNLP.Tools.Parser;
 using OpenNLP.Tools.PosTagger;
 using System;
 using System.Collections.Generic;
@@ -26,7 +25,7 @@ namespace MicroSent.Models.Analyser
         private IAlgorithmConfiguration configuration;
         #endregion
 
-        #region constructor
+        #region constructors
         public PosTagger(IAlgorithmConfiguration configuration)
         {
             this.configuration = configuration;
@@ -92,9 +91,145 @@ namespace MicroSent.Models.Analyser
                 tagAllTokensWithStanford(tweet);
             }
         }
+
+        public JArray correctSyntaxNetTokenizingDifferences(Tweet tweet, JArray conllArray, int sentenceIndex)
+        {
+            JArray correctedConllTokens = new JArray();
+            List<int> allRemovedIndexes = new List<int>();
+            for (int i = 0; i < conllArray.Count; i++)
+            {
+                List<int> newlyRemovedIndexes = removeWronglyParsedTokensIfNecessary(i, tweet, conllArray, sentenceIndex);
+                correctRemovedIndexes(newlyRemovedIndexes, allRemovedIndexes.Count);
+                allRemovedIndexes.AddRange(newlyRemovedIndexes);
+
+                addNewJObjectToArray(conllArray[i], correctedConllTokens);
+            }
+
+            updateJTokenHeads(correctedConllTokens, allRemovedIndexes);
+
+            return correctedConllTokens;
+        }
         #endregion
 
         #region private methods
+        private void correctRemovedIndexes(List<int> removedIndexes, int amountOfPreviouslyRemovedIndexes)
+        {
+            // The removed conllArray indexes might not be correct because
+            // there might already be tokens removed before. The currently removed indexes
+            // must be corrected to match their original index
+
+            if (amountOfPreviouslyRemovedIndexes == 0)
+                return;
+
+            for (int j = 0; j < removedIndexes.Count; j++)
+            {
+                removedIndexes[j] = removedIndexes[j] + amountOfPreviouslyRemovedIndexes;
+            }
+        }
+
+        private List<int> removeWronglyParsedTokensIfNecessary(int currentTokenIndex, Tweet tweet,
+            JArray conllArray, int sentenceIndex)
+        {
+            JToken token = conllArray[currentTokenIndex];
+
+            // the array count is reduced by 1 because you don't need to check the last
+            // token. There won't be any other tokens after it that you can concatinate
+            // it with if the jToken und the sentence token don't match
+            if (currentTokenIndex < conllArray.Count - 1)
+            {
+                string jTokenText = token.Value<string>(GoogleParserConstants.TOKEN_WORD);
+                string sentenceTokenText = UnicodeHelper.removeNonUnicodeCharacters(tweet.sentences[sentenceIndex][currentTokenIndex].text);
+                if (!areTokensEqual(jTokenText, sentenceTokenText))
+                {
+                    var indexRangeToRemove = getTokenIndexRangeToRemove(currentTokenIndex, jTokenText,
+                        sentenceTokenText, conllArray);
+                    if (indexRangeToRemove != null)
+                    {
+                        ConsolePrinter.printCorrectedGoogleParsing(tweet.getFullUnicodeSentence(sentenceIndex));
+                        return removeTokens(indexRangeToRemove.Item1, indexRangeToRemove.Item2, conllArray);
+                    }
+                }
+            }
+            return new List<int>();
+        }
+
+        private Tuple<int, int> getTokenIndexRangeToRemove(
+            int currentTokenIndex, string startJTokenText, string tokenTextToMatch, JArray conllArray)
+        {
+            int deleteUnitilThisIndex = currentTokenIndex + 1;
+            string concatinatedJTokenText = startJTokenText;
+            while (deleteUnitilThisIndex < conllArray.Count)
+            {
+                string nextJTokenText = conllArray[deleteUnitilThisIndex].Value<string>(GoogleParserConstants.TOKEN_WORD);
+                translateGoogleAbbreviation(ref nextJTokenText);
+
+                if (areTokensEqual(concatinatedJTokenText + nextJTokenText, tokenTextToMatch))
+                {
+                    // the token at the current index mustn't be deleted because
+                    // it represents the jToken that has to be matched to the sentence token (from the tweet)
+                    // it doesn't matter that the content isn't the same - only the indexes are imporant
+                    return new Tuple<int, int>(currentTokenIndex + 1, deleteUnitilThisIndex);
+                }
+                concatinatedJTokenText += nextJTokenText;
+                deleteUnitilThisIndex++;
+            }
+            // Adding the text of jTokens couldn't match the tokenTextToMatch string.
+            // It's hard to handle this because this means that the application tokenizer
+            // and the SyntaxNet tokenizer are working totally different in this case (or
+            // the communication via network is making problem.
+            // But normally this shouldn't happen - and if it does the code must be adapted
+            // to cover this case
+            return null;
+        }
+
+        private bool areTokensEqual(string jTokenText, string sentenceTokenText)
+        {
+            // The apostrophe at the start of jTokenText is checked because
+            // that's (apart from the negation ending n't) the only position where
+            // apostrophes can occure and the network communication erases them during transmission.
+            // This might have to be fixed in the future - but it works currently
+            return jTokenText == sentenceTokenText
+                    || ($"{TokenPartConstants.APOSTROPHE}{jTokenText}" == sentenceTokenText)
+                    || (isNegationEnding(jTokenText) && isNegationEnding(sentenceTokenText));
+        }
+
+        private bool isNegationEnding(string tokenText)
+        {
+            return tokenText == TokenPartConstants.NEGATION_TOKEN_ENDING_WITH_APOSTROPHE
+                            || tokenText == TokenPartConstants.NEGATION_TOKEN_ENDING_WITHOUT_APOSTROPHE;
+        }
+
+        private void updateJTokenHeads(JArray correctedConllTokens, List<int> allDeletedIndexes)
+        {
+            foreach (JObject correctedToken in correctedConllTokens)
+            {
+                int originalParentIndex = correctedToken.Value<int>(GoogleParserConstants.TOKEN_HEAD);
+                if (originalParentIndex != -1)
+                {
+                    int newParentIndex = originalParentIndex - allDeletedIndexes.Count(ind => ind <= originalParentIndex);
+                    if (newParentIndex != originalParentIndex)
+                    {
+                        correctedToken.Remove(GoogleParserConstants.TOKEN_HEAD);
+                        correctedToken.Add(GoogleParserConstants.TOKEN_HEAD, newParentIndex);
+                    }
+                }
+            }
+        }
+
+        private void addNewJObjectToArray(JToken conllToken, JArray correctedConllTokens)
+        {
+            JObject correctedToken = new JObject();
+
+            string tag = conllToken.Value<string>(GoogleParserConstants.TOKEN_TAG);
+            string word = conllToken.Value<string>(GoogleParserConstants.TOKEN_WORD);
+            int head = conllToken.Value<int>(GoogleParserConstants.TOKEN_HEAD);
+
+            correctedToken.Add(GoogleParserConstants.TOKEN_TAG, tag);
+            correctedToken.Add(GoogleParserConstants.TOKEN_WORD, word);
+            correctedToken.Add(GoogleParserConstants.TOKEN_HEAD, head);
+            correctedConllTokens.Add(correctedToken);
+        }
+
         private async Task<JArray> getConllArrayFromServer(string sentence)
         {
             networkSendClientSocket.sendStringToServer(sentence);
@@ -110,10 +245,9 @@ namespace MicroSent.Models.Analyser
             for (int i = 0; i < tweet.sentences.Count; i++)
             {
                 JArray conllArray = await getConllArrayFromServer(tweet.getFullUnicodeSentence(i));
-                JArray correctedConllArray = parseTreeAnalyser.correctSyntaxNetTokenizingDifferences(tweet, conllArray, i);
+                JArray correctedConllArray = correctSyntaxNetTokenizingDifferences(tweet, conllArray, i);
                 mapPosLabelsOfConllArrayToTokens(correctedConllArray, tweet.sentences[i]);
                 parseTreeAnalyser.buildDependencyTree(tweet, correctedConllArray, sentenceIndex: i);
-                //parseTreeAnalyser.buildTreeAndTagTokensFromSyntaxNet(tweet, conllArray, i);
             }
         }
 
@@ -207,6 +341,30 @@ namespace MicroSent.Models.Analyser
         private string[] tagSequence(List<SubToken> subTokensList)
         {
             return tagSequence(subTokensList.Select(t => t.text).ToArray());
+        }
+
+        private void translateGoogleAbbreviation(ref string word)
+        {
+            switch (word)
+            {
+                case GoogleParserConstants.RIGHT_ROUND_BRACKED:
+                    word = TokenPartConstants.CLOSING_BRACKET;
+                    break;
+                case GoogleParserConstants.LEFT_ROUND_BRACKED:
+                    word = TokenPartConstants.OPENING_BRACKET;
+                    break;
+            }
+        }
+
+        private List<int> removeTokens(int firstIndexToDelete, int lastIndexToDelete, JArray tokens)
+        {
+            List<int> deletedIndexes = new List<int>();
+            for (int i = lastIndexToDelete; i >= firstIndexToDelete; i--)
+            {
+                tokens.RemoveAt(i);
+                deletedIndexes.Add(i);
+            }
+            return deletedIndexes;
         }
         #endregion
     }

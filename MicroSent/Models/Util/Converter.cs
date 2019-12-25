@@ -6,6 +6,7 @@ namespace MicroSent.Models.Util
 {
     public static class Converter
     {
+        #region public methods
         public static PosLabels convertTagToPosLabel(string tag)
         {
             tag = tag.Replace(TokenPartConstants.DOLLAR, TokenPartConstants.LETTER_D);
@@ -15,5 +16,6 @@ namespace MicroSent.Models.Util
             }
             return posLabel;
         }
+        #endregion
     }
 }
