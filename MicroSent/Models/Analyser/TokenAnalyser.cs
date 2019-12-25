@@ -11,6 +11,7 @@ namespace MicroSent.Models.Analyser
 {
     public class TokenAnalyser
     {
+        #region private members
         private const string MentionReplacement = "Michael";
 
         private Regex linkDetection = new Regex(RegexConstants.LINK_PATTERN);
@@ -23,7 +24,9 @@ namespace MicroSent.Models.Analyser
         Lemmatizer lemmatizer;
 
         private NHunspell.Hunspell hunspell;
+        #endregion
 
+        #region constructors
         public TokenAnalyser()
         {
             hunspell = new NHunspell.Hunspell(DataPath.NHUNSPELL_ENG_AFF, DataPath.NHUNSPELL_ENG_DICT);
@@ -33,7 +36,9 @@ namespace MicroSent.Models.Analyser
                 lemmatizer = new Lemmatizer(stream);
             }
         }
+        #endregion
 
+        #region public methods
         public void analyseTokenType(Token token)
         {
             if (checkForHashtag(token))
@@ -65,6 +70,7 @@ namespace MicroSent.Models.Analyser
                 return;
             }
         }
+        #endregion
 
         #region tokentype
         private bool checkForHashtag(Token token)
@@ -72,7 +78,6 @@ namespace MicroSent.Models.Analyser
             if (token.text.StartsWith(TokenPartConstants.TWITTER_HASHTAG))
             {
                 token.text = token.text.Remove(0, 1);
-                //analyseHashtag
                 return token.isHashtag = true;
             }
             return false;

@@ -9,6 +9,7 @@ namespace MicroSent.Models.Analyser
 {
     public class TweetAnalyser
     {
+        #region private members
         private const string IronyString = "irony";
         private const string SarcasmStringSlash = "/s";
         private const string SarcasmStringBackslash = "\\s";
@@ -20,12 +21,16 @@ namespace MicroSent.Models.Analyser
         private List<string> auxiliaryVerbs = new List<string> { "am", "is", "are", "was", "were", "do", "did", "does" };
 
         private Regex domainDetection = new Regex(RegexConstants.DOMAIN_PATTERN);
+        #endregion
 
+        #region constructors
         public TweetAnalyser()
         {
 
         }
+        #endregion
 
+        #region public methods
         public void analyseFirstEndHashtagPosition(List<Token> tokens, Tweet tweet)
         {
             for (int i = tokens.Count - 1; i > 0; i--)
@@ -56,6 +61,164 @@ namespace MicroSent.Models.Analyser
             tweet.isIronic = hasIronyEndHashtag(tweet) || hasSarcasmToken(tweet);
         }
 
+        public void filterUselessInterogativeSentences(Tweet tweet)
+        {
+            foreach (var sentence in tweet.sentences)
+            {
+                if (sentence.Count > 3)
+                {
+                    Token firstToken = sentence.First();
+                    Token secondToken = sentence[1];
+                    Token lastToken = sentence.Last();
+
+                    if (isWhWord(firstToken)
+                        && isAuxiliaryVerb(secondToken)
+                        && lastToken.text.Contains(TokenPartConstants.QUESTIONMARK))
+                    {
+                        ConsolePrinter.printSentenceIgnored(tweet, tweet.sentences.IndexOf(sentence));
+                        ignoreSentenceForRating(sentence);
+                    }
+                }
+            }
+        }
+
+        public void applyKWordNegation(Tweet tweet, int negatedWordDistance,
+            bool negateLeftSide = true, bool negateRightSide = true, bool ignoreSentenceBoundaries = false)
+        {
+            foreach (List<Token> sentenceTokens in tweet.sentences)
+            {
+                foreach (int tokenSentenceIndex in getSentenceIndexesOfNegationWord(sentenceTokens, tweet))
+                {
+                    Token token = sentenceTokens[tokenSentenceIndex];
+
+                    int firstNegationIndex = negateLeftSide ? token.indexInTweet - negatedWordDistance : token.indexInTweet;
+                    int lastNegationIndex = negateRightSide ? token.indexInTweet + negatedWordDistance : token.indexInTweet;
+
+                    //the first part of the negation word is eg. do, did, could, ...
+                    //this counts as token but shouldn't, so the negation distance must be increased
+                    if (token.text == TokenPartConstants.NEGATION_TOKEN_ENDING_WITH_APOSTROPHE || token.text == TokenPartConstants.NEGATION_TOKEN_ENDING_WITHOUT_APOSTROPHE)
+                        firstNegationIndex--;
+
+                    //tweet boundaries
+                    firstNegationIndex = firstNegationIndex < 0 ? 0 : firstNegationIndex;
+                    lastNegationIndex = lastNegationIndex > tweet.tokenCount - 1 ? tweet.tokenCount - 1 : lastNegationIndex;
+
+                    //sentence boundaries
+                    if (!ignoreSentenceBoundaries)
+                    {
+                        if (sentenceTokens.Count(t => t.indexInTweet == firstNegationIndex) == 0)
+                        {
+                            firstNegationIndex = sentenceTokens.First().indexInTweet;
+                        }
+                        while (sentenceTokens.Count(t => t.indexInTweet == lastNegationIndex) == 0)
+                        {
+                            lastNegationIndex = sentenceTokens.Last().indexInTweet;
+                        }
+                    }
+
+                    for (int i = firstNegationIndex; i <= lastNegationIndex; i++)
+                    {
+                        if (i == tokenSentenceIndex)
+                        {
+                            continue;
+                        }
+                        negate(tweet.getTokenByIndex(i));
+                    }
+                }
+            }
+        }
+
+        public void applyEndHashtagNegation(Tweet tweet)
+        {
+            if (tweet.firstEndHashtagIndex == -1)
+                return;
+
+            foreach (Token token in tweet.rest.Where(t => t.indexInTweet >= tweet.firstEndHashtagIndex))
+            {
+                if (token.isHashtag)
+                {
+                    foreach (SubToken subToken in token.subTokens)
+                    {
+                        Match match = negationHashtagPart.Match(subToken.text);
+                        if (match.Success)
+                        {
+                            negate(token);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        public void applyParseTreeDependentNegation(Tweet tweet, bool negationBeforeQuestionmark)
+        {
+            for (int sentenceIndex = 0; sentenceIndex < tweet.sentences.Count; sentenceIndex++)
+            {
+                List<Token> sentenceTokens = tweet.sentences[sentenceIndex];
+                if (!negationBeforeQuestionmark && sentenceTokens.Last().text == (TokenPartConstants.QUESTIONMARK).ToString())
+                {
+                    continue;
+                }
+
+                List<int> negationWordIndexes = getSentenceIndexesOfNegationWord(sentenceTokens, tweet);
+
+                foreach (int negationWordIndex in negationWordIndexes)
+                {
+                    List<int> tokenSentenceIndexesToNegate = getNegationRangeIndexes(tweet.parseTrees[sentenceIndex], negationWordIndex);
+                    foreach (int tokenSentenceIndexToNegate in tokenSentenceIndexesToNegate)
+                    {
+                        Token token = sentenceTokens.Where(t => t.indexInSentence == tokenSentenceIndexToNegate).ToList().FirstOrDefault();
+                        if (token.indexInTweet > -1)
+                        {
+                            negate(token);
+                        }
+                        else
+                        {
+                            ConsolePrinter.printSentenceNotFoundMessage(sentenceIndex, tokenSentenceIndexToNegate);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void applyNegationTilNextPunctuation(Tweet tweet)
+        {
+            foreach (List<Token> sentenceTokens in tweet.sentences)
+            {
+                foreach (int tokenSentenceIndex in getSentenceIndexesOfNegationWord(sentenceTokens, tweet))
+                {
+                    for (int i = tokenSentenceIndex + 1; i < sentenceTokens.Count; i++)
+                    {
+                        Token token = sentenceTokens[i];
+                        if (token.isPunctuation || token.isStructureToken)
+                            break;
+
+                        token.negationRating = RatingConstants.NEGATION;
+                    }
+                }
+            }
+        }
+
+        public void applySpecialStructureNegation(Tweet tweet)
+        {
+            foreach (var sentence in tweet.sentences)
+            {
+                for (int i = 0; i < sentence.Count; i++)
+                {
+                    negateGerundForms(i, sentence);
+                    negateBaseFroms(i, sentence);
+                }
+            }
+        }
+
+        public string extractDomain(string url)
+        {
+            string fullHost = new Uri(url).Host;
+            return domainDetection.Match(fullHost).Value;
+        }
+        #endregion
+
+        #region private methods
         private bool hasIronyEndHashtag(Tweet tweet)
         {
             if (tweet.firstEndHashtagIndex == -1)
@@ -87,35 +250,7 @@ namespace MicroSent.Models.Analyser
             return false;
         }
 
-        public string extractDomain(string url)
-        {
-            string fullHost = new Uri(url).Host;
-            return domainDetection.Match(fullHost).Value;
-        }
-
-
         #region special structure filtering
-        public void filterUselessInterogativeSentences(Tweet tweet)
-        {
-            foreach (var sentence in tweet.sentences)
-            {
-                if (sentence.Count > 3)
-                {
-                    Token firstToken = sentence.First();
-                    Token secondToken = sentence[1];
-                    Token lastToken = sentence.Last();
-
-                    if (isWhWord(firstToken)
-                        && isAuxiliaryVerb(secondToken)
-                        && lastToken.text.Contains(TokenPartConstants.QUESTIONMARK))
-                    {
-                        ConsolePrinter.printSentenceIgnored(tweet, tweet.sentences.IndexOf(sentence));
-                        ignoreSentenceForRating(sentence);
-                    }
-                }
-            }
-        }
-
         private bool isWhWord(Token token)
         {
             return whWords.Contains(token.text);
@@ -160,36 +295,6 @@ namespace MicroSent.Models.Analyser
         /// NEGATION APPLICATION
         //////////////////////////////////////////////////////////////////////////
 
-        public void applyNegationTilNextPunctuation(Tweet tweet)
-        {
-            foreach (List<Token> sentenceTokens in tweet.sentences)
-            {
-                foreach (int tokenSentenceIndex in getSentenceIndexesOfNegationWord(sentenceTokens, tweet))
-                {
-                    for(int i = tokenSentenceIndex + 1; i < sentenceTokens.Count; i++)
-                    {
-                        Token token = sentenceTokens[i];
-                        if (token.isPunctuation || token.isStructureToken)
-                            break;
-
-                        token.negationRating = RatingConstants.NEGATION;
-                    }
-                }
-            }
-        }
-
-        public void applySpecialStructureNegation(Tweet tweet)
-        {
-            foreach(var sentence in tweet.sentences)
-            {
-                for(int i = 0; i < sentence.Count; i++)
-                {
-                    negateGerundForms(i, sentence);
-                    negateBaseFroms(i, sentence);
-                }
-            }
-        }
-
         private void negateGerundForms(int tokenIndex, List<Token> sentence)
         {
             Token token = sentence[tokenIndex];
@@ -216,105 +321,6 @@ namespace MicroSent.Models.Analyser
                 if (nextToken.text == "to" && secondNextToken.posLabel == Enums.PosLabels.VB)
                 {
                     negate(secondNextToken);
-                }
-            }
-        }
-
-        public void applyKWordNegation(Tweet tweet, int negatedWordDistance,
-            bool negateLeftSide = true, bool negateRightSide = true, bool ignoreSentenceBoundaries = false)
-        {
-            foreach (List<Token> sentenceTokens in tweet.sentences)
-            {
-                foreach (int tokenSentenceIndex in getSentenceIndexesOfNegationWord(sentenceTokens, tweet))
-                {
-                    Token token = sentenceTokens[tokenSentenceIndex];
-
-                    int firstNegationIndex = negateLeftSide ? token.indexInTweet - negatedWordDistance : token.indexInTweet;
-                    int lastNegationIndex = negateRightSide ? token.indexInTweet + negatedWordDistance : token.indexInTweet;
-
-                    //the first part of the negation word is eg. do, did, could, ...
-                    //this counts as token but shouldn't, so the negation distance must be increased
-                    if (token.text == TokenPartConstants.NEGATION_TOKEN_ENDING_WITH_APOSTROPHE|| token.text == TokenPartConstants.NEGATION_TOKEN_ENDING_WITHOUT_APOSTROPHE)
-                        firstNegationIndex--;
-
-                    //tweet boundaries
-                    firstNegationIndex = firstNegationIndex < 0 ? 0 : firstNegationIndex;
-                    lastNegationIndex = lastNegationIndex > tweet.tokenCount - 1 ? tweet.tokenCount - 1 : lastNegationIndex;
-
-                    //sentence boundaries
-                    if (!ignoreSentenceBoundaries)
-                    {
-                        if (sentenceTokens.Count(t => t.indexInTweet == firstNegationIndex) == 0)
-                        {
-                            firstNegationIndex = sentenceTokens.First().indexInTweet;
-                        }
-                        while (sentenceTokens.Count(t => t.indexInTweet == lastNegationIndex) == 0)
-                        {
-                            lastNegationIndex = sentenceTokens.Last().indexInTweet;
-                        }
-                    }
-
-                    for (int i = firstNegationIndex; i <= lastNegationIndex; i++)
-                    {
-                        if (i == tokenSentenceIndex)
-                        {
-                            continue;
-                        }
-                        negate(tweet.getTokenByIndex(i));
-                    }
-                }
-            }
-        }
-
-        public void applyEndHashtagNegation(Tweet tweet)
-        {
-            if (tweet.firstEndHashtagIndex == -1)
-                return;
-
-            foreach(Token token in tweet.rest.Where(t => t.indexInTweet >= tweet.firstEndHashtagIndex))
-            {
-                if (token.isHashtag)
-                {
-                    foreach (SubToken subToken in token.subTokens)
-                    {
-                        Match match = negationHashtagPart.Match(subToken.text);
-                        if (match.Success)
-                        {
-                            negate(token);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        public void applyParseTreeDependentNegation(Tweet tweet, bool negationBeforeQuestionmark)
-        {
-            for(int sentenceIndex = 0; sentenceIndex < tweet.sentences.Count; sentenceIndex++)
-            {
-                List<Token> sentenceTokens = tweet.sentences[sentenceIndex];
-                if (!negationBeforeQuestionmark && sentenceTokens.Last().text == (TokenPartConstants.QUESTIONMARK).ToString())
-                {
-                    continue;
-                }
-
-                List<int> negationWordIndexes = getSentenceIndexesOfNegationWord(sentenceTokens, tweet);
-
-                foreach(int negationWordIndex in negationWordIndexes)
-                {
-                    List<int> tokenSentenceIndexesToNegate = getNegationRangeIndexes(tweet.parseTrees[sentenceIndex], negationWordIndex);
-                    foreach(int tokenSentenceIndexToNegate in tokenSentenceIndexesToNegate)
-                    {
-                        Token token = sentenceTokens.Where(t => t.indexInSentence == tokenSentenceIndexToNegate).ToList().FirstOrDefault();
-                        if (token.indexInTweet > -1)
-                        {
-                            negate(token);
-                        }
-                        else
-                        {
-                            ConsolePrinter.printSentenceNotFoundMessage(sentenceIndex, tokenSentenceIndexToNegate);
-                        }
-                    }
                 }
             }
         }
@@ -369,6 +375,7 @@ namespace MicroSent.Models.Analyser
 
             return new Tuple<int, int>(smallestChildrenIndex, highestChildrenIndex);
         }
+        #endregion
         #endregion
     }
 }

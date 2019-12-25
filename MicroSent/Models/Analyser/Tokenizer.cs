@@ -11,25 +11,19 @@ namespace MicroSent.Models.Analyser
 {
     public class Tokenizer
     {
+        #region private members
         Regex tokenDetection;
         Regex negationDetection;
+        #endregion
 
+        #region constructors
         public Tokenizer()
         {
             initRegex();
         }
+        #endregion
 
-        private void initRegex()
-        {
-            tokenDetection = new Regex($"({RegexConstants.LINK_PATTERN})" +
-                $"|({RegexConstants.ALL_SMILEY_PATTERN})" +
-                $"|({RegexConstants.SENTENCE_STRUCTURE_PATTERN})" +
-                $"|({RegexConstants.PUNCTUATION_PATTERN})" +
-                $"|({RegexConstants.WORDS_PATTERN})" +
-                $"|({RegexConstants.ALL_EMOJI_PATTERN})");
-            negationDetection = new Regex($"{RegexConstants.NEGATION_WORD_PATTERN}");
-        }
-
+        #region public methods
         public List<Token> splitIntoTokens(Tweet tweet)
         {
             List<Token> allTokens = new List<Token>();
@@ -39,7 +33,7 @@ namespace MicroSent.Models.Analyser
 
             MatchCollection tokenMatches = tokenDetection.Matches(tweet.fullText);
 
-            foreach(Match match in tokenMatches)
+            foreach (Match match in tokenMatches)
             {
                 string text = match.Value;
 
@@ -72,10 +66,10 @@ namespace MicroSent.Models.Analyser
                     allTokens.Add(secondToken);
                     continue;
                 }
-                else if(tweet.fullText.Contains(TokenPartConstants.APOSTROPHE))
+                else if (tweet.fullText.Contains(TokenPartConstants.APOSTROPHE))
                 {
                     string[] parts = text.Split(TokenPartConstants.APOSTROPHE);
-                    for(int i = 0; i < parts.Length; i++)
+                    for (int i = 0; i < parts.Length; i++)
                     {
                         Token token;
                         if (i > 0)
@@ -94,5 +88,19 @@ namespace MicroSent.Models.Analyser
 
             return allTokens;
         }
+        #endregion
+
+        #region private methods
+        private void initRegex()
+        {
+            tokenDetection = new Regex($"({RegexConstants.LINK_PATTERN})" +
+                $"|({RegexConstants.ALL_SMILEY_PATTERN})" +
+                $"|({RegexConstants.SENTENCE_STRUCTURE_PATTERN})" +
+                $"|({RegexConstants.PUNCTUATION_PATTERN})" +
+                $"|({RegexConstants.WORDS_PATTERN})" +
+                $"|({RegexConstants.ALL_EMOJI_PATTERN})");
+            negationDetection = new Regex($"{RegexConstants.NEGATION_WORD_PATTERN}");
+        }
+        #endregion
     }
 }

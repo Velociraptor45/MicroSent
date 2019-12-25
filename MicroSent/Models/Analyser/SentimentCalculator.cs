@@ -8,13 +8,18 @@ namespace MicroSent.Models.Analyser
 {
     public class SentimentCalculator
     {
+        #region private members
         private IAlgorithmConfiguration configuration;
+        #endregion
 
+        #region constructors
         public SentimentCalculator(IAlgorithmConfiguration configuration)
         {
             this.configuration = configuration;
         }
+        #endregion
 
+        #region public methods
         public void calculateFinalSentiment(Tweet tweet)
         {
             foreach (List<Token> sentence in tweet.sentences)
@@ -47,7 +52,9 @@ namespace MicroSent.Models.Analyser
                 applyTotalThreshold(tweet);
             }
         }
+        #endregion
 
+        #region private methods
         private float calculateTokenRating(Tweet tweet, Token token)
         {
             float tokenRating;
@@ -131,5 +138,6 @@ namespace MicroSent.Models.Analyser
             }
             return false;
         }
+        #endregion
     }
 }
