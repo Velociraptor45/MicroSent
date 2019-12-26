@@ -33,7 +33,8 @@ namespace MicroSent.Controllers
         private PosTagger posTagger;
         private SentimentCalculator sentimentCalculator;
         private Preprocessor preprocessor;
-        private ParseTreeAnalyser parseTreeAnalyser;
+        private ParseTreeBuilder parseTreeAnalyser;
+        private Negator negator;
 
         private Serializer serializer;
         private Deserializer deserializer;
@@ -63,8 +64,8 @@ namespace MicroSent.Controllers
             wordRater = new WordRater(algorithmConfiguration);
             sentimentCalculator = new SentimentCalculator(algorithmConfiguration);
             preprocessor = new Preprocessor();
-            parseTreeAnalyser = new ParseTreeAnalyser();
-
+            parseTreeAnalyser = new ParseTreeBuilder();
+            negator = new Negator();
 
             serializer = new Serializer();
             deserializer = new Deserializer();
@@ -185,17 +186,17 @@ namespace MicroSent.Controllers
             switch (configuration.negationType)
             {
                 case NegationType.GoogleParseTree:
-                    parseTreeAnalyser.applyGoogleParseTreeNegation(tweet);
+                    negator.applyGoogleParseTreeNegation(tweet);
                     break;
                 case NegationType.TilNextPunctuation:
-                    tweetAnalyser.applyNegationTilNextPunctuation(tweet);
+                    negator.applyNegationTilNextPunctuation(tweet);
                     break;
                 case NegationType.KWindow:
-                    tweetAnalyser.applyKWordNegation(tweet, configuration.negationWindowSize);
+                    negator.applyKWordNegation(tweet, configuration.negationWindowSize);
                     break;
             }
-            tweetAnalyser.applySpecialStructureNegation(tweet);
-            tweetAnalyser.applyEndHashtagNegation(tweet);
+            negator.applySpecialStructureNegation(tweet);
+            negator.applyEndHashtagNegation(tweet);
         }
         #endregion
 
@@ -297,22 +298,15 @@ namespace MicroSent.Controllers
         private async Task<List<Tweet>> getTweets(HomeViewModel homeViewModel)
         {
             List<Tweet> tweets = new List<Tweet>();
-            Random r = new Random();
             if (configuration.useSerializedData)
             {
                 tweets = deserializer.deserializeTweets(SerializedTweetsPath);
-                foreach (Tweet tweet in tweets)
-                {
-                    tweet.referencedAccount = $"@testacc{r.Next(70)}";
-                }
+                setRandomReferencedAccounts(tweets);
             }
             else if (configuration.testing)
             {
                 tweets = tester.getTestTweets().Skip(configuration.skipTweetsAmount).ToList();
-                foreach (Tweet tweet in tweets)
-                {
-                    tweet.referencedAccount = $"@testacc{r.Next(70)}";
-                }
+                setRandomReferencedAccounts(tweets);
             }
             else
             {
@@ -321,6 +315,15 @@ namespace MicroSent.Controllers
                     return null;
             }
             return tweets;
+        }
+
+        private void setRandomReferencedAccounts(List<Tweet> tweets)
+        {
+            Random r = new Random();
+            foreach (Tweet tweet in tweets)
+            {
+                tweet.referencedAccount = $"@testacc{r.Next(70)}";
+            }
         }
 
         private async Task<List<Tweet>> crawlTweetsAsync(string accountName)
@@ -340,20 +343,36 @@ namespace MicroSent.Controllers
             List<Tweet> tweets = new List<Tweet>();
             foreach (Status status in statuses)
             {
-                Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.StatusID);
-                tweet.urls.AddRange(getNoneTwitterUrls(status));
-                if (status.IsQuotedStatus)
-                {
-                    User referencedAccount = status.QuotedStatus.User;
-                    if (referencedAccount == null)
-                        continue; //quoted tweets without a referenced account are ... broken?
-                                  //if you attempt to find those tweet, they don't exist -> skip them
-                    else
-                        tweet.referencedAccount = $"@{referencedAccount.ScreenNameResponse}";
-                }
-                tweets.Add(tweet);
+                Tweet tweet = buildTweetFromStatus(status);
+                if(tweet != null)
+                    tweets.Add(tweet);
             }
             return tweets;
+        }
+
+        private Tweet buildTweetFromStatus(Status status)
+        {
+            Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.StatusID);
+            tweet.urls.AddRange(getNoneTwitterUrls(status));
+            if (status.IsQuotedStatus)
+            {
+                if (!setReferencedAccount(status, tweet))
+                    return null; //quoted tweets without a referenced account are ... broken?
+                                 //if you attempt to find those tweet, they don't exist -> skip them
+            }
+            return tweet;
+        }
+
+        private bool setReferencedAccount(Status status, Tweet tweet)
+        {
+            User referencedAccount = status.QuotedStatus.User;
+            if (referencedAccount == null)
+            {
+                return false;
+            }
+
+            tweet.referencedAccount = $"@{referencedAccount.ScreenNameResponse}";
+            return true;
         }
 
         private IEnumerable<string> getNoneTwitterUrls(Status status)

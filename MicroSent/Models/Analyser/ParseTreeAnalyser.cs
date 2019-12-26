@@ -11,27 +11,9 @@ using System.Text.RegularExpressions;
 
 namespace MicroSent.Models.Analyser
 {
-    public class ParseTreeAnalyser
+    public class ParseTreeBuilder
     {
-        #region private members
-        private Regex negationToken = new Regex(RegexConstants.NEGATION_TOKEN_PATTERN);
-        #endregion
-
         #region public methods
-        public void applyGoogleParseTreeNegation(Tweet tweet)
-        {
-            for(int sentenceIndex = 0; sentenceIndex < tweet.sentences.Count; sentenceIndex++)
-            {
-                List<Token> tokensToNegate = new List<Token>();
-                fillWithTokensToNegate(tweet.parseTrees[sentenceIndex], tokensToNegate);
-
-                foreach(Token token in tokensToNegate)
-                {
-                    token.negationRating *= RatingConstants.NEGATION;
-                }
-            }
-        }
-
         public void buildDependencyTree(Tweet tweet, JArray conllArray, int sentenceIndex)
         {
             List<Node> allNodes = new List<Node>();
@@ -55,30 +37,6 @@ namespace MicroSent.Models.Analyser
             }
 
             tweet.parseTrees.Add(allNodes.Where(n => n.parent == null).First());
-        }
-        #endregion
-
-        #region private methods
-        private void fillWithTokensToNegate(Node node, List<Token> tokens)
-        {
-            Match match = negationToken.Match(node.correspondingToken.text);
-            if (match.Success)
-            {
-                if (node.parent != null)
-                {
-                    tokens.Add(node.parent.correspondingToken);
-                    foreach (Node child in node.parent.children)
-                    {
-                        tokens.Add(child.correspondingToken);
-                    }
-                    tokens.Remove(node.correspondingToken);
-                }
-            }
-
-            foreach(Node child in node.children)
-            {
-                fillWithTokensToNegate(child, tokens);
-            }
         }
         #endregion
     }

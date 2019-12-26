@@ -20,7 +20,7 @@ namespace MicroSent.Models.Analyser
         private NetworkClientSocket networkSendClientSocket;
         private NetworkClientSocket networkReceiveClientSocket;
 
-        private ParseTreeAnalyser parseTreeAnalyser;
+        private ParseTreeBuilder parseTreeBuilder;
 
         private IAlgorithmConfiguration configuration;
         #endregion
@@ -38,7 +38,7 @@ namespace MicroSent.Models.Analyser
             networkReceiveClientSocket = new NetworkClientSocket(
                 configuration.clientReceivingPort, configuration.clientHost);
 
-            parseTreeAnalyser = new ParseTreeAnalyser();
+            parseTreeBuilder = new ParseTreeBuilder();
         }
         #endregion
 
@@ -247,7 +247,7 @@ namespace MicroSent.Models.Analyser
                 JArray conllArray = await getConllArrayFromServer(tweet.getFullUnicodeSentence(i));
                 JArray correctedConllArray = correctSyntaxNetTokenizingDifferences(tweet, conllArray, i);
                 mapPosLabelsOfConllArrayToTokens(correctedConllArray, tweet.sentences[i]);
-                parseTreeAnalyser.buildDependencyTree(tweet, correctedConllArray, sentenceIndex: i);
+                parseTreeBuilder.buildDependencyTree(tweet, correctedConllArray, sentenceIndex: i);
             }
         }
 
