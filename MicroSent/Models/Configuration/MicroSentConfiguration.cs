@@ -41,9 +41,9 @@ namespace MicroSent.Models.Configuration
 
         public MicroSentConfiguration()
         {
-            testing = true;
-            useGoogleParser = true;
-            useSerializedData = true;
+            testing = false;
+            useGoogleParser = false;
+            useSerializedData = false;
             serializeData = false;
             skipTweetsAmount = 0;
 
@@ -68,7 +68,7 @@ namespace MicroSent.Models.Configuration
             useLemmatizedText = true;
 
             negationWindowSize = NegationConstants.FOUR_WORDS;
-            negationType = NegationType.GoogleParseTree;
+            negationType = NegationType.TilNextPunctuation;
         }
     }
 }

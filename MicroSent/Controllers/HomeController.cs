@@ -21,6 +21,7 @@ namespace MicroSent.Controllers
 {
     public class HomeController : Controller
     {
+        #region private members
         private TwitterCrawler twitterCrawler;
         private TweetBuilder tweetBuilder;
 
@@ -33,6 +34,7 @@ namespace MicroSent.Controllers
         private Preprocessor preprocessor;
         private ParseTreeBuilder parseTreeAnalyser;
         private Negator negator;
+        private VisualizationTransformer visualizationTransformer;
 
         private Serializer serializer;
         private Deserializer deserializer;
@@ -44,7 +46,9 @@ namespace MicroSent.Controllers
         private const string SerializedTweetsPath = DataPath.SERIALIZED_TWEETS;
 
         private IAlgorithmConfiguration configuration;
+        #endregion
 
+        #region constructors
         public HomeController(IOptions<TwitterCrawlerConfig> crawlerConfig, IAlgorithmConfiguration algorithmConfiguration)
         {
             this.configuration = algorithmConfiguration;
@@ -65,13 +69,16 @@ namespace MicroSent.Controllers
             preprocessor = new Preprocessor();
             parseTreeAnalyser = new ParseTreeBuilder();
             negator = new Negator();
+            visualizationTransformer = new VisualizationTransformer();
 
             serializer = new Serializer();
             deserializer = new Deserializer();
 
             tester = new Tester();
         }
+        #endregion
 
+        #region public methods
         public async Task<IActionResult> Index(HomeViewModel homeViewModel)
         {
             if (configuration.testing)
@@ -91,17 +98,17 @@ namespace MicroSent.Controllers
             if(configuration.serializeData && !configuration.useSerializedData)
                 serializer.serializeTweets(allTweets, SerializedTweetsPath);
 
-
             if (configuration.testing)
                 tester.checkTweetRating(allTweets);
             else
                 printOnConsole(allTweets);
 
-            translateTweetsToRating(allTweets, out List<Rating> linkRatings, out List<Rating> accountRatings);
+            visualizationTransformer.translateTweetsToRating(allTweets, out List<Rating> linkRatings, out List<Rating> accountRatings);
             homeViewModel.linkRatings = linkRatings;
             homeViewModel.accountRatings = accountRatings;
             return View(homeViewModel);
         }
+        #endregion
 
         #region private methods
         private void printOnConsole(List<Tweet> allTweets)
@@ -208,6 +215,12 @@ namespace MicroSent.Controllers
 
         private void applyRating(Tweet tweet)
         {
+            applyWordRating(tweet);
+            applySmileyEmojiRating(tweet);
+        }
+
+        private void applyWordRating(Tweet tweet)
+        {
             foreach (List<Token> sentence in tweet.sentences)
             {
                 foreach (Token token in sentence)
@@ -218,7 +231,10 @@ namespace MicroSent.Controllers
                     }
                 }
             }
+        }
 
+        private void applySmileyEmojiRating(Tweet tweet)
+        {
             foreach (Token token in tweet.rest)
             {
                 if (token.isEmoji)
@@ -230,62 +246,6 @@ namespace MicroSent.Controllers
                     token.smileyRating = rater.getSmileyRating(token);
                 }
             }
-        }
-
-        private void translateTweetsToRating(List<Tweet> tweets, out List<Rating> linkRatings, out List<Rating> accountRating)
-        {
-            linkRatings = new List<Rating>();
-            accountRating = new List<Rating>();
-
-            var distinctLinks = tweets.Where(t => t.linkedDomain != null).Select(t => t.linkedDomain).Distinct();
-            var distinctAccounts = tweets.Where(t => t.referencedAccount != null).Select(t => t.referencedAccount).Distinct();
-
-            createAndAddRatingsToList(tweets, distinctLinks, linkRatings, true);
-            createAndAddRatingsToList(tweets, distinctAccounts, accountRating, false);
-        }
-
-        private void createAndAddRatingsToList(List<Tweet> tweets, IEnumerable<string> entities, List<Rating> ratingList, bool isLink)
-        {
-            foreach (var entity in entities)
-            {
-                IEnumerable<Tweet> allTweetsContainingEntity;
-                if (isLink)
-                    allTweetsContainingEntity = tweets.Where(t => t.linkedDomain != null && t.linkedDomain == entity);
-                else
-                    allTweetsContainingEntity = tweets.Where(t => t.referencedAccount != null && t.referencedAccount == entity);
-
-                var positiveRatedTweets = allTweetsContainingEntity.Where(t => getHigherTweetPolarity(t) > 0);
-                var negativeRatedTweets = allTweetsContainingEntity.Where(t => getHigherTweetPolarity(t) < 0);
-                var neutralRatedTweets = allTweetsContainingEntity.Where(t => getHigherTweetPolarity(t) == 0);
-
-                int occurencesPositive = positiveRatedTweets.Count();
-                int occurencesNegative = negativeRatedTweets.Count();
-                int occurencesNeutral = neutralRatedTweets.Count();
-
-                if (occurencesPositive > 0)
-                {
-                    float averageRatingPositive = positiveRatedTweets.Average(t => getHigherTweetPolarity(t));
-                    Rating rating = new Rating(entity, averageRatingPositive, occurencesPositive);
-                    ratingList.Add(rating);
-                }
-                if (occurencesNegative > 0)
-                {
-                    float averageRatingNegative = negativeRatedTweets.Average(t => getHigherTweetPolarity(t));
-                    Rating rating = new Rating(entity, averageRatingNegative, occurencesNegative);
-                    ratingList.Add(rating);
-                }
-                if (occurencesNeutral > 0)
-                {
-                    float averageRatingNeutral = neutralRatedTweets.Average(t => getHigherTweetPolarity(t));
-                    Rating rating = new Rating(entity, averageRatingNeutral, occurencesNeutral);
-                    ratingList.Add(rating);
-                }
-            }
-        }
-
-        private float getHigherTweetPolarity(Tweet tweet)
-        {
-            return tweet.positiveRating > Math.Abs(tweet.negativeRating) ? tweet.positiveRating : tweet.negativeRating;
         }
         #endregion
 
