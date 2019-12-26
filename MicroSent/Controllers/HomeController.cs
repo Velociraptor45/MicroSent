@@ -2,15 +2,12 @@
 using MicroSent.Models;
 using MicroSent.Models.Analyser;
 using MicroSent.Models.Constants;
-using MicroSent.Models.Network;
 using MicroSent.Models.Test;
 using MicroSent.Models.TwitterConnection;
 using MicroSent.Models.Util;
 using MicroSent.Models.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
-using OpenNLP.Tools.Parser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,11 +22,12 @@ namespace MicroSent.Controllers
     public class HomeController : Controller
     {
         private TwitterCrawler twitterCrawler;
+        private TweetBuilder tweetBuilder;
 
         private Tokenizer tokenizer;
         private TokenAnalyser tokenAnalyser;
         private TweetAnalyser tweetAnalyser;
-        private WordRater wordRater;
+        private Rater rater;
         private PosTagger posTagger;
         private SentimentCalculator sentimentCalculator;
         private Preprocessor preprocessor;
@@ -58,10 +56,11 @@ namespace MicroSent.Controllers
 
             posTagger = new PosTagger(configuration);
             twitterCrawler = new TwitterCrawler(crawlerConfig);
+            tweetBuilder = new TweetBuilder(configuration);
             tokenizer = new Tokenizer();
             tokenAnalyser = new TokenAnalyser();
             tweetAnalyser = new TweetAnalyser();
-            wordRater = new WordRater(algorithmConfiguration);
+            rater = new Rater(algorithmConfiguration);
             sentimentCalculator = new SentimentCalculator(algorithmConfiguration);
             preprocessor = new Preprocessor();
             parseTreeAnalyser = new ParseTreeBuilder();
@@ -83,7 +82,7 @@ namespace MicroSent.Controllers
                 return View(homeViewModel);
             }
 
-            List<Tweet> allTweets = await getTweets(homeViewModel);
+            List<Tweet> allTweets = await getTweets(homeViewModel.accountName);
             if (allTweets == null)
                 return View(homeViewModel);
 
@@ -104,6 +103,7 @@ namespace MicroSent.Controllers
             return View(homeViewModel);
         }
 
+        #region private methods
         private void printOnConsole(List<Tweet> allTweets)
         {
             foreach (Tweet tweet in allTweets)
@@ -214,7 +214,7 @@ namespace MicroSent.Controllers
                 {
                     if (!token.isLink && !token.isMention && !token.isPunctuation && !token.isStructureToken)
                     {
-                        wordRater.setWordRating(token);
+                        rater.setWordRating(token);
                     }
                 }
             }
@@ -223,11 +223,11 @@ namespace MicroSent.Controllers
             {
                 if (token.isEmoji)
                 {
-                    token.emojiRating = wordRater.getEmojiRating(token);
+                    token.emojiRating = rater.getEmojiRating(token);
                 }
                 else if (token.isSmiley)
                 {
-                    token.smileyRating = wordRater.getSmileyRating(token);
+                    token.smileyRating = rater.getSmileyRating(token);
                 }
             }
         }
@@ -289,96 +289,30 @@ namespace MicroSent.Controllers
         }
         #endregion
 
-
-        #region TWEET CRAWLING
-        //////////////////////////////////////////////////////////////
-        /// TWEET CRAWLING
-        //////////////////////////////////////////////////////////////
-
-        private async Task<List<Tweet>> getTweets(HomeViewModel homeViewModel)
+        private async Task<List<Tweet>> getTweets(string accountName)
         {
-            List<Tweet> tweets = new List<Tweet>();
+            List<Tweet> tweets;
             if (configuration.useSerializedData)
             {
                 tweets = deserializer.deserializeTweets(SerializedTweetsPath);
-                setRandomReferencedAccounts(tweets);
+                tweetBuilder.setRandomReferencedAccounts(tweets);
             }
             else if (configuration.testing)
             {
                 tweets = tester.getTestTweets().Skip(configuration.skipTweetsAmount).ToList();
-                setRandomReferencedAccounts(tweets);
+                tweetBuilder.setRandomReferencedAccounts(tweets);
             }
             else
             {
-                tweets = await crawlTweetsAsync(homeViewModel.accountName);
+                ConsolePrinter.printBeginCrawlingTweets(accountName);
+                List<Status> statuses = await twitterCrawler.getLinksAndQuotedRetweets(accountName);
+                ConsolePrinter.printFinishedCrawlingTweets();
+
+                tweets = tweetBuilder.transformStatusesToTweets(statuses);
                 if (tweets == null)
                     return null;
             }
             return tweets;
-        }
-
-        private void setRandomReferencedAccounts(List<Tweet> tweets)
-        {
-            Random r = new Random();
-            foreach (Tweet tweet in tweets)
-            {
-                tweet.referencedAccount = $"@testacc{r.Next(70)}";
-            }
-        }
-
-        private async Task<List<Tweet>> crawlTweetsAsync(string accountName)
-        {
-            ConsolePrinter.printBeginCrawlingTweets(accountName);
-            List<Status> relevantStatuses = await twitterCrawler.getLinksAndQuotedRetweets(accountName);
-            ConsolePrinter.printFinishedCrawlingTweets();
-
-            if (relevantStatuses == null)
-                return null;
-            else
-                return transformStatusesToTweets(relevantStatuses);
-        }
-
-        private List<Tweet> transformStatusesToTweets(List<Status> statuses)
-        {
-            List<Tweet> tweets = new List<Tweet>();
-            foreach (Status status in statuses)
-            {
-                Tweet tweet = buildTweetFromStatus(status);
-                if(tweet != null)
-                    tweets.Add(tweet);
-            }
-            return tweets;
-        }
-
-        private Tweet buildTweetFromStatus(Status status)
-        {
-            Tweet tweet = new Tweet(status.FullText, status.ScreenName, status.StatusID);
-            tweet.urls.AddRange(getNoneTwitterUrls(status));
-            if (status.IsQuotedStatus)
-            {
-                if (!setReferencedAccount(status, tweet))
-                    return null; //quoted tweets without a referenced account are ... broken?
-                                 //if you attempt to find those tweet, they don't exist -> skip them
-            }
-            return tweet;
-        }
-
-        private bool setReferencedAccount(Status status, Tweet tweet)
-        {
-            User referencedAccount = status.QuotedStatus.User;
-            if (referencedAccount == null)
-            {
-                return false;
-            }
-
-            tweet.referencedAccount = $"@{referencedAccount.ScreenNameResponse}";
-            return true;
-        }
-
-        private IEnumerable<string> getNoneTwitterUrls(Status status)
-        {
-            var noneTwitterUrls = status.Entities.UrlEntities.Where(e => !e.DisplayUrl.StartsWith(TokenPartConstants.TWITTER_DOMAIN));
-            return noneTwitterUrls.Select(e => e.ExpandedUrl);
         }
         #endregion
     }

@@ -57,10 +57,10 @@ namespace MicroSent.Models.Configuration
             clientReceivingPort = 6050;
             clientHost = "localhost";
 
-            useExtendedLexicon = true;
+            useExtendedLexicon = false;
             useAvarageRatingScore = false;
             useOnlyAverageRatingScore = false;
-            useSingleTokenThreshold = false;
+            useSingleTokenThreshold = true;
             useTotalThreshold = false;
             singleTokenThreshold = .2f;
             totalThreshold = .5f;
@@ -68,7 +68,7 @@ namespace MicroSent.Models.Configuration
             useLemmatizedText = true;
 
             negationWindowSize = NegationConstants.FOUR_WORDS;
-            negationType = NegationType.KWindow;
+            negationType = NegationType.GoogleParseTree;
         }
     }
 }

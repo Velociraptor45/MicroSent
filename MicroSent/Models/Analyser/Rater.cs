@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace MicroSent.Models.Analyser
 {
-    public class WordRater
+    public class Rater
     {
         #region private members
         private const string SentiLexiconRootName = "SentiWords";
@@ -35,7 +35,7 @@ namespace MicroSent.Models.Analyser
         #endregion
 
         #region constructors
-        public WordRater(IAlgorithmConfiguration configuration)
+        public Rater(IAlgorithmConfiguration configuration)
         {
             this.configuration = configuration;
             if(polarityDictionary == null)
