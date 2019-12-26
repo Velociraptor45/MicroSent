@@ -103,9 +103,7 @@ namespace MicroSent.Controllers
             else
                 printOnConsole(allTweets);
 
-            visualizationTransformer.translateTweetsToRating(allTweets, out List<Rating> linkRatings, out List<Rating> accountRatings);
-            homeViewModel.linkRatings = linkRatings;
-            homeViewModel.accountRatings = accountRatings;
+            convertRatingsToVisualizationFormat(homeViewModel, allTweets);
             return View(homeViewModel);
         }
         #endregion
@@ -121,6 +119,13 @@ namespace MicroSent.Controllers
                 ConsolePrinter.printNegativeRating(tweet);
                 ConsolePrinter.printEmptyLine();
             }
+        }
+
+        private void convertRatingsToVisualizationFormat(HomeViewModel homeViewModel, List<Tweet> tweets)
+        {
+            visualizationTransformer.translateTweetsToRating(tweets, out List<Rating> linkRatings, out List<Rating> accountRatings);
+            homeViewModel.linkRatings = linkRatings;
+            homeViewModel.accountRatings = accountRatings;
         }
 
         #region ANALYSIS
