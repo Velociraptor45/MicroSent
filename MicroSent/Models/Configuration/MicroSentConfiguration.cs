@@ -41,7 +41,7 @@ namespace MicroSent.Models.Configuration
 
         public MicroSentConfiguration()
         {
-            testing = true;
+            testing = false;
             useGoogleParser = false;
             useSerializedData = false;
             serializeData = false;
@@ -57,10 +57,10 @@ namespace MicroSent.Models.Configuration
             clientReceivingPort = 6050;
             clientHost = "localhost";
 
-            useExtendedLexicon = true;
+            useExtendedLexicon = false;
             useAvarageRatingScore = false;
             useOnlyAverageRatingScore = false;
-            useSingleTokenThreshold = false;
+            useSingleTokenThreshold = true;
             useTotalThreshold = false;
             singleTokenThreshold = .2f;
             totalThreshold = .5f;

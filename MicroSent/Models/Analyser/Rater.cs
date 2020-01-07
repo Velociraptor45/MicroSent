@@ -8,8 +8,9 @@ using System.Linq;
 
 namespace MicroSent.Models.Analyser
 {
-    public class WordRater
+    public class Rater
     {
+        #region private members
         private const string SentiLexiconRootName = "SentiWords";
         private const string LexiconExtensionRootName = "LexiconExtension";
 
@@ -31,8 +32,10 @@ namespace MicroSent.Models.Analyser
         private const float ValueNotFound = float.MinValue;
 
         IAlgorithmConfiguration configuration;
+        #endregion
 
-        public WordRater(IAlgorithmConfiguration configuration)
+        #region constructors
+        public Rater(IAlgorithmConfiguration configuration)
         {
             this.configuration = configuration;
             if(polarityDictionary == null)
@@ -45,7 +48,9 @@ namespace MicroSent.Models.Analyser
                 }
             }
         }
+        #endregion
 
+        #region public methods
         public float getEmojiRating(Token token)
         {
             if (positiveEmojiDetection.Match(token.text).Success)
@@ -88,7 +93,9 @@ namespace MicroSent.Models.Analyser
 
             
         }
+        #endregion
 
+        #region private methods
         private float getWordRating(string text, string stemmedText, string lemmatizedText, PosLabels posLabel)
         {
             string sentiWordLabel = convertToSentiWordPosLabel(posLabel);
@@ -199,5 +206,6 @@ namespace MicroSent.Models.Analyser
             }
             return null;
         }
+        #endregion
     }
 }
